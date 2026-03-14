@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Chat Viewer</title>
+  <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+
+  <button id="authButton">Authorize and Load</button>
+  <button id="execButton">Get Super Chats</button>
+
+  <div id="superChatsContainer" style="margin-top: 20px;"></div>
+
+  <script>
+    // ====== CONFIGURAÇÃO ======
+    const USE_MOCK = true;                   // true = usa mock data, false = chama API real
+    const CLIENT_ID = "SEU_CLIENT_ID_AQUI";  // Substitua pelo client ID do Google Cloud
+    const API_KEY = "SUA_API_KEY_AQUI";      // Substitua pela API Key
+    const CHANNEL_ID = "UC_SEU_CANAL_ID";    // Substitua pelo ID do seu canal
+    const MAX_RESULTS = 10;                  // Quantidade de Super Chats a retornar
+    let  MOCK_FILE = "mock.json"; // Arquivo JSON com dados de teste
+    // ====== MOCK DATA ======
+    let MOCK_DATA = []
+    async function loadMockData() {
+      try {
+        const response = await fetch(MOCK_FILE);
+        MOCK_DATA = await response.json();
+        console.log("Mock data loaded", MOCK_DATA);
+      } catch (err) {
+        console.error("Error loading mock data", err);
+      }
+    }loadMockData();
+
+    // ====== FUNÇÕES ======
+    function authenticate() {
+      return gapi.auth2.getAuthInstance()
+        .signIn({ scope: "https://www.googleapis.com/auth/youtube.readonly" })
+        .then(() => console.log("Sign-in successful"))
+        .catch(err => console.error("Error signing in", err));
+    }
+
+    function loadClient() {
+      gapi.client.setApiKey(API_KEY);
+      return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
+        .then(() => console.log("GAPI client loaded for API"))
+        .catch(err => console.error("Error loading GAPI client for API", err));
+    }
+
+    async function execute() {
+      const container = document.getElementById("superChatsContainer");
+      container.innerHTML = ""; // limpa conteúdo anterior
+
+      let data = [];
+
+      if (USE_MOCK) {
+        if (MOCK_DATA.length === 0) {
+          await loadMockData();
+        }
+        data = MOCK_DATA;
+      } else {
+        try {
+          const response = await gapi.client.youtube.superChatEvents.list({
+            part: "snippet",
+            channelId: CHANNEL_ID,
+            maxResults: MAX_RESULTS
+          });
+          data = response.result.items;
+        } catch (err) {
+          console.error("Execute error", err);
+          return;
+        }
+      }
+
+      // Renderiza no HTML
+      data.items.forEach(sc => {
+        const scDiv = document.createElement("div");
+        scDiv.style.border = "1px solid #ccc";
+        scDiv.style.borderRadius = "8px";
+        scDiv.style.padding = "10px";
+        scDiv.style.margin = "5px 0";
+        scDiv.style.background = "#f9f9f9";
+
+        scDiv.innerHTML = `
+          <strong>${sc.snippet.supporterDetails.displayName}</strong> 
+          donated <span style="color: green; font-weight: bold;">${sc.snippet.displayString}</span><br>
+          <em>${sc.snippet.commentText || ""}</em>
+        `;
+        container.appendChild(scDiv);
+      });
+    }
+
+    // ====== INICIALIZAÇÃO ======
+    gapi.load("client:auth2", () => {
+      gapi.auth2.init({ client_id: CLIENT_ID });
+    });
+
+    // ====== BOTÕES ======
+    document.getElementById("authButton").onclick = () => authenticate().then(loadClient);
+    document.getElementById("execButton").onclick = () => execute();
+  </script>
+
+</body>
+</html>

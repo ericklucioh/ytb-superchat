@@ -1,0 +1,146 @@
+{
+  "kind": "youtube#superChatEventListResponse",
+  "etag": "etag_example_67890",
+  "nextPageToken": "CAoQAAEFG",
+  "pageInfo": {
+    "totalResults": 5,
+    "resultsPerPage": 5
+  },
+  "items": [
+    {
+      "kind": "youtube#superChatEvent",
+      "etag": "etag_sc_1",
+      "id": "SC_1A2B3C",
+      "snippet": {
+        "channelId": "UC_SEU_CANAL_ID",
+        "supporterDetails": {
+          "channelId": "UC_USER1",
+          "channelUrl": "https://www.youtube.com/channel/UC_USER1",
+          "displayName": "User1",
+          "profileImageUrl": "https://yt3.ggpht.com/ytc/AAUvwni_user1_profile"
+        },
+        "commentText": "Boa live! 👏",
+        "createdAt": "2026-03-08T14:35:00Z",
+        "amountMicros": 5000000,
+        "currency": "USD",
+        "displayString": "$5.00",
+        "messageType":  "superChatEvent",
+        "isSuperStickerEvent": false,
+        "superStickerMetadata": null
+      }
+    },
+    {
+      "kind": "youtube#superChatEvent",
+      "etag": "etag_sc_2",
+      "id": "SC_4D5E6F",
+      "snippet": {
+        "channelId": "UC_SEU_CANAL_ID",
+        "supporterDetails": {
+          "channelId": "UC_USER2",
+          "channelUrl": "https://www.youtube.com/channel/UC_USER2",
+          "displayName": "User2",
+          "profileImageUrl": "https://yt3.ggpht.com/ytc/AAUvwni_user2_profile"
+        },
+        "commentText": "Muito bom! 🔥",
+        "createdAt": "2026-03-08T14:40:00Z",
+        "amountMicros": 15000000,
+        "currency": "USD",
+        "displayString": "$15.00",
+        "messageType": "superChatEvent",
+        "isSuperStickerEvent": false,
+        "superStickerMetadata": null
+      }
+    },
+    {
+      "kind": "youtube#superChatEvent",
+      "etag": "etag_sc_3",
+      "id": "SC_7G8H9I",
+      "snippet": {
+        "channelId": "UC_SEU_CANAL_ID",
+        "supporterDetails": {
+          "channelId": "UC_USER3",
+          "channelUrl": "https://www.youtube.com/channel/UC_USER3",
+          "displayName": "User3",
+          "profileImageUrl": "https://yt3.ggpht.com/ytc/AAUvwni_user3_profile"
+        },
+        "commentText": "Conteúdo sensacional!",
+        "createdAt": "2026-03-08T14:50:00Z",
+        "amountMicros": 50000000,
+        "currency": "BRL",
+        "displayString": "R$ 50,00",
+        "messageType": "superChatEvent",
+        "isSuperStickerEvent": false,
+        "superStickerMetadata": null
+      }
+    },
+    {
+      "kind": "youtube#superChatEvent",
+      "etag": "etag_sc_4",
+      "id": "SC_0J1K2L",
+      "snippet": {
+        "channelId": "UC_SEU_CANAL_ID",
+        "supporterDetails": {
+          "channelId": "UC_USER4",
+          "channelUrl": "https://www.youtube.com/channel/UC_USER4",
+          "displayName": "User4",
+          "profileImageUrl": "https://yt3.ggpht.com/ytc/AAUvwni_user4_profile"
+        },
+        "commentText": "👏👏👏",
+        "createdAt": "2026-03-08T15:00:00Z",
+        "amountMicros": 1000000,
+        "currency": "EUR",
+        "displayString": "€1.00",
+        "messageType": "superChatEvent",
+        "isSuperStickerEvent": false,
+        "superStickerMetadata": null
+      }
+    },
+    {
+      "kind": "youtube#superChatEvent",
+      "etag": "etag_sc_5",
+      "id": "SS_3M4N5O",
+      "snippet": {
+        "channelId": "UC_SEU_CANAL_ID",
+        "supporterDetails": {
+          "channelId": "UC_USER5",
+          "channelUrl": "https://www.youtube.com/channel/UC_USER5",
+          "displayName": "User5",
+          "profileImageUrl": "https://yt3.ggpht.com/ytc/AAUvwni_user5_profile"
+        },
+        "commentText": "",
+        "createdAt": "2026-03-08T15:10:00Z",
+        "amountMicros": 25000000,
+        "currency": "USD",
+        "displayString": "$25.00",
+        "messageType": "superStickerEvent",
+        "isSuperStickerEvent": true,
+        "superStickerMetadata": {
+          "stickerId": "sadcat_1",
+          "altText": ":cat-cry:"
+        }
+      }
+    },
+    {
+        "kind": "youtube#superChatEvent",
+        "etag": "etag_sc_6",
+        "id": "SC_6P7Q8R",
+        "snippet": {
+          "channelId": "UC_SEU_CANAL_ID",
+          "supporterDetails": {
+             "channelId": "UC_USER6",
+             "channelUrl": "https://www.youtube.com/channel/UC_USER6",
+             "displayName": "User6",
+             "profileImageUrl": "https://yt3.ggpht.com/ytc/AAUvwni_user6_profile"
+          },
+          "commentText": "Adoro seu conteúdo! ❤️",
+          "createdAt": "2026-03-08T15:20:00Z",
+          "amountMicros": 3000000,
+          "currency": "BRL",
+          "displayString": "R$ 3,00",
+          "messageType":  "superChatEvent",
+          "isSuperStickerEvent": false,
+          "superStickerMetadata": null
+        }
+     }
+  ]
+}
