@@ -54,7 +54,6 @@ const removeMessage = (messageId: string) => {
   });
 };
 
-// E passe para o MessageList:
 
   const login = () => {
     if (!window.google) {
