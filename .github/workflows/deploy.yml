@@ -1,0 +1,38 @@
+name: Build and Deploy to Hostinger
+
+on:
+  push:
+    branches:
+      - main # ou a sua branch principal
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Project
+        run: npm run build
+        # Nota: Se for SSG (Static), o output vai para a pasta /out ou /dist
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Ajuste 'local-dir' para './out' se usar output: export no Next.js
+          # Ou './' se for um projeto Node simples
+          local-dir: ./out/
+          server-dir: /public_html/
