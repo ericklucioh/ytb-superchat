@@ -3,12 +3,14 @@ name: Build and Deploy to Hostinger
 on:
   push:
     branches:
-      - main # ou a sua branch principal
+      - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
+    outputs:
+      build-version: ${{ steps.build-id.outputs.version }}
+    
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -24,7 +26,28 @@ jobs:
 
       - name: Build Project
         run: npm run build
-        # Nota: Se for SSG (Static), o output vai para a pasta /out ou /dist
+        
+      - name: Generate Build ID
+        id: build-id
+        run: echo "version=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: ./out/
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: ./out/
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -32,7 +55,5 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # Ajuste 'local-dir' para './out' se usar output: export no Next.js
-          # Ou './' se for um projeto Node simples
           local-dir: ./out/
           server-dir: /public_html/
