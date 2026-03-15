@@ -1,105 +1,341 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Super Chat Viewer</title>
-  <script src="https://apis.google.com/js/api.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Chat Viewer</title>
+
+<script src="https://apis.google.com/js/api.js"></script>
+
+<style>
+.superchat-actions{
+  margin-top:8px;
+}
+
+.superchat-actions button{
+  padding:5px 10px;
+  margin-right:6px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:12px;
+  transition:0.2s;
+}
+
+.hideBtn{
+  background:#555;
+  color:white;
+}
+
+.hideBtn:hover{
+  background:#666;
+}
+
+.readBtn{
+  background:#00aa66;
+  color:white;
+}
+
+.readBtn:hover{
+  background:#008855;
+}
+
+body{
+  font-family: Arial, Helvetica, sans-serif;
+  background:#0f0f0f;
+  color:white;
+  margin:0;
+  padding:30px;
+}
+
+h1{
+  margin-bottom:20px;
+}
+
+.controls{
+  margin-bottom:20px;
+}
+
+button{
+  background:#ff0000;
+  border:none;
+  color:white;
+  padding:10px 18px;
+  margin-right:10px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.2s;
+}
+
+button:hover{
+  background:#cc0000;
+}
+
+#toggleBtn{
+  background:#444;
+}
+
+#toggleBtn:hover{
+  background:#666;
+}
+
+#superChatsContainer{
+  max-width:600px;
+}
+
+.superchat{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  background:#1e1e1e;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:10px;
+  border-left:6px solid #ffcc00;
+  animation:fadeIn .4s ease;
+  transition:0.3s;
+}
+
+.superchat.oculto{
+  display:none;
+}
+
+.superchat.lido{
+  opacity:0.6;
+  border-left-color:#888;
+}
+
+.superchat img{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+}
+
+.superchat-name{
+  font-weight:bold;
+}
+
+.superchat-amount{
+  color:#00ff88;
+  font-weight:bold;
+}
+
+.superchat-message{
+  margin-top:4px;
+  opacity:0.9;
+}
+
+.hidden{
+  display:none;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+</style>
 </head>
+
 <body>
 
-  <button id="authButton">Authorize and Load</button>
-  <button id="execButton">Get Super Chats</button>
+<h1>💬 Super Chat Viewer</h1>
 
-  <div id="superChatsContainer" style="margin-top: 20px;"></div>
+<div class="controls">
+<button id="authButton">Login</button>
+<button id="execButton">Buscar SuperChats</button>
+<button id="toggleBtn">Ocultar</button>
+</div>
 
-  <script>
-    // ====== CONFIGURAÇÃO ======
-    const USE_MOCK = true;                   // true = usa mock data, false = chama API real
-    const CLIENT_ID = "SEU_CLIENT_ID_AQUI";  // Substitua pelo client ID do Google Cloud
-    const API_KEY = "SUA_API_KEY_AQUI";      // Substitua pela API Key
-    const CHANNEL_ID = "UC_SEU_CANAL_ID";    // Substitua pelo ID do seu canal
-    const MAX_RESULTS = 10;                  // Quantidade de Super Chats a retornar
-    let  MOCK_FILE = "mock.json"; // Arquivo JSON com dados de teste
-    // ====== MOCK DATA ======
-    let MOCK_DATA = []
-    async function loadMockData() {
-      try {
-        const response = await fetch(MOCK_FILE);
-        MOCK_DATA = await response.json();
-        console.log("Mock data loaded", MOCK_DATA);
-      } catch (err) {
-        console.error("Error loading mock data", err);
-      }
-    }loadMockData();
+<div id="superChatsContainer"></div>
 
-    // ====== FUNÇÕES ======
-    function authenticate() {
-      return gapi.auth2.getAuthInstance()
-        .signIn({ scope: "https://www.googleapis.com/auth/youtube.readonly" })
-        .then(() => console.log("Sign-in successful"))
-        .catch(err => console.error("Error signing in", err));
-    }
+<script>
 
-    function loadClient() {
-      gapi.client.setApiKey(API_KEY);
-      return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
-        .then(() => console.log("GAPI client loaded for API"))
-        .catch(err => console.error("Error loading GAPI client for API", err));
-    }
+const USE_MOCK = true
+const CLIENT_ID = "SEU_CLIENT_ID_AQUI"
+const API_KEY = "SUA_API_KEY_AQUI"
+const MAX_RESULTS = 10
 
-    async function execute() {
-      const container = document.getElementById("superChatsContainer");
-      container.innerHTML = ""; // limpa conteúdo anterior
+let MOCK_FILE = "mock.json"
+let MOCK_DATA = []
+let visible = true
 
-      let data = [];
-
-      if (USE_MOCK) {
-        if (MOCK_DATA.length === 0) {
-          await loadMockData();
+async function loadMockData(){
+  try {
+    const res = await fetch(MOCK_FILE)
+    MOCK_DATA = await res.json()
+  } catch (error) {
+    console.log("Erro ao carregar mock, usando dados de exemplo")
+    // Dados de exemplo caso o mock.json não exista
+    MOCK_DATA = {
+      items: [
+        {
+          snippet: {
+            supporterDetails: {
+              displayName: "João Silva",
+              profileImageUrl: "https://via.placeholder.com/42"
+            },
+            displayString: "R$ 50,00",
+            commentText: "Ótimo vídeo! Continue assim!"
+          }
+        },
+        {
+          snippet: {
+            supporterDetails: {
+              displayName: "Maria Oliveira",
+              profileImageUrl: "https://via.placeholder.com/42"
+            },
+            displayString: "R$ 100,00",
+            commentText: "Merece muito mais views!"
+          }
         }
-        data = MOCK_DATA;
+      ]
+    }
+  }
+}
+
+function authenticate(){
+  return gapi.auth2.getAuthInstance()
+  .signIn({scope:"https://www.googleapis.com/auth/youtube.readonly"})
+}
+
+function loadClient(){
+  gapi.client.setApiKey(API_KEY)
+  return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
+}
+
+async function execute(){
+
+  const container = document.getElementById("superChatsContainer")
+  container.innerHTML=""
+
+  let items=[]
+
+  if(USE_MOCK){
+    if(!MOCK_DATA.items) await loadMockData()
+    items = MOCK_DATA.items || []
+  }else{
+    try {
+      const response = await gapi.client.youtube.superChatEvents.list({
+        part:"snippet",
+        maxResults:MAX_RESULTS
+      })
+      items = response.result.items || []
+    } catch (error) {
+      console.error("Erro ao buscar SuperChats:", error)
+      alert("Erro ao buscar SuperChats. Verifique o console.")
+      return
+    }
+  }
+
+  if(items.length === 0){
+    container.innerHTML = "<p>Nenhum Super Chat encontrado.</p>"
+    return
+  }
+
+  items.forEach((sc, index)=>{
+
+    const snippet = sc.snippet
+    const user = snippet.supporterDetails
+
+    const div = document.createElement("div")
+    div.className = "superchat"
+    div.dataset.index = index
+
+    div.innerHTML = `
+      <img src="${user.profileImageUrl || 'https://via.placeholder.com/42'}">
+      
+      <div style="flex:1">
+        <div class="superchat-name">
+          ${user.displayName || 'Usuário'}
+          • <span class="superchat-amount">${snippet.displayString || 'R$ 0,00'}</span>
+        </div>
+
+        <div class="superchat-message">
+          ${snippet.commentText || "Sem mensagem"}
+        </div>
+
+        <div class="superchat-actions">
+          <button class="hideBtn">Ocultar</button>
+          <button class="readBtn">Lido</button>
+        </div>
+      </div>
+    `
+
+    // Adiciona eventos aos botões
+    const hideBtn = div.querySelector('.hideBtn')
+    const readBtn = div.querySelector('.readBtn')
+
+    hideBtn.addEventListener('click', function() {
+      div.classList.add('oculto')
+    })
+
+    readBtn.addEventListener('click', function() {
+      div.classList.toggle('lido')
+      if(div.classList.contains('lido')){
+        this.textContent = 'Não lido'
+        this.style.background = '#aa6600'
       } else {
-        try {
-          const response = await gapi.client.youtube.superChatEvents.list({
-            part: "snippet",
-            channelId: CHANNEL_ID,
-            maxResults: MAX_RESULTS
-          });
-          data = response.result.items;
-        } catch (err) {
-          console.error("Execute error", err);
-          return;
-        }
+        this.textContent = 'Lido'
+        this.style.background = '#00aa66'
       }
+    })
 
-      // Renderiza no HTML
-      data.items.forEach(sc => {
-        const scDiv = document.createElement("div");
-        scDiv.style.border = "1px solid #ccc";
-        scDiv.style.borderRadius = "8px";
-        scDiv.style.padding = "10px";
-        scDiv.style.margin = "5px 0";
-        scDiv.style.background = "#f9f9f9";
+    container.appendChild(div)
+  })
 
-        scDiv.innerHTML = `
-          <strong>${sc.snippet.supporterDetails.displayName}</strong> 
-          donated <span style="color: green; font-weight: bold;">${sc.snippet.displayString}</span><br>
-          <em>${sc.snippet.commentText || ""}</em>
-        `;
-        container.appendChild(scDiv);
-      });
-    }
+}
 
-    // ====== INICIALIZAÇÃO ======
-    gapi.load("client:auth2", () => {
-      gapi.auth2.init({ client_id: CLIENT_ID });
-    });
+// Inicialização do gapi
+gapi.load("client:auth2", ()=>{
+  gapi.auth2.init({client_id: CLIENT_ID})
+})
 
-    // ====== BOTÕES ======
-    document.getElementById("authButton").onclick = () => authenticate().then(loadClient);
-    document.getElementById("execButton").onclick = () => execute();
-  </script>
+// Botão de Login
+document.getElementById("authButton").onclick = ()=> {
+  authenticate()
+    .then(() => {
+      console.log("Login realizado com sucesso")
+      return loadClient()
+    })
+    .then(() => {
+      console.log("Cliente carregado")
+      alert("Login realizado com sucesso!")
+    })
+    .catch(error => {
+      console.error("Erro no login:", error)
+      alert("Erro no login. Verifique o console.")
+    })
+}
+
+// Botão de Buscar
+document.getElementById("execButton").onclick = ()=> {
+  execute()
+}
+
+// Botão de Ocultar/Mostrar
+document.getElementById("toggleBtn").onclick = ()=>{
+  const container = document.getElementById("superChatsContainer")
+  const toggleBtn = document.getElementById("toggleBtn")
+
+  visible = !visible
+
+  if(visible){
+    container.classList.remove("hidden")
+    toggleBtn.innerText = "Ocultar"
+  }else{
+    container.classList.add("hidden")
+    toggleBtn.innerText = "Mostrar"
+  }
+}
+
+// Carrega dados mock ao iniciar
+if(USE_MOCK){
+  loadMockData()
+}
+
+</script>
 
 </body>
 </html>

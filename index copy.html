@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YouTube SuperChat Test</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<h2>Teste OAuth YouTube</h2>
+
+<button onclick="login()">Login com Google</button>
+<button onclick="getSuperChats()">Buscar SuperChats</button>
+
+<pre id="output"></pre>
+
+<script>
+let accessToken = null;
+
+function login() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: "501032928481-fgrk6l73l6v4f4m27uu17igs1u0j2uop.apps.googleusercontent.com",
+    scope: "https://www.googleapis.com/auth/youtube.readonly",
+    callback: (response) => {
+      accessToken = response.access_token;
+      document.getElementById("output").textContent =
+        "Autenticado!\nToken: " + accessToken;
+    }
+  });
+
+  client.requestAccessToken();
+}
+
+async function getSuperChats() {
+
+  if (!accessToken) {
+    alert("Faça login primeiro");
+    return;
+  }
+
+  const url = "https://www.googleapis.com/youtube/v3/superChatEvents?part=snippet&maxResults=10";
+
+  const res = await fetch(url, {
+    headers: {
+      "Authorization": "Bearer " + accessToken
+    }
+  });
+
+  const data = await res.json();
+
+  document.getElementById("output").textContent =
+    JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
