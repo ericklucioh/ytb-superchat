@@ -30,7 +30,21 @@ export const MessageCard = ({ item, onMarkAsRead, onRemove }: MessageCardProps) 
       onRemove(item.message.id);
     }, 300);
   };
-
+// Crie um objeto de estilos separado
+const buttonStyle = {
+  backgroundColor: '#4CAF50',
+  color: 'white',
+  border: 'none',
+  borderRadius: '20px',
+  padding: '6px 12px',
+  fontSize: '12px',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
+  transition: 'all 0.2s',
+  opacity: 0.8
+};
   return (
     <div 
       onClick={handleClick}
@@ -109,30 +123,21 @@ export const MessageCard = ({ item, onMarkAsRead, onRemove }: MessageCardProps) 
           </div>
           
           {/* Botão de lida */}
-          <button
-            onClick={handleRemove}
-            style={{
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              border: 'none',
-              borderRadius: '20px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              transition: 'all 0.2s',
-              opacity: 0.8,
-              ':hover': {
-                opacity: 1,
-                transform: 'scale(1.05)'
-              }
-            }}
-            title="Marcar como lida e remover"
-          >
-            <span>✅</span> Lida
-          </button>
+<button
+  onClick={handleRemove}
+  style={buttonStyle}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.opacity = '1';
+    e.currentTarget.style.transform = 'scale(1.05)';
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.opacity = '0.8';
+    e.currentTarget.style.transform = 'scale(1)';
+  }}
+  title="Marcar como lida e remover"
+>
+  <span>✅</span> Lida
+</button>
         </div>
       </div>
 
