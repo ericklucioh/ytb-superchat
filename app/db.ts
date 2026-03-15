@@ -12,7 +12,7 @@ export const MOCK_SUPER_CHATS = [
         profileImageUrl: "https://ui-avatars.com/api/?name=João+Silva&background=random",
         channelUrl: "https://youtube.com/@joaosilva"
       },
-      commentText: "Melhor live de todas! 🚀",
+      commentText: "Melhor live de todaselhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!elhor live de todas!! 🚀",
       displayString: "R$ 50,00",
       amountMicros: 50000000,
       currency: "BRL",
