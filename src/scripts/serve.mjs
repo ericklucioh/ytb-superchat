@@ -22,6 +22,15 @@ const mimeTypes = new Map([
 const server = http.createServer((req, res) => {
   const requestUrl = new URL(req.url || "/", "http://localhost");
   const pathname = decodeURIComponent(requestUrl.pathname);
+
+  if (pathname === "/chrome-extension.zip") {
+    const zipPath = path.join(rootDir, "out", "chrome-extension.zip");
+    if (fs.existsSync(zipPath)) {
+      serveFile(zipPath, res);
+      return;
+    }
+  }
+
   const filePath = resolvePath(pathname);
 
   fs.stat(filePath, (err, stats) => {
@@ -35,8 +44,8 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    if (pathname === "/") {
-      serveFile(path.join(rootDir, "index.html"), res);
+    if (pathname === "/" || pathname === "/index.html") {
+      serveFile(path.join(rootDir, "src", "index.html"), res);
       return;
     }
 
@@ -48,7 +57,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => {
   console.log(`Serving ${rootDir}`);
-  console.log(`http://localhost:${port}/`);
+  console.log(`http://localhost:${port}/src/index.html`);
   console.log(`http://localhost:${port}/extension/index.html?session=YOUR_SESSION_ID`);
 });
 

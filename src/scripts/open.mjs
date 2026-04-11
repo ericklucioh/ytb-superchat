@@ -7,12 +7,12 @@ const port = getPort();
 const session = getSession();
 
 if (!target || !["site", "overlay"].includes(target)) {
-  console.error("Usage: node scripts/open.mjs <site|overlay>");
+  console.error("Usage: node src/scripts/open.mjs <site|overlay>");
   process.exit(1);
 }
 
 const pathPart = target === "site"
-  ? "/"
+  ? "/src/index.html"
   : `/extension/index.html${session ? `?session=${encodeURIComponent(session)}` : ""}`;
 
 const url = `http://localhost:${port}${pathPart}`;

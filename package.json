@@ -4,11 +4,11 @@
   "private": true,
   "description": "Live chat overlay and streamer dashboard for Twitch and YouTube.",
   "scripts": {
-    "dev": "node scripts/serve.mjs",
-    "serve": "node scripts/serve.mjs",
-    "build": "node scripts/build.mjs",
-    "open:site": "node scripts/open.mjs site",
-    "open:streamer": "node scripts/open.mjs site",
-    "open:overlay": "node scripts/open.mjs overlay"
+    "dev": "node src/scripts/serve.mjs",
+    "serve": "node src/scripts/serve.mjs",
+    "build": "node src/scripts/build.mjs",
+    "open:site": "node src/scripts/open.mjs site",
+    "open:streamer": "node src/scripts/open.mjs site",
+    "open:overlay": "node src/scripts/open.mjs overlay"
   }
 }

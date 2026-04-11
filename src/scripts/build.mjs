@@ -53,6 +53,13 @@ for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
   fs.cpSync(source, destination, { recursive: true, force: true });
 }
 
+fs.copyFileSync(path.join(rootDir, 'src', 'index.html'), path.join(outDir, 'index.html'));
+fs.copyFileSync(path.join(rootDir, 'src', 'streamer.css'), path.join(outDir, 'streamer.css'));
+fs.copyFileSync(path.join(rootDir, 'src', 'logoWhite.svg'), path.join(outDir, 'logoWhite.svg'));
+fs.copyFileSync(path.join(rootDir, 'src', 'youtube.png'), path.join(outDir, 'youtube.png'));
+fs.copyFileSync(path.join(rootDir, 'src', 'twitch.png'), path.join(outDir, 'twitch.png'));
+fs.cpSync(path.join(rootDir, 'src', 'site'), path.join(outDir, 'site'), { recursive: true, force: true });
+
 createExtensionZip(extensionDir, zipPath);
 console.log(`Built static site in ${path.relative(rootDir, outDir)}`);
 console.log(`Built Chrome extension zip at ${path.relative(rootDir, zipPath)}`);

@@ -5,7 +5,7 @@ Chrome extension and local overlay project for highlighting live chat messages i
 ## What this fork does
 
 - Keeps the OBS overlay flow intact inside `extension/`
-- Adds a streamer panel at the repository root `index.html`
+- Adds a streamer panel in `src/index.html`
 - Unifies Twitch + YouTube into one live control surface
 - Persists dashboard state in `localStorage`
 - Lets you click a chat item in the dashboard to send it to the OBS overlay
@@ -14,7 +14,7 @@ Chrome extension and local overlay project for highlighting live chat messages i
 
 This fork is designed to be opened with a local web server such as Live Server.
 
-- `index.html` is the main site and streamer control panel
+- `src/index.html` is the main site and streamer control panel
 - `extension/index.html` is the OBS overlay page
 - The Chrome extension lives under `extension/` and is still used to capture Twitch and YouTube chat events
 - `npm run build` creates `out/chrome-extension.zip` with only the `extension/` files
@@ -27,14 +27,20 @@ This fork is designed to be opened with a local web server such as Live Server.
 Start a local server from the project root:
 
 ```powershell
-.\scripts\serve.ps1
+.\src\scripts\serve.ps1
 ```
 
 Open the pages in your browser:
 
 ```powershell
-.\scripts\open-streamer.ps1
-.\scripts\open-overlay.ps1 -Session YOUR_SESSION_ID
+.\src\scripts\open-site.ps1
+.\src\scripts\open-overlay.ps1 -Session YOUR_SESSION_ID
+```
+
+Or start the server and open the site in one step:
+
+```powershell
+.\src\scripts\dev.ps1
 ```
 
 The default server port is `8000`.
@@ -62,7 +68,7 @@ Or create a local `.env` file from `.env.example`.
 
 Open the folder in VS Code and start Live Server from:
 
-- `index.html`
+- `src/index.html`
 - `extension/index.html`
 
 ## Extension install
@@ -82,7 +88,7 @@ Then open Twitch or YouTube popout chat with the extension loaded.
 
 ## Files of interest
 
-- `index.html` - main site and streamer dashboard
+- `src/index.html` - main site and streamer dashboard source
 - `extension/index.html` - OBS overlay renderer
 - `src/site/streamer-app.js` - dashboard bootstrap, state sync, rendering, and overlay trigger
 - `src/site/streamer-store.js` - persisted state and event normalization
@@ -93,7 +99,7 @@ Then open Twitch or YouTube popout chat with the extension loaded.
 
 ## Notes
 
-- `index.html` is the page you should open for the main site and dashboard
+- `src/index.html` is the page you should open for the main site and dashboard source
 - The OBS overlay is under `extension/index.html`
 - For testing, reload the extension and refresh the chat tabs after changing the code
 - If PowerShell script execution is blocked, you may need to allow local scripts with your execution policy
