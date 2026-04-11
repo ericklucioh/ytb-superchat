@@ -17,7 +17,7 @@ This fork is designed to be opened with a local web server such as Live Server.
 - `index.html` is the main site and streamer control panel
 - `extension/index.html` is the OBS overlay page
 - The Chrome extension lives under `extension/` and is still used to capture Twitch and YouTube chat events
-- `npm run build` also creates `out/chrome-extension.zip` for the extension package
+- `npm run build` creates `out/chrome-extension.zip` with only the `extension/` files
 - The site implementation lives under `src/site/`
 
 ## Run locally

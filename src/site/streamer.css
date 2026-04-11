@@ -310,6 +310,15 @@ body {
   font-size: 1.05rem;
 }
 
+.summary-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.summary-action,
 .summary-close {
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -320,6 +329,19 @@ body {
   font-weight: 700;
   cursor: pointer;
   font-size: 0.84rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.summary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.summary-action:hover,
+.summary-close:hover {
+  transform: translateY(-1px);
 }
 
 .summary-stats {
