@@ -143,7 +143,7 @@ export function createStreamerView(elements) {
     card.classList.toggle("is-gifted", Number.isFinite(event.giftCount) && event.giftCount > 0);
 
     platformBadge.innerHTML = platformIconMarkup(event.platform);
-    user.textContent = `@${event.user}`;
+    user.textContent = `${event.user}`;
     months.textContent = formatMonths(event.months ?? event.tier);
 
     return template;
@@ -174,7 +174,7 @@ export function createStreamerView(elements) {
     card.classList.toggle("has-actions", event.type !== "message");
 
     platformBadge.innerHTML = platformIconMarkup(event.platform);
-    user.textContent = `@${event.user}`;
+    user.textContent = `${event.user}`;
     message.textContent = event.message || "";
 
     if (event.type === "superchat" && Number.isFinite(event.amount)) {
@@ -233,7 +233,7 @@ export function createStreamerView(elements) {
     card.classList.toggle("is-hidden", status === "hidden");
 
     platformBadge.innerHTML = platformIconMarkup(event.platform);
-    user.textContent = `@${event.user}`;
+    user.textContent = `${event.user}`;
     message.textContent = event.message || "";
 
     if (event.type === "superchat" && Number.isFinite(event.amount)) {
@@ -287,7 +287,7 @@ export function createStreamerView(elements) {
       platform.innerHTML = platformIconMarkup(event.platform);
     }
     if (user) {
-      user.textContent = `@${event.user}`;
+      user.textContent = `${event.user}`;
     }
     if (statusNode) {
       statusNode.textContent = formatStatus(status);

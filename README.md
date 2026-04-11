@@ -18,6 +18,7 @@ This fork is designed to be opened with a local web server such as Live Server.
 - `extension/index.html` is the OBS overlay page
 - The Chrome extension lives under `extension/` and is still used to capture Twitch and YouTube chat events
 - `npm run build` also creates `out/chrome-extension.zip` for the extension package
+- The site implementation lives under `src/site/`
 
 ## Run locally
 
@@ -83,10 +84,10 @@ Then open Twitch or YouTube popout chat with the extension loaded.
 
 - `index.html` - main site and streamer dashboard
 - `extension/index.html` - OBS overlay renderer
-- `streamer-app.js` - dashboard bootstrap, state sync, rendering, and overlay trigger
-- `streamer-store.js` - persisted state and event normalization
-- `streamer-view.js` - DOM rendering helpers for the streamer panel
-- `streamer-utils.js` - shared formatters and payload helpers
+- `src/site/streamer-app.js` - dashboard bootstrap, state sync, rendering, and overlay trigger
+- `src/site/streamer-store.js` - persisted state and event normalization
+- `src/site/streamer-view.js` - DOM rendering helpers for the streamer panel
+- `src/site/streamer-utils.js` - shared formatters and payload helpers
 - `extension/sources/youtube.js` - YouTube chat capture
 - `extension/sources/twitch.js` - Twitch chat capture
 

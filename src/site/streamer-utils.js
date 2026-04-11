@@ -174,7 +174,7 @@ export function extractGiftCount(source, membershipMarkup, message) {
 }
 
 export function platformIconMarkup(platform) {
-  const src = platform === "twitch" ? "twitch.png" : "youtube.png";
+  const src = platform === "twitch" ? "extension/twitch.png" : "extension/youtube.png";
   const label = platform === "twitch" ? "Twitch" : "YouTube";
   return `<img src="${src}" alt="${label}" title="${label}">`;
 }
@@ -312,7 +312,7 @@ export function buildOverlayPayload(event) {
     backgroundColor: event.backgroundColor || "",
     textColor: event.textColor || "",
     chatmessage,
-    chatimg: event.chatimg || (event.platform === "twitch" ? "twitch.png" : "youtube.png"),
+    chatimg: event.chatimg || (event.platform === "twitch" ? "extension/twitch.png" : "extension/youtube.png"),
     hasDonation: event.hasDonation || "",
     hasMembership: event.hasMembership || "",
     type: event.platform,
@@ -558,3 +558,4 @@ export function createEventNormalizer() {
     validateEvent
   };
 }
+
