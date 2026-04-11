@@ -174,7 +174,7 @@ export function extractGiftCount(source, membershipMarkup, message) {
 }
 
 export function platformIconMarkup(platform) {
-  const src = platform === "twitch" ? "extension/twitch.png" : "extension/youtube.png";
+  const src = platform === "twitch" ? "/twitch.png" : "/youtube.png";
   const label = platform === "twitch" ? "Twitch" : "YouTube";
   return `<img src="${src}" alt="${label}" title="${label}">`;
 }
@@ -183,6 +183,110 @@ export function formatAmount(value) {
   return new Intl.NumberFormat("pt-BR", {
     maximumFractionDigits: 2
   }).format(value);
+}
+
+export function formatBrlAmount(value) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+export function extractCurrencyLabel(source, donationText) {
+  const candidates = [
+    source?.currencyCode,
+    source?.currency,
+    source?.currencySymbol
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string") {
+      continue;
+    }
+
+    const text = candidate.trim().toUpperCase();
+    if (text) {
+      return normalizeCurrencyCode(text);
+    }
+  }
+
+  const rawText = String(donationText || source?.hasDonation || source?.amount || "").trim();
+  if (!rawText) {
+    return "";
+  }
+
+  const upper = rawText.toUpperCase();
+  if (upper.includes("R$")) {
+    return "BRL";
+  }
+  if (upper.includes("US$") || upper.includes("USD")) {
+    return "USD";
+  }
+  if (upper.includes("CA$") || upper.includes("C$") || upper.includes("CAD")) {
+    return "CAD";
+  }
+  if (upper.includes("AU$") || upper.includes("A$") || upper.includes("AUD")) {
+    return "AUD";
+  }
+  if (upper.includes("MX$") || upper.includes("MXN")) {
+    return "MXN";
+  }
+  if (upper.includes("€") || upper.includes("EUR")) {
+    return "EUR";
+  }
+  if (upper.includes("£") || upper.includes("GBP")) {
+    return "GBP";
+  }
+  if (upper.includes("¥") || upper.includes("JPY")) {
+    return "JPY";
+  }
+  if (upper.includes("₩") || upper.includes("KRW")) {
+    return "KRW";
+  }
+
+  const codeMatch = upper.match(/\b[A-Z]{3}\b/);
+  return codeMatch ? normalizeCurrencyCode(codeMatch[0]) : "";
+}
+
+export function normalizeCurrencyCode(value) {
+  const code = String(value || "").trim().toUpperCase();
+  const aliases = {
+    "$": "USD",
+    "R$": "BRL",
+    "US$": "USD",
+    "C$": "CAD",
+    "CA$": "CAD",
+    "A$": "AUD",
+    "AU$": "AUD",
+    "MX$": "MXN",
+    "€": "EUR",
+    "£": "GBP",
+    "¥": "JPY",
+    "₩": "KRW"
+  };
+
+  return aliases[code] || code;
+}
+
+export function formatCurrencyAmount(value, currency, brlRate = null, options = {}) {
+  const code = normalizeCurrencyCode(currency || "BRL") || "BRL";
+  const amount = formatAmount(value);
+  const native = `${code} ${amount}`;
+  const pendingText = typeof options.pendingText === "string" ? options.pendingText : "";
+
+  if (code === "BRL") {
+    return native;
+  }
+
+  if (!Number.isFinite(brlRate)) {
+    if (pendingText) {
+      return `${native} · ${pendingText}`;
+    }
+    return native;
+  }
+
+  return `${native} · ${formatBrlAmount(value * brlRate)}`;
 }
 
 export function formatMonths(value) {
@@ -304,7 +408,8 @@ export function formatTime(value) {
   }).format(date);
 }
 
-export function buildOverlayPayload(event) {
+export function buildOverlayPayload(event, options = {}) {
+  const currencyRate = Number(options.currencyRate);
   const chatmessage = event.message || "";
   const payload = {
     chatname: event.user,
@@ -318,13 +423,14 @@ export function buildOverlayPayload(event) {
     type: event.platform,
     platform: event.platform,
     eventType: event.type,
+    currency: event.currency || "",
     timestamp: Date.now()
   };
 
   if (event.type === "superchat" && Number.isFinite(event.amount)) {
-    payload.hasDonation = `<div class="donation">${formatAmount(event.amount)}</div>`;
+    payload.hasDonation = `<div class="donation">${formatCurrencyAmount(event.amount, event.currency, currencyRate)}</div>`;
     if (!payload.chatmessage) {
-      payload.chatmessage = `Superchat de ${formatAmount(event.amount)}`;
+      payload.chatmessage = `Superchat de ${formatCurrencyAmount(event.amount, event.currency, currencyRate)}`;
     }
   }
 
@@ -399,6 +505,7 @@ export function createEventNormalizer() {
       ...(event.textColor ? { textColor: event.textColor } : {}),
       ...(event.hasDonation ? { hasDonation: event.hasDonation } : {}),
       ...(event.hasMembership ? { hasMembership: event.hasMembership } : {}),
+      ...(event.currency ? { currency: event.currency } : {}),
       ...(Number.isFinite(event.amount) ? { amount: event.amount } : {}),
       ...(Number.isFinite(event.tier) ? { tier: event.tier } : {}),
       ...(Number.isFinite(event.months) ? { months: event.months } : {}),
@@ -439,6 +546,7 @@ export function createEventNormalizer() {
     const textColor = stringOrEmpty(source.textColor || "");
     const donationMarkup = stringOrEmpty(source.hasDonation || "");
     const membershipMarkup = stringOrEmpty(source.hasMembership || "");
+    const currency = extractCurrencyLabel(source, donationMarkup || hasDonation);
     const giftCount = extractGiftCount(source, membershipMarkup, message);
     const timestamp = toNumber(source.timestamp ?? payload.timestamp ?? Date.now());
     if (!Number.isFinite(timestamp)) {
@@ -504,6 +612,10 @@ export function createEventNormalizer() {
       event.hasMembership = membershipMarkup;
     }
 
+    if (currency) {
+      event.currency = currency;
+    }
+
     if (type === "superchat") {
       event.amount = amount;
     }
@@ -521,6 +633,9 @@ export function createEventNormalizer() {
   }
 
   function normalizeStoredEvent(rawEvent) {
+    const currency = typeof rawEvent?.currency === "string" && rawEvent.currency.trim()
+      ? rawEvent.currency.trim()
+      : extractCurrencyLabel(rawEvent, rawEvent?.hasDonation);
     const event = validateEvent({
       id: rawEvent?.id,
       platform: rawEvent?.platform,
@@ -535,6 +650,7 @@ export function createEventNormalizer() {
       textColor: typeof rawEvent?.textColor === "string" ? rawEvent.textColor : "",
       hasDonation: typeof rawEvent?.hasDonation === "string" ? rawEvent.hasDonation : "",
       hasMembership: typeof rawEvent?.hasMembership === "string" ? rawEvent.hasMembership : "",
+      currency,
       amount: toNumber(rawEvent?.amount),
       tier: toNumber(rawEvent?.tier),
       months: toNumber(rawEvent?.months),
