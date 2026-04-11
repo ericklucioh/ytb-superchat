@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 const rootDir = process.cwd();
 const outDir = path.join(rootDir, 'out');
+const zipPath = path.join(outDir, 'chrome-extension.zip');
 
 const excludedNames = new Set([
   '.git',
@@ -50,4 +52,31 @@ for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
   fs.cpSync(source, destination, { recursive: true, force: true });
 }
 
+createExtensionZip(outDir, zipPath);
 console.log(`Built static site in ${path.relative(rootDir, outDir)}`);
+console.log(`Built Chrome extension zip at ${path.relative(rootDir, zipPath)}`);
+
+function createExtensionZip(outputDir, destinationZip) {
+  fs.rmSync(destinationZip, { force: true });
+
+  if (process.platform === 'win32') {
+    const command = `Compress-Archive -Path "${path.join(outputDir, '*')}" -DestinationPath "${destinationZip}" -Force`;
+    const result = spawnSync('powershell', ['-NoProfile', '-Command', command], {
+      stdio: 'inherit'
+    });
+
+    if (result.status !== 0) {
+      throw new Error('Failed to create Chrome extension zip with Compress-Archive.');
+    }
+    return;
+  }
+
+  const result = spawnSync('zip', ['-r', 'chrome-extension.zip', '.', '-x', 'chrome-extension.zip'], {
+    cwd: outputDir,
+    stdio: 'inherit'
+  });
+
+  if (result.status !== 0) {
+    throw new Error('Failed to create Chrome extension zip with zip.');
+  }
+}
