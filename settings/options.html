@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    .section {
+      border-top: 1px #ddd solid;
+      padding-top: 8px;
+      padding-bottom: 8px;
+    }
+    .setting {
+      margin-bottom: 4px;
+    }
+    label {
+      display: block;
+    }
+    input.text {
+      display: block;
+      padding: 4px;
+      border: 1px #ccc solid;
+      border-radius: 4px;
+      width: 90%;
+    }
+    input.checkbox {
+      float: left;
+    }
+    button {
+      padding: 6px;
+      border: 1px #ccc solid;
+      border-radius: 4px;
+    }
+    hr {
+      border: 0;
+      border-top: 1px #ccc solid;
+    }
+  </style>
+</head>
+<body>
+
+  <p>Customize the colors of the live chat pop-up. Enter the <a href="https://www.google.com/search?q=hex+color+picker">hex codes</a> of the colors you'd like to use. Remember that full black #000 will be keyed out. You can delete a value to reset it to the default.</p>
+  <ul>
+    <li>Black: #000</li>
+    <li>Dark Grey: #222</li>
+    <li>White: #fff</li>
+  </ul>
+  <p> These settings do not impact the OBS Browser source overlay </p>
+  <p><strong>Painel do streamer:</strong> use a nova tela separada para acompanhar Twitch + YouTube juntos, com filtros e controle manual de lidos/ocultos.</p>
+
+  <form>
+    <div class="section">
+      <div class="setting">
+        <label>Session Channel ID</label>
+        <div>A unique session connection channel ID; keep this private.</div>
+        <input type="text" class="text" id="streamID">
+      </div>
+    </div>
+    <div class="section">
+      <div class="setting">
+        <label>Highlight Words</label>
+        <div>Enter a list of comma-separated words that will be highlighted in the chat</div>
+        <input type="text" class="text" id="highlight-words">
+      </div>
+    </div>
+    <div class="section">
+      <div class="setting">
+        <label>Background Color</label>
+        <input type="text" class="text" id="color">
+      </div>
+    </div>
+    <div class="section">
+      <div class="setting">
+        <label>Author Name Color</label>
+        <input type="text" class="text" id="author-color">
+      </div>
+      <div class="setting">
+        <label>Author Background Color</label>
+        <input type="text" class="text" id="author-bg-color">
+      </div>
+      <div class="setting">
+        <label>Author Avatar Border Color</label>
+        <input type="text" class="text" id="author-avatar-border-color">
+      </div>
+    </div>
+    <div class="section">
+      <div class="setting">
+        <label>Chat Message Background Color</label>
+        <input type="text" class="text" id="comment-bg-color">
+      </div>
+      <div class="setting">
+        <label>Chat Message Text Color</label>
+        <input type="text" class="text" id="comment-color">
+      </div>
+    </div>
+    <div class="section">
+      <div class="setting" style="margin-bottom: 10px;">
+        <input type="checkbox" class="checkbox" id="firstname">
+        <label>Show only first name</label>
+      </div>
+      <div class="setting">
+        <label>Font</label>
+        <input type="text" class="text" id="font-family">
+      </div>
+    </div>
+    <div class="section">
+      <p><i>Adjust these to make the comment text smaller or fit more lines of text. Sorry it's kind of hard to use.</i></p>
+      <div class="setting">
+        <label>Active Comment Scale (e.g. 0.8)</label>
+        <input type="text" class="text" id="scale">
+      </div>
+      <div class="setting">
+        <label>Active Comment Bottom Position</label>
+        <div>(set negative to move lower when scaled down, e.g. -2vh)</div>
+        <input type="text" class="text" id="comment-bottom">
+      </div>
+      <div class="setting">
+        <label>Active Comment Height (default 30vh)</label>
+        <input type="text" class="text" id="comment-height">
+      </div>
+      <div class="setting">
+        <label>Width Offset</label>
+        <div>(make text area wider when scaled down, e.g. 100)</div>
+        <input type="text" class="text" id="size-offset">
+      </div>
+    </div>
+    <button id="savedButton" style="cursor:pointer" type="submit">Save</button>
+    <button id="open-dashboard" style="cursor:pointer" type="button">Open streamer panel</button>
+  </form>
+
+  <script src="options.js"></script>
+
+</body>
+
+</html>

@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chat Overlay for YouTube, Twitch & more
 
-## Getting Started
+Chrome extension and local overlay project for highlighting live chat messages in OBS, plus a separate streamer dashboard for monitoring Twitch and YouTube together.
 
-First, run the development server:
+## What this fork does
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Keeps the OBS overlay flow intact
+- Adds a streamer panel in `streamer.html`
+- Unifies Twitch + YouTube into one live control surface
+- Persists dashboard state in `localStorage`
+- Lets you click a chat item in the dashboard to send it to the OBS overlay
+
+## Recommended workflow
+
+This fork is designed to be opened with a local web server such as Live Server.
+
+- `index.html` is the OBS overlay page
+- `streamer.html` is the streamer control panel
+- The Chrome extension is still used to capture Twitch and YouTube chat events
+
+## Run locally
+
+### Recommended on Windows: PowerShell
+
+Start a local server from the project root:
+
+```powershell
+.\scripts\serve.ps1
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the pages in your browser:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+.\scripts\open-streamer.ps1
+.\scripts\open-overlay.ps1 -Session YOUR_SESSION_ID
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The default server port is `8000`.
 
-## Learn More
+### Alternative: npm scripts
 
-To learn more about Next.js, take a look at the following resources:
+If you prefer Node tooling:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run serve
+npm run open:streamer
+npm run open:overlay
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You can override the port with a `.env` file or in PowerShell:
 
-## Deploy on Vercel
+```powershell
+$env:PORT=9000; npm run serve
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Or create a local `.env` file from `.env.example`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Alternative: VS Code Live Server
+
+Open the folder in VS Code and start Live Server from:
+
+- `index.html`
+- `streamer.html`
+
+## Extension install
+
+1. Open `chrome://extensions`
+2. Enable `Developer mode`
+3. Click `Load unpacked`
+4. Select this repository folder
+
+Then open Twitch or YouTube popout chat with the extension loaded.
+
+## Session flow
+
+- The streamer panel stores the current session in `localStorage`
+- The dashboard can also read `?session=...` from the URL
+- The overlay uses the same session ID to receive the selected message
+
+## Files of interest
+
+- `index.html` - OBS overlay renderer
+- `streamer.html` - streamer dashboard
+- `streamer-app.js` - dashboard bootstrap, state sync, rendering, and overlay trigger
+- `streamer-store.js` - persisted state and event normalization
+- `streamer-view.js` - DOM rendering helpers for the streamer panel
+- `streamer-utils.js` - shared formatters and payload helpers
+- `sources/youtube.js` - YouTube chat capture
+- `sources/twitch.js` - Twitch chat capture
+
+## Notes
+
+- `index.html` is safe to open from `http://localhost`
+- The overlay no longer redirects away when opened locally
+- For testing, reload the extension and refresh the chat tabs after changing the code
+- If PowerShell script execution is blocked, you may need to allow local scripts with your execution policy
+- If you use the npm opener for the overlay, set `SESSION` as an environment variable or in `.env`
+
+## Original project
+
+This fork is based on the work of Steve Seguin and the original live chat overlay project.

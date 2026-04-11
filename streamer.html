@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel Unificado do Streamer</title>
+  <link rel="stylesheet" href="streamer.css">
+</head>
+<body>
+  <div class="backdrop"></div>
+  <main class="shell">
+    <section class="stats-board stats-board--compact" aria-label="Controle">
+      <div class="stats-board-head">
+        <div class="session-row session-row--inline">
+          <div id="connection-status" class="connection-status">🔴</div>
+
+          <input id="session-input" type="text" spellcheck="false" autocomplete="off" placeholder="Session ID">
+          <button id="connect-button" type="button">Conectar</button>
+        </div>
+        <div class="filter-group filter-group--inline" id="filter-group" aria-label="Filtros de visualização">
+          <button type="button" class="filter-button is-active" data-filter="active">Ativos</button>
+          <button type="button" class="filter-button" data-filter="read">Lidos</button>
+          <button type="button" class="filter-button" data-filter="hidden">Ocultos</button>
+          <button type="button" class="filter-button" data-filter="all">Tudo</button>
+        </div>
+        <button id="summary-button" type="button" class="summary-button" aria-expanded="false" aria-controls="summary-popup">Resumo</button>
+      </div>
+    </section>
+
+    <section class="dashboard">
+      <article class="panel panel-priority">
+        <div class="panel-header">
+          <div>
+            <h2>Subs e membros</h2>
+          </div>
+          <span id="priority-count" class="panel-count">0</span>
+        </div>
+        <div id="priority-list" class="event-list priority-strip"></div>
+      </article>
+
+      <article class="panel panel-superchat">
+        <div class="panel-header">
+          <div>
+            <h2>Superchats</h2>
+          </div>
+          <span id="superchat-count" class="panel-count">0</span>
+        </div>
+        <div id="superchat-list" class="event-list"></div>
+      </article>
+
+      <article class="panel panel-chat">
+        <div class="panel-header">
+          <div>
+            <h2>Chat unificado</h2>
+          </div>
+          <span id="chat-count" class="panel-count">0</span>
+        </div>
+        <div id="chat-list" class="event-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <div class="summary-popup" id="summary-popup" hidden>
+    <div class="summary-backdrop" data-summary-close></div>
+    <section class="summary-panel" role="dialog" aria-modal="true" aria-labelledby="summary-title">
+      <div class="summary-panel-head">
+        <div>
+          <p class="panel-kicker">Resumo rápido</p>
+          <h2 id="summary-title">Painel</h2>
+        </div>
+        <button type="button" class="summary-close" data-summary-close aria-label="Fechar resumo">Fechar</button>
+      </div>
+      <div class="toolbar-meta toolbar-meta--inline">
+        <span id="event-total">0 eventos salvos</span>
+        <span class="dot"></span>
+        <span id="current-filter">Ativos</span>
+      </div>
+      <div class="stats-table summary-stats">
+        <div class="stat-row stat-twitch">
+          <span class="stat-label">Subs Twitch</span>
+          <strong id="count-twitch-subs">0</strong>
+        </div>
+        <div class="stat-row stat-youtube">
+          <span class="stat-label">Membros YouTube</span>
+          <strong id="count-youtube-members">0</strong>
+        </div>
+        <div class="stat-row stat-total">
+          <span class="stat-label">Total combinado</span>
+          <strong id="count-total-combined">0</strong>
+        </div>
+        <div class="stat-row stat-superchat">
+          <span class="stat-label">Superchats</span>
+          <strong id="count-superchats">0</strong>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="detail-popup" id="detail-popup" hidden>
+    <div class="detail-backdrop" data-detail-close></div>
+    <section class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <div class="detail-panel-head">
+        <div class="detail-title-wrap">
+          <span class="platform-badge detail-platform-badge" data-detail-platform></span>
+          <div>
+            <p class="panel-kicker" data-detail-kind>Mensagem</p>
+            <h2 id="detail-title" data-detail-user>@usuario</h2>
+          </div>
+        </div>
+        <button type="button" class="summary-close" data-detail-close aria-label="Fechar detalhe">Fechar</button>
+      </div>
+      <div class="toolbar-meta toolbar-meta--inline detail-meta-row">
+        <span data-detail-status>Ativo</span>
+        <span class="dot"></span>
+        <span data-detail-extra>Detalhe</span>
+      </div>
+      <p class="detail-message" data-detail-message></p>
+      <div class="detail-actions">
+        <button type="button" data-detail-action="read">LIDO</button>
+        <button type="button" data-detail-action="hidden">OCULTAR</button>
+      </div>
+    </section>
+  </div>
+
+  <template id="priority-template">
+    <article class="priority-card">
+      <span class="platform-badge"></span>
+      <strong class="event-user"></strong>
+      <span class="priority-months"></span>
+    </article>
+  </template>
+
+  <template id="event-template">
+    <article class="event-card">
+      <div class="event-head">
+        <span class="platform-badge"></span>
+        <span class="event-user"></span>
+        <div class="event-actions">
+          <button type="button" data-action="read">LIDO</button>
+          <button type="button" data-action="hidden">OCULTAR</button>
+        </div>
+        <div class="event-meta"></div>
+      </div>
+      <div class="event-body">
+        <div class="event-main">
+          <div class="event-meta-row">
+            <span class="event-time"></span>
+          </div>
+          <span class="event-message"></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script type="module" src="streamer-app.js"></script>
+</body>
+</html>
