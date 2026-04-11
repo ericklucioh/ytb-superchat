@@ -6,14 +6,14 @@ const target = process.argv[2];
 const port = getPort();
 const session = getSession();
 
-if (!target || !["streamer", "overlay"].includes(target)) {
-  console.error("Usage: node scripts/open.mjs <streamer|overlay>");
+if (!target || !["site", "overlay"].includes(target)) {
+  console.error("Usage: node scripts/open.mjs <site|overlay>");
   process.exit(1);
 }
 
-const pathPart = target === "streamer"
-  ? "/streamer.html"
-  : `/index.html${session ? `?session=${encodeURIComponent(session)}` : ""}`;
+const pathPart = target === "site"
+  ? "/"
+  : `/extension/index.html${session ? `?session=${encodeURIComponent(session)}` : ""}`;
 
 const url = `http://localhost:${port}${pathPart}`;
 

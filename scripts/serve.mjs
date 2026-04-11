@@ -48,8 +48,8 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => {
   console.log(`Serving ${rootDir}`);
-  console.log(`http://localhost:${port}/streamer.html`);
-  console.log(`http://localhost:${port}/index.html?session=YOUR_SESSION_ID`);
+  console.log(`http://localhost:${port}/`);
+  console.log(`http://localhost:${port}/extension/index.html?session=YOUR_SESSION_ID`);
 });
 
 function getPort() {

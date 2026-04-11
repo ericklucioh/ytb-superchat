@@ -7,7 +7,8 @@
     "dev": "node scripts/serve.mjs",
     "serve": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
-    "open:streamer": "node scripts/open.mjs streamer",
+    "open:site": "node scripts/open.mjs site",
+    "open:streamer": "node scripts/open.mjs site",
     "open:overlay": "node scripts/open.mjs overlay"
   }
 }

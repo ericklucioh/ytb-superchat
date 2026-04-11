@@ -64,7 +64,8 @@ function editedOptions(){
 
 function openStreamerPanel() {
   chrome.storage.sync.get(["streamID"], function(result) {
-    var url = new URL(chrome.runtime.getURL("streamer.html"));
+    var homepage = chrome.runtime.getManifest().homepage_url || window.location.origin + "/";
+    var url = new URL("/", homepage);
     if (result.streamID) {
       url.searchParams.set("session", result.streamID);
     }
