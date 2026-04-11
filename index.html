@@ -502,18 +502,8 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 		roomID = urlParams.get("s");
 		try{
 			localStorage.setItem("overlay_room_id", roomID);
-		} catch(e){}
-	} else {
-		var promptedRoom = prompt("Enter your session ID here, or add it to the URL.");
-		if (promptedRoom){
-			roomID = promptedRoom;
-			try{
-				localStorage.setItem("overlay_room_id", roomID);
-			} catch(e){}
-		}
-	}
-
-	if (urlParams.has("chroma")){
+}
+{
 		var chroma = urlParams.get("chroma") || "0F0";
 		document.body.style.backgroundColor = "#"+chroma;
 	} else if (urlParams.has("transparent")){
@@ -861,3 +851,6 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 	</script>
 	</body>
 </html>
+
+
+
