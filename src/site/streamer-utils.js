@@ -205,13 +205,13 @@ export function extractCurrencyLabel(source, donationText) {
       continue;
     }
 
-    const text = candidate.trim().toUpperCase();
+    const text = stripHtml(candidate).trim().toUpperCase();
     if (text) {
-      return normalizeCurrencyCode(text);
+      return resolveCurrencyCode(text);
     }
   }
 
-  const rawText = String(donationText || source?.hasDonation || source?.amount || "").trim();
+  const rawText = stripHtml(String(donationText || source?.hasDonation || source?.amount || "")).trim();
   if (!rawText) {
     return "";
   }
@@ -246,7 +246,11 @@ export function extractCurrencyLabel(source, donationText) {
   }
 
   const codeMatch = upper.match(/\b[A-Z]{3}\b/);
-  return codeMatch ? normalizeCurrencyCode(codeMatch[0]) : "";
+  if (!codeMatch) {
+    return "";
+  }
+
+  return resolveCurrencyCode(codeMatch[0]);
 }
 
 export function normalizeCurrencyCode(value) {
@@ -269,8 +273,30 @@ export function normalizeCurrencyCode(value) {
   return aliases[code] || code;
 }
 
+export function isValidCurrencyCode(value) {
+  const code = normalizeCurrencyCode(value);
+  if (!/^[A-Z]{3}$/.test(code)) {
+    return false;
+  }
+
+  if (typeof Intl !== "undefined" && typeof Intl.supportedValuesOf === "function") {
+    try {
+      return Intl.supportedValuesOf("currency").includes(code);
+    } catch {
+      // Fall through to a minimal safety check below.
+    }
+  }
+
+  return code !== "DIV";
+}
+
+export function resolveCurrencyCode(value) {
+  const code = normalizeCurrencyCode(value);
+  return isValidCurrencyCode(code) ? code : "";
+}
+
 export function formatCurrencyAmount(value, currency, brlRate = null, options = {}) {
-  const code = normalizeCurrencyCode(currency || "BRL") || "BRL";
+  const code = resolveCurrencyCode(currency || "BRL") || "BRL";
   const amount = formatAmount(value);
   const native = `${code} ${amount}`;
   const pendingText = typeof options.pendingText === "string" ? options.pendingText : "";
@@ -633,9 +659,7 @@ export function createEventNormalizer() {
   }
 
   function normalizeStoredEvent(rawEvent) {
-    const currency = typeof rawEvent?.currency === "string" && rawEvent.currency.trim()
-      ? rawEvent.currency.trim()
-      : extractCurrencyLabel(rawEvent, rawEvent?.hasDonation);
+    const currency = extractCurrencyLabel(rawEvent, rawEvent?.hasDonation);
     const event = validateEvent({
       id: rawEvent?.id,
       platform: rawEvent?.platform,

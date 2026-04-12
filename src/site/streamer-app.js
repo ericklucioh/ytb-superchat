@@ -1,4 +1,4 @@
-import { buildOverlayPayload, cleanText, compareMessageEvent, comparePriorityEvent, compareSuperchatEvent, feedRoomFor, normalizeCurrencyCode } from "./streamer-utils.js";
+import { buildOverlayPayload, cleanText, compareMessageEvent, comparePriorityEvent, compareSuperchatEvent, feedRoomFor, isValidCurrencyCode, normalizeCurrencyCode } from "./streamer-utils.js";
 import { createStreamerStore } from "./streamer-store.js";
 import { createStreamerView } from "./streamer-view.js";
 
@@ -526,6 +526,9 @@ function boot() {
 
   function getCurrencyRate(currency) {
     const code = normalizeCurrencyCode(currency || "BRL") || "BRL";
+    if (!isValidCurrencyCode(code)) {
+      return null;
+    }
     if (code === "BRL") {
       return 1;
     }
@@ -535,6 +538,9 @@ function boot() {
 
   function hasCurrencyRate(currency) {
     const code = normalizeCurrencyCode(currency || "BRL") || "BRL";
+    if (!isValidCurrencyCode(code)) {
+      return false;
+    }
     if (code === "BRL") {
       return true;
     }
@@ -551,6 +557,9 @@ function boot() {
       }
 
       const code = normalizeCurrencyCode(event.currency || "BRL") || "BRL";
+      if (!isValidCurrencyCode(code)) {
+        continue;
+      }
       if (code !== "BRL" && !currencyRates.has(code) && !pendingCurrencyRates.has(code)) {
         currencies.add(code);
       }
