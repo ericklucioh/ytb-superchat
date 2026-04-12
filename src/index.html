@@ -12,12 +12,6 @@
   <main class="shell">
     <section class="stats-board stats-board--compact" aria-label="Controle">
       <div class="stats-board-head">
-        <div class="session-row session-row--inline">
-          <div id="connection-status" class="connection-status">🔴</div>
-
-          <input id="session-input" type="text" spellcheck="false" autocomplete="off" placeholder="Session ID">
-          <button id="connect-button" type="button">Conectar</button>
-        </div>
         <div class="filter-group filter-group--inline" id="filter-group" aria-label="Filtros de visualização">
           <button type="button" class="filter-button is-active" data-filter="active">Ativos</button>
           <button type="button" class="filter-button" data-filter="read">Lidos</button>
@@ -74,6 +68,11 @@
           <button type="button" class="summary-close" data-summary-close aria-label="Fechar resumo">Fechar</button>
         </div>
       </div>
+      <div class="session-row session-row--inline summary-session-row">
+        <div id="connection-status" class="connection-status">🔴</div>
+        <input id="session-input" type="text" spellcheck="false" autocomplete="off" placeholder="Session ID">
+        <button id="connect-button" type="button">Conectar</button>
+      </div>
       <div class="toolbar-meta toolbar-meta--inline">
         <span id="event-total">0 eventos salvos</span>
         <span class="dot"></span>
@@ -91,6 +90,10 @@
         <div class="stat-row stat-total">
           <span class="stat-label">Total combinado</span>
           <strong id="count-total-combined">0</strong>
+        </div>
+        <div class="stat-row stat-superchat-total">
+          <span class="stat-label">Total em R$</span>
+          <strong id="count-superchats-brl-total">R$ 0,00</strong>
         </div>
         <div class="stat-row stat-superchat">
           <span class="stat-label">Superchats</span>

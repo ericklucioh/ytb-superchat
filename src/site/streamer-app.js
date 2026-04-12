@@ -22,6 +22,7 @@ function boot() {
     countYoutubeMembers: document.getElementById("count-youtube-members"),
     countTotalCombined: document.getElementById("count-total-combined"),
     countSuperchats: document.getElementById("count-superchats"),
+    countSuperchatsBrlTotal: document.getElementById("count-superchats-brl-total"),
     priorityCount: document.getElementById("priority-count"),
     superchatCount: document.getElementById("superchat-count"),
     chatCount: document.getElementById("chat-count"),
@@ -373,14 +374,15 @@ function boot() {
       .sort(comparePriorityEvent);
     const superchatEvents = visibleEvents
       .filter((event) => event.type === "superchat")
+      .map(decorateEventForView)
       .sort(compareSuperchatEvent);
     const chatEvents = store.liveEvents.slice().sort(compareMessageEvent);
     const counts = store.getCounts();
     const focusedEvent = detailId ? store.findEventById(detailId) : null;
     const priorityViewEvents = priorityEvents.map(decorateEventForView);
-    const superchatViewEvents = superchatEvents.map(decorateEventForView);
     const chatViewEvents = chatEvents.map(decorateEventForView);
     const focusedViewEvent = focusedEvent ? decorateEventForView(focusedEvent) : null;
+    const superchatTotals = summarizeSuperchatEvents(superchatEvents);
 
     warmCurrencyRates(superchatEvents);
 
@@ -393,9 +395,10 @@ function boot() {
     view.render({
       state,
       priorityEvents: priorityViewEvents,
-      superchatEvents: superchatViewEvents,
+      superchatEvents,
       chatEvents: chatViewEvents,
       counts,
+      superchatTotals,
       focusedEvent: focusedViewEvent
     });
   }
@@ -493,12 +496,32 @@ function boot() {
       return event;
     }
 
+    const currency = normalizeCurrencyCode(event.currency || "BRL") || "BRL";
+    const currencyRate = getCurrencyRate(currency);
+    const brlAmount = Number.isFinite(currencyRate) ? event.amount * currencyRate : event.amount;
+    const sortBrlAmount = brlAmount;
+
     return {
       ...event,
-      currency: normalizeCurrencyCode(event.currency || "BRL") || "BRL",
-      currencyRate: getCurrencyRate(event.currency),
-      currencyRateLoaded: hasCurrencyRate(event.currency)
+      currency,
+      currencyRate,
+      currencyRateLoaded: hasCurrencyRate(currency),
+      brlAmount,
+      sortBrlAmount
     };
+  }
+
+  function summarizeSuperchatEvents(events) {
+    let totalBrl = 0;
+
+    for (const event of events) {
+      if (Number.isFinite(event?.brlAmount)) {
+        totalBrl += event.brlAmount;
+        continue;
+      }
+    }
+
+    return { totalBrl };
   }
 
   function getCurrencyRate(currency) {

@@ -372,8 +372,8 @@ export function comparePriorityEvent(a, b) {
 }
 
 export function compareSuperchatEvent(a, b) {
-  const aAmount = Number.isFinite(a.amount) ? a.amount : -Infinity;
-  const bAmount = Number.isFinite(b.amount) ? b.amount : -Infinity;
+  const aAmount = Number.isFinite(a.sortBrlAmount) ? a.sortBrlAmount : -Infinity;
+  const bAmount = Number.isFinite(b.sortBrlAmount) ? b.sortBrlAmount : -Infinity;
 
   if (aAmount !== bAmount) {
     return bAmount - aAmount;

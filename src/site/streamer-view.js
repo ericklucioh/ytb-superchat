@@ -1,4 +1,4 @@
-import { labelForFilter, platformIconMarkup, formatAmount, formatCurrencyAmount, formatMonths, formatStatus, formatType, formatTime } from "./streamer-utils.js";
+import { labelForFilter, platformIconMarkup, formatAmount, formatBrlAmount, formatCurrencyAmount, formatMonths, formatStatus, formatType, formatTime } from "./streamer-utils.js";
 
 function setTextContent(node, value) {
   if (node) {
@@ -49,8 +49,7 @@ function renderAmountMeta(meta, event) {
     meta.textContent = formatCurrencyAmount(
       event.amount,
       event.currency,
-      event.currencyRate,
-      { pendingText: event.currencyRateLoaded ? "" : "convertendo..." }
+      event.currencyRate
     );
     return true;
   }
@@ -175,6 +174,7 @@ export function createStreamerView(elements) {
     superchatEvents,
     chatEvents,
     counts,
+    superchatTotals,
     focusedEvent
   }) {
     setTextContent(elements.eventTotal, `${counts.totalEvents} eventos salvos`);
@@ -183,6 +183,10 @@ export function createStreamerView(elements) {
     setTextContent(elements.countYoutubeMembers, String(counts.youtubeMembers));
     setTextContent(elements.countTotalCombined, String(counts.totalCombined));
     setTextContent(elements.countSuperchats, String(counts.superchats));
+    if (elements.countSuperchatsBrlTotal) {
+      const totalLabel = formatBrlAmount(superchatTotals?.totalBrl || 0);
+      setTextContent(elements.countSuperchatsBrlTotal, totalLabel);
+    }
     setTextContent(elements.priorityCount, String(priorityEvents.length));
     setTextContent(elements.superchatCount, String(superchatEvents.length));
     setTextContent(elements.chatCount, String(chatEvents.length));
@@ -242,8 +246,7 @@ export function createStreamerView(elements) {
           const parts = [formatCurrencyAmount(
             event.amount,
             event.currency,
-            event.currencyRate,
-            { pendingText: event.currencyRateLoaded ? "" : "convertendo..." }
+            event.currencyRate
           )];
           const arrival = formatTime(event.timestamp);
           if (arrival) {
