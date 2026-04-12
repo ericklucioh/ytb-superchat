@@ -22,7 +22,7 @@ The dashboard is the control panel for the project:
 
 ## Main code files
 
-- [`site/streamer-app.js`](site/streamer-app.js) - bootstraps the app, connects to the websocket, and drives rendering
+- [`site/streamer-app.js`](site/streamer-app.js) - bootstraps the app, connects to the local bridge, and drives rendering
 - [`site/streamer-store.js`](site/streamer-store.js) - persists state and normalizes incoming events
 - [`site/streamer-view.js`](site/streamer-view.js) - renders the panels, summary, and detail popups
 - [`site/streamer-text.js`](site/streamer-text.js) - shared text and parsing helpers
@@ -79,4 +79,4 @@ The dashboard accepts a session in a few ways:
 
 - Superchat conversion is used internally for ordering and totals in the dashboard.
 - The OBS overlay keeps the original currency display.
-- The site does not capture chat on its own. It consumes events coming from the Chrome extension or overlay socket.
+- The site does not capture chat on its own. It consumes events coming from the Chrome extension bridge, and still uses the OBS overlay socket only for the selection path.

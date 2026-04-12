@@ -7,7 +7,7 @@ export const VALID_PLATFORMS = new Set(["twitch", "youtube"]);
 export const VALID_TYPES = new Set(["message", "sub", "member", "superchat"]);
 
 export function platformIconMarkup(platform) {
-  const src = platform === "twitch" ? "/twitch.png" : "/youtube.png";
+  const src = platform === "twitch" ? "twitch.png" : "youtube.png";
   const label = platform === "twitch" ? "Twitch" : "YouTube";
   return `<img src="${src}" alt="${label}" title="${label}">`;
 }
@@ -247,7 +247,8 @@ export function createEventNormalizer() {
     const textColor = stringOrEmpty(source.textColor || "");
     const donationMarkup = stringOrEmpty(source.hasDonation || "");
     const membershipMarkup = stringOrEmpty(source.hasMembership || "");
-    const currency = extractCurrencyLabel(source, donationMarkup || hasDonation);
+    const explicitCurrency = stringOrEmpty(source.currency || "");
+    const currency = explicitCurrency || extractCurrencyLabel(source, donationMarkup || hasDonation);
     const giftCount = extractGiftCount(source, membershipMarkup, message);
     const timestamp = toNumber(source.timestamp ?? payload.timestamp ?? Date.now());
     if (!Number.isFinite(timestamp)) {
@@ -334,7 +335,8 @@ export function createEventNormalizer() {
   }
 
   function normalizeStoredEvent(rawEvent) {
-    const currency = extractCurrencyLabel(rawEvent, rawEvent?.hasDonation);
+    const explicitCurrency = stringOrEmpty(rawEvent?.currency || "");
+    const currency = explicitCurrency || extractCurrencyLabel(rawEvent, rawEvent?.hasDonation);
     const event = validateEvent({
       id: rawEvent?.id,
       platform: rawEvent?.platform,

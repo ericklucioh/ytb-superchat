@@ -2,35 +2,59 @@
 	var runtime = window.OverlayRuntime;
 	var avatarHelpers = window.OverlayAvatarHelpers || {};
 	var channel = runtime.generateStreamID();
-	var feedChannel = channel + ":feed";
 	var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 	var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 	var alreadyPrompted = false;
-	var soca = runtime.createSocketBridge({ getRoomId: function () { return channel; } });
-	var socaFeed = runtime.createSocketBridge({ getRoomId: function () { return feedChannel; } });
+	var localBridge = null;
+	var unwatchStreamId = null;
+
+	function syncSession(nextSession) {
+		var session = String(nextSession || "").replace(/\s+/g, "").trim();
+		if (!session || session === channel) {
+			return;
+		}
+
+		channel = session;
+		if (localBridge) {
+			localBridge.setSession(channel);
+		}
+	}
 
 	function actionwtf(){ // steves personal socket server service
 		if (!alreadyPrompted){
 			alreadyPrompted=true;
 			prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
 		}
-
-		soca.connect();
 		runtime.persistStreamId(channel);
 		chrome.runtime.lastError;
 	}
 
-	function feedwtf(){
-		socaFeed.connect();
-	}
-
 	function pushFeedMessage(data){
 		outputCounter += 1;
-		runtime.sendBridgeMessage(socaFeed, data, {
+		var bridge = ensureLocalBridge();
+		if (!bridge) {
+			return;
+		}
+		runtime.sendBridgeMessage(bridge, data, {
 			envelopeKey: "feed",
 			id: outputCounter,
-			storageKeys: sendProperties
+			includeSettings: false
 		});
+	}
+
+	function ensureLocalBridge() {
+		if (localBridge) {
+			return localBridge;
+		}
+		if (!window.OverlayLocalChatBridge || !window.OverlayLocalChatBridge.createChannel) {
+			return null;
+		}
+		localBridge = window.OverlayLocalChatBridge.createChannel({
+			role: "source",
+			session: channel
+		});
+		localBridge.connect();
+		return localBridge;
 	}
 
 	function isYoutubeFeedNode(element) {
@@ -187,12 +211,15 @@
 	runtime.loadSettings(properties, function(item){
 	  if (item.streamID){
 		channel = item.streamID;
-		feedChannel = channel + ":feed";
 	  } else {
 		runtime.persistStreamId(channel);
 		chrome.runtime.lastError;
 	  }
 
+	  ensureLocalBridge();
+	  if (!unwatchStreamId && runtime.watchStreamId) {
+		unwatchStreamId = runtime.watchStreamId(syncSession);
+	  }
 	  runtime.applyOverlaySettings(item, document.documentElement, { color: "#000" });
 	  showOnlyFirstName = !!item.showOnlyFirstName;
 	  highlightWords = runtime.normalizeHighlightWords(item.highlightWords);
@@ -204,7 +231,6 @@
 	setTimeout(function(){
 		$( "yt-live-chat-app" ).before( '<button class="btn-clear-youtube">CLEAR</button><button class="btn-getoverlay-youtube">LINK</button>' );
 		actionwtf();
-		feedwtf();
 	},600);
 
 		function onElementInserted(containerSelector,  callback) {

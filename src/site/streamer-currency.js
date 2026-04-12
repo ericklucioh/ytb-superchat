@@ -117,7 +117,12 @@ export function extractCurrencyLabel(source, donationText) {
 }
 
 export function formatCurrencyAmount(value, currency, brlRate = null, options = {}) {
-  const code = resolveCurrencyCode(currency || "BRL") || "BRL";
+  const normalized = normalizeCurrencyCode(currency || "BRL") || "BRL";
+  if (normalized === "BITS") {
+    return `${formatAmount(value)} bits`;
+  }
+
+  const code = resolveCurrencyCode(normalized) || "BRL";
   const amount = formatAmount(value);
   const native = `${code} ${amount}`;
   const pendingText = typeof options.pendingText === "string" ? options.pendingText : "";

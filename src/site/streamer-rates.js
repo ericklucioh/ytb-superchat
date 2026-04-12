@@ -34,6 +34,17 @@ export function createCurrencyRateService({ scheduleRender } = {}) {
     }
 
     const currency = normalizeCurrencyCode(event.currency || "BRL") || "BRL";
+    if (currency === "BITS") {
+      return {
+        ...event,
+        currency,
+        currencyRate: null,
+        currencyRateLoaded: false,
+        brlAmount: 0,
+        sortBrlAmount: event.amount
+      };
+    }
+
     const currencyRate = getCurrencyRate(currency);
     const brlAmount = Number.isFinite(currencyRate) ? event.amount * currencyRate : event.amount;
     const sortBrlAmount = brlAmount;
@@ -69,6 +80,9 @@ export function createCurrencyRateService({ scheduleRender } = {}) {
       }
 
       const code = normalizeCurrencyCode(event.currency || "BRL") || "BRL";
+      if (code === "BITS") {
+        continue;
+      }
       if (!isValidCurrencyCode(code)) {
         continue;
       }

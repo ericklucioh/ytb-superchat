@@ -118,20 +118,26 @@ function resolveStatus(event, state, live) {
 
 function renderAmountMeta(meta, event) {
   if (event.type === "superchat" && Number.isFinite(event.amount)) {
-    meta.textContent = formatCurrencyAmount(
-      event.amount,
-      event.currency,
-      event.currencyRate
-    );
+    if (meta) {
+      meta.textContent = formatCurrencyAmount(
+        event.amount,
+        event.currency,
+        event.currencyRate
+      );
+    }
     return true;
   }
 
   if ((event.type === "sub" || event.type === "member") && Number.isFinite(event.tier)) {
-    meta.textContent = `Tier ${formatAmount(event.tier)}`;
+    if (meta) {
+      meta.textContent = `Tier ${formatAmount(event.tier)}`;
+    }
     return true;
   }
 
-  meta.remove();
+  if (meta && meta.parentNode) {
+    meta.remove();
+  }
   return false;
 }
 

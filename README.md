@@ -58,12 +58,13 @@ Load `extension/` unpacked in Chrome while developing:
 
 - The dashboard stores the current session ID in `localStorage`
 - The dashboard can also read `?session=...` from the URL
-- The extension uses the same session ID to send data to the overlay
+- The extension uses the same session ID to send chat data into the dashboard bridge
+- The OBS overlay still uses its own browser-source session flow
 
 ## Main files
 
 - [`src/index.html`](src/index.html) - streamer dashboard entry point
-- [`src/site/streamer-app.js`](src/site/streamer-app.js) - dashboard bootstrap and socket flow
+- [`src/site/streamer-app.js`](src/site/streamer-app.js) - dashboard bootstrap and local bridge flow
 - [`src/site/streamer-store.js`](src/site/streamer-store.js) - persisted state and normalization
 - [`src/site/streamer-view.js`](src/site/streamer-view.js) - UI rendering helpers
 - [`src/site/streamer-text.js`](src/site/streamer-text.js) - shared text, parsing, and normalization helpers

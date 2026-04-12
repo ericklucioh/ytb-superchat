@@ -1,8 +1,9 @@
-import { buildOverlayPayload, compareMessageEvent, comparePriorityEvent, compareSuperchatEvent, feedRoomFor } from "./streamer-events.js";
+import { buildOverlayPayload, compareMessageEvent, comparePriorityEvent, compareSuperchatEvent } from "./streamer-events.js";
 import { cleanText } from "./streamer-text.js";
 import { createCurrencyRateService } from "./streamer-rates.js";
 import { createStreamerStore } from "./streamer-store.js";
 import { createStreamerView } from "./streamer-view.js";
+import { createChatBridge } from "./chat-bridge.js";
 
 const STORAGE_KEY = "overlay_state";
 const ROOM_KEY = "overlay_room_id";
@@ -11,6 +12,7 @@ const MAX_LIVE_MESSAGES = 500;
 function boot() {
   const elements = {
     sessionInput: document.getElementById("session-input"),
+    generateButton: document.getElementById("generate-button"),
     connectButton: document.getElementById("connect-button"),
     summaryButton: document.getElementById("summary-button"),
     connectionStatus: document.getElementById("connection-status"),
@@ -34,7 +36,7 @@ function boot() {
     eventTemplate: document.getElementById("event-template")
   };
 
-  if (!elements.sessionInput || !elements.connectButton || !elements.filterGroup) {
+  if (!elements.sessionInput || !elements.generateButton || !elements.connectButton || !elements.filterGroup) {
     return;
   }
 
@@ -51,12 +53,16 @@ function boot() {
   const storedRoom = cleanText(localStorage.getItem(ROOM_KEY) || "");
   const initialRoom = urlRoom || storedRoom || store.state.roomId || "";
 
-  let feedSocket = null;
-  let connectionToken = 0;
   let renderQueued = false;
   let summaryOpen = false;
   let detailId = "";
   const currencyService = createCurrencyRateService({ scheduleRender });
+  const chatBridge = createChatBridge({
+    session: initialRoom,
+    onMessage: handleIncomingPayload,
+    onReady: () => setStatus("🟢"),
+    onSession: handleBridgeSession
+  });
 
   elements.sessionInput.value = initialRoom;
   view.syncFilterButtons(store.state.filter);
@@ -81,6 +87,17 @@ function boot() {
 
   elements.connectButton.addEventListener("click", () => {
     connect(elements.sessionInput.value.trim());
+  });
+
+  elements.generateButton.addEventListener("click", () => {
+    const generatedSession = buildSessionId();
+    elements.sessionInput.value = generatedSession;
+    connect(generatedSession);
+    try {
+      navigator.clipboard?.writeText?.(generatedSession);
+    } catch {
+      //
+    }
   });
 
   elements.sessionInput.addEventListener("keydown", (event) => {
@@ -206,76 +223,62 @@ function boot() {
       return;
     }
 
-    connectionToken += 1;
-    const token = connectionToken;
-    const joinedRoom = feedRoomFor(nextRoom);
-
     store.connectRoom(nextRoom);
     localStorage.setItem(ROOM_KEY, nextRoom);
     persistSharedRoom(nextRoom);
     elements.sessionInput.value = nextRoom;
     view.syncFilterButtons(store.state.filter);
     setStatus("🟡");
+    chatBridge.setSession(nextRoom);
+    scheduleRender();
+  }
 
-    if (feedSocket) {
-      try {
-        feedSocket.close();
-      } catch {
-        // ignore close errors
+  function buildSessionId(length = 11) {
+    const alphabet = "ABCEFGHJKLMNPQRSTUVWXYZabcefghijkmnpqrstuvwxyz23456789";
+    const bytes = new Uint8Array(length);
+    if (window.crypto && typeof window.crypto.getRandomValues === "function") {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (let index = 0; index < bytes.length; index += 1) {
+        bytes[index] = Math.floor(Math.random() * 256);
       }
-      feedSocket = null;
     }
 
-    const socket = new WebSocket("wss://api.overlay.ninja");
-    feedSocket = socket;
+    let result = "";
+    for (let index = 0; index < bytes.length; index += 1) {
+      result += alphabet.charAt(bytes[index] % alphabet.length);
+    }
+    return result;
+  }
 
-    socket.addEventListener("open", () => {
-      if (token !== connectionToken || feedSocket !== socket) {
-        return;
-      }
-      setStatus("🟢");
-      socket.send(JSON.stringify({ join: joinedRoom }));
+  function handleBridgeSession(nextSession) {
+    const session = cleanText(nextSession);
+    if (!session || session === store.state.roomId) {
+      return;
+    }
+
+    store.connectRoom(session);
+    localStorage.setItem(ROOM_KEY, session);
+    persistSharedRoom(session);
+    elements.sessionInput.value = session;
+    view.syncFilterButtons(store.state.filter);
+    setStatus("🟡");
+    scheduleRender();
+  }
+
+  function handleIncomingPayload(payload) {
+    if (!payload) {
+      return;
+    }
+
+    const normalized = store.normalizer.normalizeIncoming(payload);
+    if (!normalized) {
+      return;
+    }
+
+    if (store.insertEvent(normalized)) {
       scheduleRender();
-    });
-
-    socket.addEventListener("message", (event) => {
-      if (token !== connectionToken || feedSocket !== socket) {
-        return;
-      }
-
-      const payload = parsePayload(event.data);
-      if (!payload) {
-        return;
-      }
-
-      const normalized = store.normalizer.normalizeIncoming(payload);
-      if (!normalized) {
-        return;
-      }
-
-      if (store.insertEvent(normalized)) {
-        scheduleRender();
-      }
-    });
-
-    socket.addEventListener("close", () => {
-      if (token !== connectionToken || feedSocket !== socket) {
-        return;
-      }
-
-      setStatus("🟡");
-      window.setTimeout(() => {
-        if (token === connectionToken && feedSocket === socket) {
-          connect(nextRoom);
-        }
-      }, 1800);
-    });
-
-    socket.addEventListener("error", () => {
-      if (token === connectionToken && feedSocket === socket) {
-        setStatus("Falha na conexão. Tentando novamente.");
-      }
-    });
+    }
   }
 
   function toggleOverlaySelection(id) {
@@ -448,23 +451,7 @@ function boot() {
   }
 
   function cleanup() {
-    if (feedSocket) {
-      try {
-        feedSocket.close();
-      } catch {
-        // ignore close errors
-      }
-      feedSocket = null;
-    }
-  }
-
-  function parsePayload(raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      return parsed;
-    } catch {
-      return null;
-    }
+    chatBridge.close();
   }
 
 }

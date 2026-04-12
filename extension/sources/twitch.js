@@ -1,47 +1,32 @@
 var runtime = window.OverlayRuntime;
 var avatarHelpers = window.OverlayAvatarHelpers || {};
 var channel = runtime.generateStreamID();
-var feedChannel = channel + ":feed";
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var alreadyPrompted = false;
-var soca = runtime.createSocketBridge({
-	getRoomId: function () {
-		return channel;
-	},
-	onMessage: function (event) {
-		if (event.data) {
-			var data = JSON.parse(event.data);
-			if ("url" in data) {
-				if ("twitch" in data) {
-					if (document.getElementById("img_" + data["twitch"])) {
-						document.getElementById("img_" + data["twitch"]).src = data["url"];
-					}
-				}
-			}
-		}
-	}
-});
-var socaFeed = runtime.createSocketBridge({
-	getRoomId: function () {
-		return feedChannel;
-	}
-});
-
+var localBridge = null;
 function twitchLog() {}
+var unwatchStreamId = null;
+
+function syncSession(nextSession) {
+	var session = String(nextSession || "").replace(/\s+/g, "").trim();
+	if (!session || session === channel) {
+		return;
+	}
+
+	channel = session;
+	if (localBridge) {
+		localBridge.setSession(channel);
+	}
+}
 
 function actionwtf(){ // steves personal socket server service
 	if (!alreadyPrompted){
 		alreadyPrompted=true;
 	}
 
-	soca.connect();
 	runtime.persistStreamId(channel);
 	chrome.runtime.lastError;
-}
-
-function feedwtf(){
-	socaFeed.connect();
 }
 
 function pushFeedMessage(data){
@@ -54,11 +39,30 @@ function pushFeedMessage(data){
 		hasMembership: !!(data && data.hasMembership),
 		messagePreview: data && data.chatmessage ? String(data.chatmessage).slice(0, 80) : ""
 	});
-	runtime.sendBridgeMessage(socaFeed, data, {
+	var bridge = ensureLocalBridge();
+	if (!bridge) {
+		return;
+	}
+	runtime.sendBridgeMessage(bridge, data, {
 		envelopeKey: "feed",
 		id: outputCounter,
-		storageKeys: sendProperties
+		includeSettings: false
 	});
+}
+
+function ensureLocalBridge() {
+	if (localBridge) {
+		return localBridge;
+	}
+	if (!window.OverlayLocalChatBridge || !window.OverlayLocalChatBridge.createChannel) {
+		return null;
+	}
+	localBridge = window.OverlayLocalChatBridge.createChannel({
+		role: "source",
+		session: channel
+	});
+	localBridge.connect();
+	return localBridge;
 }
 
 function extractTwitchAvatarFromDom(element) {
@@ -78,9 +82,6 @@ function extractTwitchAvatarFromDom(element) {
 function startTwitchConnections() {
 	setTimeout(function () {
 		actionwtf();
-	}, 500);
-	setTimeout(function () {
-		feedwtf();
 	}, 500);
 }
 
@@ -173,6 +174,7 @@ function sendTwitchFeed(element) {
 	if (chatdonation) {
 		hasDonation = '<div class="cheer">' + chatdonation + '</div>';
 	}
+	var isBitsDonation = !!$(element).find('.chat-line__message--cheer-amount').length || /\bbits?\b/i.test(String(chatdonation));
 
 	var hasMembership = '';
 	var eventType = "message";
@@ -208,6 +210,7 @@ function sendTwitchFeed(element) {
 	data.chatimg = chatimg;
 	data.hasDonation = hasDonation;
 	data.hasMembership = hasMembership;
+	data.currency = isBitsDonation ? "BITS" : "";
 	data.type = "twitch";
 	data.platform = "twitch";
 	data.eventType = eventType;
@@ -287,12 +290,15 @@ runtime.loadSettings(properties, function(item){
   });
   if (item.streamID){
     channel = item.streamID;
-    feedChannel = channel + ":feed";
   } else {
 	runtime.persistStreamId(channel);
 	chrome.runtime.lastError;
   }
 
+  ensureLocalBridge();
+  if (!unwatchStreamId && runtime.watchStreamId) {
+    unwatchStreamId = runtime.watchStreamId(syncSession);
+  }
   runtime.applyOverlaySettings(item, document.documentElement, { color: "#000" });
   showOnlyFirstName = !!item.showOnlyFirstName;
   highlightWords = runtime.normalizeHighlightWords(item.highlightWords);

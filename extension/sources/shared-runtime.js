@@ -37,11 +37,22 @@
   ];
 
   const settingsCache = new Map();
+  const streamIdListeners = new Set();
 
   if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === "sync" && changes) {
         settingsCache.clear();
+        if (changes.streamID) {
+          const nextStreamId = typeof changes.streamID.newValue === "string" ? changes.streamID.newValue.trim() : "";
+          for (const listener of streamIdListeners) {
+            try {
+              listener(nextStreamId);
+            } catch {
+              //
+            }
+          }
+        }
       }
     });
   }
@@ -291,6 +302,17 @@
     });
   }
 
+  function watchStreamId(callback) {
+    if (typeof callback !== "function") {
+      return () => {};
+    }
+
+    streamIdListeners.add(callback);
+    return () => {
+      streamIdListeners.delete(callback);
+    };
+  }
+
   global.OverlayRuntime = {
     DEFAULT_SEND_PROPERTIES,
     DEFAULT_SETTINGS_PROPERTIES,
@@ -301,6 +323,7 @@
     persistStreamId,
     applyOverlaySettings,
     createSocketBridge,
-    sendBridgeMessage
+    sendBridgeMessage,
+    watchStreamId
   };
 })(window);
