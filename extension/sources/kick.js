@@ -1,18 +1,9 @@
 (function () {
-	var soca = false;
-
-	function generateStreamID() {
-		var text = "";
-		var possible = "ABCEFGHJKLMNPQRSTUVWXYZabcefghijkmnpqrstuvwxyz23456789";
-		for (var i = 0; i < 11; i++) {
-			text += possible.charAt(Math.floor(Math.random() * possible.length));
-		}
-		return text;
-	}
-
-	var channel = generateStreamID();
+	var runtime = window.OverlayRuntime;
+	var soca = null;
+	var channel = runtime.generateStreamID();
 	var outputCounter = 0;
-	var sendProperties = ["color", "scale", "sizeOffset", "commentBottom", "commentHeight", "authorBackgroundColor", "authorAvatarBorderColor", "authorColor", "commentBackgroundColor", "commentColor", "fontFamily", "showOnlyFirstName", "highlightWords"];
+	var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 	var showOnlyFirstName = false;
 	var highlightWords = [];
 	var highlightWordSet = [];
@@ -26,44 +17,25 @@
 	injectKickStyles();
 
 	function actionwtf() {
-		if (soca) {
-			return;
+		if (!soca) {
+			soca = runtime.createSocketBridge({
+				getRoomId: function () {
+					return channel;
+				}
+			});
 		}
-
-		soca = new WebSocket("wss://api.overlay.ninja");
-		soca.onclose = function () {
-			setTimeout(function () {
-				soca = false;
-				actionwtf();
-			}, 2000);
-		};
-		soca.onopen = function () {
-			soca.send(JSON.stringify({ join: channel }));
-		};
-
-		chrome.storage.sync.set({
-			streamID: channel
-		});
-
+		soca.connect();
+		runtime.persistStreamId(channel);
 		chrome.runtime.lastError;
 	}
 
 	function pushMessage(data) {
-		var message = {};
-		message.msg = true;
-		message.contents = data;
-		try {
-			chrome.storage.sync.get(sendProperties, function (item) {
-				outputCounter += 1;
-				message.id = outputCounter;
-				message.settings = item;
-				soca.send(JSON.stringify(message));
-			});
-		} catch (e) {
-			outputCounter += 1;
-			message.id = outputCounter;
-			soca.send(JSON.stringify(message));
-		}
+		outputCounter += 1;
+		runtime.sendBridgeMessage(soca, data, {
+			envelopeKey: "msg",
+			id: outputCounter,
+			storageKeys: sendProperties
+		});
 	}
 
 	function extractKickChannelFromUrl(url) {
@@ -595,65 +567,22 @@
 	});
 
 	function applyBrandSettings(item) {
-		var root = document.documentElement;
-		if (item.color) {
-			root.style.setProperty("--keyer-bg-color", item.color);
-		}
-		if (item.authorBackgroundColor) {
-			root.style.setProperty("--author-bg-color", item.authorBackgroundColor);
-			root.style.setProperty("--author-avatar-border-color", item.authorBackgroundColor);
-		}
-		if (item.authorAvatarBorderColor) {
-			root.style.setProperty("--author-avatar-border-color", item.authorAvatarBorderColor);
-		}
-		if (item.commentBackgroundColor) {
-			root.style.setProperty("--comment-bg-color", item.commentBackgroundColor);
-		}
-		if (item.authorColor) {
-			root.style.setProperty("--author-color", item.authorColor);
-		}
-		if (item.commentColor) {
-			root.style.setProperty("--comment-color", item.commentColor);
-		}
-		if (item.fontFamily) {
-			root.style.setProperty("--font-family", item.fontFamily);
-		}
-		if (item.scale) {
-			root.style.setProperty("--comment-scale", item.scale);
-		}
-		if (item.commentBottom) {
-			root.style.setProperty("--comment-area-bottom", item.commentBottom);
-		}
-		if (item.commentHeight) {
-			root.style.setProperty("--comment-area-height", item.commentHeight);
-		}
-		if (item.sizeOffset) {
-			root.style.setProperty("--comment-area-size-offset", item.sizeOffset);
-		}
+		runtime.applyOverlaySettings(item, document.documentElement, { color: "#000" });
 	}
 
 	var properties = ["color", "scale", "streamID", "sizeOffset", "commentBottom", "commentHeight", "authorBackgroundColor", "authorAvatarBorderColor", "authorColor", "commentBackgroundColor", "commentColor", "fontFamily", "showOnlyFirstName", "highlightWords"];
 
-	chrome.storage.sync.get(properties, function (item) {
+	runtime.loadSettings(properties, function (item) {
 		if (item.streamID) {
 			channel = item.streamID;
 		} else {
-			chrome.storage.sync.set({
-				streamID: channel
-			});
+			runtime.persistStreamId(channel);
 			chrome.runtime.lastError;
 		}
 
 		showOnlyFirstName = !!item.showOnlyFirstName;
-		highlightWords = Array.isArray(item.highlightWords) ? item.highlightWords : [];
-		highlightWordSet = highlightWords.map(function (word) {
-			if (typeof word === "string") {
-				return word.toLowerCase();
-			}
-			return "";
-		}).filter(function (word) {
-			return word.length > 0;
-		});
+		highlightWords = runtime.normalizeHighlightWords(item.highlightWords);
+		highlightWordSet = highlightWords.slice();
 
 		applyBrandSettings(item);
 		reapplyHighlights();

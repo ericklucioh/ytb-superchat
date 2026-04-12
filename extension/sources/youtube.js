@@ -1,72 +1,35 @@
 (function () {
-	
-	var soca=false;
-	function generateStreamID(){
-		var text = "";
-		var possible = "ABCEFGHJKLMNPQRSTUVWXYZabcefghijkmnpqrstuvwxyz23456789";
-		for (var i = 0; i < 11; i++){
-			text += possible.charAt(Math.floor(Math.random() * possible.length));
-		}
-		return text;
-	};
-	var channel = generateStreamID();
+	var runtime = window.OverlayRuntime;
+	var channel = runtime.generateStreamID();
 	var feedChannel = channel + ":feed";
 	var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
-	var socaFeed=false;
-
-	var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
+	var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 	var alreadyPrompted = false;
+	var soca = runtime.createSocketBridge({ getRoomId: function () { return channel; } });
+	var socaFeed = runtime.createSocketBridge({ getRoomId: function () { return feedChannel; } });
 
 	function actionwtf(){ // steves personal socket server service
-		if (soca){return;}
-		
 		if (!alreadyPrompted){
 			alreadyPrompted=true;
 			prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
 		}
-		
-		soca = new WebSocket("wss://api.overlay.ninja");
-		soca.onclose = function (){
-			setTimeout(function(){soca=false;actionwtf(); },2000);
-		};
-		soca.onopen = function (){
-			soca.send(JSON.stringify({"join":channel}));
-		};
-		
-		chrome.storage.sync.set({
-			streamID: channel
-		});
-		
+
+		soca.connect();
+		runtime.persistStreamId(channel);
 		chrome.runtime.lastError;
 	}
 
 	function feedwtf(){
-		if (socaFeed){return;}
-		socaFeed = new WebSocket("wss://api.overlay.ninja");
-		socaFeed.onclose = function (){
-			setTimeout(function(){socaFeed=false;feedwtf(); },2000);
-		};
-		socaFeed.onopen = function (){
-			socaFeed.send(JSON.stringify({"join":feedChannel}));
-		};
+		socaFeed.connect();
 	}
 
 	function pushFeedMessage(data){
-		var message = {};
-		message.feed = true;
-		message.contents = data;
-		try {
-			chrome.storage.sync.get(sendProperties, function(item){
-				outputCounter += 1;
-				message.id = outputCounter;
-				message.settings = item;
-				socaFeed.send(JSON.stringify(message));
-			});
-		} catch(e){
-			outputCounter += 1;
-			message.id = outputCounter;
-			socaFeed.send(JSON.stringify(message));
-		}
+		outputCounter += 1;
+		runtime.sendBridgeMessage(socaFeed, data, {
+			envelopeKey: "feed",
+			id: outputCounter,
+			storageKeys: sendProperties
+		});
 	}
 
 	function isYoutubeFeedNode(element) {
@@ -203,59 +166,18 @@
 
 	var properties = ["color","scale","streamID","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
 
-	chrome.storage.sync.get(properties, function(item){
-	  var color = "#000";
-	  if(item.color) {
-		color = item.color;
-	  }
+	runtime.loadSettings(properties, function(item){
 	  if (item.streamID){
 		channel = item.streamID;
 		feedChannel = channel + ":feed";
 	  } else {
-		
-		chrome.storage.sync.set({
-			streamID: channel
-		});
-		
+		runtime.persistStreamId(channel);
 		chrome.runtime.lastError;
 	  }
-	  
-	  let root = document.documentElement;
-	  root.style.setProperty("--keyer-bg-color", color);
 
-	  if(item.authorBackgroundColor) {
-		root.style.setProperty("--author-bg-color", item.authorBackgroundColor);
-		root.style.setProperty("--author-avatar-border-color", item.authorBackgroundColor);
-	  }
-	  if(item.authorAvatarBorderColor) {
-		root.style.setProperty("--author-avatar-border-color", item.authorAvatarBorderColor);
-	  }
-	  if(item.commentBackgroundColor) {
-		root.style.setProperty("--comment-bg-color", item.commentBackgroundColor);
-	  }
-	  if(item.authorColor) {
-		root.style.setProperty("--author-color", item.authorColor);
-	  }
-	  if(item.commentColor) {
-		root.style.setProperty("--comment-color", item.commentColor);
-	  }
-	  if(item.fontFamily) {
-		root.style.setProperty("--font-family", item.fontFamily);
-	  }
-	  if(item.scale) {
-		root.style.setProperty("--comment-scale", item.scale);
-	  }
-	  if(item.commentBottom) {
-		root.style.setProperty("--comment-area-bottom", item.commentBottom);
-	  }
-	  if(item.commentHeight) {
-		root.style.setProperty("--comment-area-height", item.commentHeight);
-	  }
-	  if(item.sizeOffset) {
-		root.style.setProperty("--comment-area-size-offset", item.sizeOffset);
-	  }
-	  showOnlyFirstName = item.showOnlyFirstName;
-	  highlightWords = item.highlightWords;
+	  runtime.applyOverlaySettings(item, document.documentElement, { color: "#000" });
+	  showOnlyFirstName = !!item.showOnlyFirstName;
+	  highlightWords = runtime.normalizeHighlightWords(item.highlightWords);
 	});
 
 	$("#primary-content").append('<span style="font-size: 0.7em">Aspect Ratio: <span id="aspect-ratio"></span></span>');
