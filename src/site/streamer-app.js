@@ -293,9 +293,7 @@ function boot() {
       return;
     }
 
-    const overlayPayload = buildOverlayPayload(event, {
-      currencyRate: getCurrencyRate(event.currency)
-    });
+    const overlayPayload = buildOverlayPayload(event);
     if (!overlayPayload) {
       return;
     }

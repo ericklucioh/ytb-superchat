@@ -435,7 +435,6 @@ export function formatTime(value) {
 }
 
 export function buildOverlayPayload(event, options = {}) {
-  const currencyRate = Number(options.currencyRate);
   const chatmessage = event.message || "";
   const payload = {
     chatname: event.user,
@@ -454,9 +453,9 @@ export function buildOverlayPayload(event, options = {}) {
   };
 
   if (event.type === "superchat" && Number.isFinite(event.amount)) {
-    payload.hasDonation = `<div class="donation">${formatCurrencyAmount(event.amount, event.currency, currencyRate)}</div>`;
+    payload.hasDonation = `<div class="donation">${formatCurrencyAmount(event.amount, event.currency)}</div>`;
     if (!payload.chatmessage) {
-      payload.chatmessage = `Superchat de ${formatCurrencyAmount(event.amount, event.currency, currencyRate)}`;
+      payload.chatmessage = `Superchat de ${formatCurrencyAmount(event.amount, event.currency)}`;
     }
   }
 
