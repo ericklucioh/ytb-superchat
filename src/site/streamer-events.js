@@ -1,4 +1,4 @@
-import { cleanText, extractGiftCount, hashString, inferPlatform, parseAmount, stringOrEmpty, stripHtml, toNumber } from "./streamer-text.js";
+import { cleanText, decodeHtmlEntities, extractGiftCount, hashString, inferEventType, inferPlatform, parseAmount, stringOrEmpty, stripHtml, toNumber } from "./streamer-text.js";
 import { extractCurrencyLabel, formatAmount, formatCurrencyAmount } from "./streamer-currency.js";
 
 export const VALID_FILTERS = new Set(["active", "read", "hidden", "all"]);

@@ -6,7 +6,6 @@ import { createStreamerView } from "./streamer-view.js";
 
 const STORAGE_KEY = "overlay_state";
 const ROOM_KEY = "overlay_room_id";
-const MAX_EVENTS = 500;
 const MAX_LIVE_MESSAGES = 500;
 
 function boot() {
@@ -42,7 +41,6 @@ function boot() {
   const store = createStreamerStore({
     storageKey: STORAGE_KEY,
     roomKey: ROOM_KEY,
-    maxEvents: MAX_EVENTS,
     maxLiveMessages: MAX_LIVE_MESSAGES
   });
   const view = createStreamerView(elements);
@@ -56,7 +54,6 @@ function boot() {
   let feedSocket = null;
   let connectionToken = 0;
   let renderQueued = false;
-  let heartbeatTimer = null;
   let summaryOpen = false;
   let detailId = "";
   const currencyService = createCurrencyRateService({ scheduleRender });
@@ -200,7 +197,6 @@ function boot() {
 
   window.addEventListener("beforeunload", cleanup);
 
-  startHeartbeat();
   scheduleRender();
 
   function connect(roomId) {
@@ -378,9 +374,6 @@ function boot() {
     const chatEvents = store.liveEvents.slice().sort(compareMessageEvent);
     const counts = store.getCounts();
     const focusedEvent = detailId ? store.findEventById(detailId) : null;
-    const priorityViewEvents = priorityEvents.map((event) => event);
-    const chatViewEvents = chatEvents.map((event) => event);
-    const focusedViewEvent = focusedEvent ? focusedEvent : null;
     const superchatTotals = currencyService.summarizeSuperchatEvents(superchatEvents);
 
     currencyService.warmCurrencyRates(superchatEvents);
@@ -393,12 +386,12 @@ function boot() {
     view.syncFilterButtons(state.filter);
     view.render({
       state,
-      priorityEvents: priorityViewEvents,
+      priorityEvents,
       superchatEvents,
-      chatEvents: chatViewEvents,
+      chatEvents,
       counts,
       superchatTotals,
-      focusedEvent: focusedViewEvent
+      focusedEvent
     });
   }
 
@@ -454,23 +447,7 @@ function boot() {
     });
   }
 
-  function startHeartbeat() {
-    if (heartbeatTimer) {
-      return;
-    }
-
-    heartbeatTimer = window.setInterval(() => {
-      renderQueued = false;
-      render();
-    }, 2000);
-  }
-
   function cleanup() {
-    if (heartbeatTimer) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = null;
-    }
-
     if (feedSocket) {
       try {
         feedSocket.close();

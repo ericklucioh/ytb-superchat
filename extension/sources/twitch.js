@@ -467,13 +467,16 @@ function startTwitchObserver() {
 			onElementInsertedTwitch(selector, "chat-line__message", function(element){
 				var processed = scanTwitchNode(element, "mutation");
 				if (!processed) {
-					if (String(element.className || "").indexOf("Layout-sc-") === 0) {
+					var hasContent = String(element.textContent || "").trim().length > 0;
+					if (String(element.className || "").indexOf("Layout-sc-") === 0 && hasContent) {
 						twitchLog("wrapper without message nodes", {
 							className: element.className,
 							preview: String(element.innerText || "").slice(0, 80)
 						});
 					}
-					queueTwitchRescan(element);
+					if (hasContent) {
+						queueTwitchRescan(element);
+					}
 					return;
 				}
 			});

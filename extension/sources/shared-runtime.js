@@ -36,6 +36,24 @@
     "highlightWords"
   ];
 
+  const settingsCache = new Map();
+
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === "sync" && changes) {
+        settingsCache.clear();
+      }
+    });
+  }
+
+  function settingsSignature(properties) {
+    if (!Array.isArray(properties) || !properties.length) {
+      return DEFAULT_SETTINGS_PROPERTIES.join("|");
+    }
+
+    return properties.slice().sort().join("|");
+  }
+
   function generateStreamID(length = 11) {
     let text = "";
     const possible = "ABCEFGHJKLMNPQRSTUVWXYZabcefghijkmnpqrstuvwxyz23456789";
@@ -61,14 +79,24 @@
 
   function loadSettings(properties, callback) {
     const keys = Array.isArray(properties) && properties.length ? properties : DEFAULT_SETTINGS_PROPERTIES;
+    const signature = settingsSignature(keys);
 
     try {
       chrome.storage.sync.get(keys, (result) => {
-        callback(result || {});
+        const settings = result || {};
+        settingsCache.set(signature, settings);
+        callback(settings);
       });
     } catch {
-      callback({});
+      const settings = {};
+      settingsCache.set(signature, settings);
+      callback(settings);
     }
+  }
+
+  function getCachedSettings(properties) {
+    const signature = settingsSignature(properties);
+    return settingsCache.get(signature) || null;
   }
 
   function persistStreamId(streamID) {
@@ -248,6 +276,13 @@
       return;
     }
 
+    const cachedSettings = getCachedSettings(storageKeys);
+    if (cachedSettings) {
+      payload.settings = cachedSettings;
+      bridge.send(payload);
+      return;
+    }
+
     loadSettings(storageKeys, (settings) => {
       if (settings) {
         payload.settings = settings;
@@ -262,6 +297,7 @@
     generateStreamID,
     normalizeHighlightWords,
     loadSettings,
+    getCachedSettings,
     persistStreamId,
     applyOverlaySettings,
     createSocketBridge,

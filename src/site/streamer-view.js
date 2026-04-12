@@ -7,30 +7,101 @@ function setTextContent(node, value) {
   }
 }
 
-function clearNode(node) {
-  if (node) {
-    node.innerHTML = "";
+const collectionState = new WeakMap();
+
+function getCollectionState(container) {
+  let state = collectionState.get(container);
+  if (!state) {
+    state = {
+      items: new Map(),
+      emptyNode: null
+    };
+    collectionState.set(container, state);
   }
+  return state;
+}
+
+function getRenderedRoot(rendered) {
+  if (!rendered) {
+    return null;
+  }
+
+  if (rendered.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+    return rendered.firstElementChild || rendered.firstChild || null;
+  }
+
+  return rendered.nodeType ? rendered : null;
 }
 
 function renderEmptyState(container, emptyText) {
+  const state = getCollectionState(container);
+  if (state.emptyNode && state.emptyNode.parentNode === container) {
+    state.emptyNode.remove();
+  }
+
   const empty = document.createElement("div");
   empty.className = "empty-state";
   empty.textContent = emptyText;
+  state.emptyNode = empty;
   container.appendChild(empty);
 }
 
-function renderCollection(container, events, emptyText, renderItem) {
-  clearNode(container);
+function renderCollection(container, events, emptyText, renderItem, updateItem) {
+  if (!container) {
+    return;
+  }
+
+  const state = getCollectionState(container);
 
   if (!events.length) {
+    state.items.clear();
+    container.innerHTML = "";
     renderEmptyState(container, emptyText);
     return;
   }
 
+  if (state.emptyNode && state.emptyNode.parentNode === container) {
+    state.emptyNode.remove();
+    state.emptyNode = null;
+  }
+
   const fragment = document.createDocumentFragment();
+  const nextIds = new Set();
   for (const event of events) {
-    fragment.appendChild(renderItem(event));
+    let record = state.items.get(event.id);
+    let node = record?.node;
+
+    if (!node || !node.isConnected) {
+      const rendered = renderItem(event);
+      node = getRenderedRoot(rendered);
+      if (!node) {
+        continue;
+      }
+      record = {
+        node
+      };
+      state.items.set(event.id, record);
+    }
+
+    if (typeof updateItem === "function") {
+      updateItem(node, event);
+    }
+
+    if (node.dataset) {
+      node.dataset.id = event.id;
+    }
+
+    nextIds.add(event.id);
+    fragment.appendChild(node);
+  }
+
+  for (const [id, record] of state.items) {
+    if (!nextIds.has(id)) {
+      if (record?.node && record.node.parentNode) {
+        record.node.remove();
+      }
+      state.items.delete(id);
+    }
   }
 
   container.appendChild(fragment);
@@ -74,22 +145,21 @@ function renderTimestampRow(eventHead, eventMetaRow, user, time, event) {
   eventHead.classList.add("event-head--superchat");
 }
 
-function createMessageCard(event, state, elements, { live = false } = {}) {
-  const template = elements.eventTemplate.content.cloneNode(true);
-  const card = template.querySelector(".event-card");
-  const eventHead = template.querySelector(".event-head");
-  const eventMetaRow = template.querySelector(".event-meta-row");
-  const platformBadge = template.querySelector(".platform-badge");
-  const user = template.querySelector(".event-user");
-  const time = template.querySelector(".event-time");
-  const message = template.querySelector(".event-message");
-  const meta = template.querySelector(".event-meta");
-  const actions = template.querySelector(".event-actions");
-  const readButton = template.querySelector('button[data-action="read"]');
-  const hiddenButton = template.querySelector('button[data-action="hidden"]');
+function syncMessageCard(card, event, state, { live = false } = {}) {
+  const eventHead = card.querySelector(".event-head");
+  const eventMetaRow = card.querySelector(".event-meta-row");
+  const platformBadge = card.querySelector(".platform-badge");
+  const user = card.querySelector(".event-user");
+  const time = card.querySelector(".event-time");
+  const message = card.querySelector(".event-message");
+  const meta = card.querySelector(".event-meta");
+  const actions = card.querySelector(".event-actions");
+  const readButton = card.querySelector('button[data-action="read"]');
+  const hiddenButton = card.querySelector('button[data-action="hidden"]');
   const status = resolveStatus(event, state, live);
 
   card.dataset.id = event.id;
+  card.dataset.viewType = "message";
   card.classList.toggle("is-live-message", live);
   card.classList.toggle("is-read", status === "read");
   card.classList.toggle("is-hidden", status === "hidden");
@@ -105,31 +175,47 @@ function createMessageCard(event, state, elements, { live = false } = {}) {
   renderAmountMeta(meta, event);
 
   if (event.type === "message") {
-    eventMetaRow.remove();
-    actions.remove();
-    return template;
+    if (eventMetaRow) {
+      eventMetaRow.remove();
+    }
+    if (actions) {
+      actions.remove();
+    }
+    return card;
   }
 
-  readButton.classList.toggle("is-active", status === "read");
-  hiddenButton.classList.toggle("is-active", status === "hidden");
+  if (readButton) {
+    readButton.classList.toggle("is-active", status === "read");
+  }
+  if (hiddenButton) {
+    hiddenButton.classList.toggle("is-active", status === "hidden");
+  }
 
   if (event.type === "superchat" && eventMetaRow && user && time) {
     renderTimestampRow(eventHead, eventMetaRow, user, time, event);
   } else {
-    eventMetaRow.remove();
+    if (eventMetaRow) {
+      eventMetaRow.remove();
+    }
   }
 
+  return card;
+}
+
+function createMessageCard(event, state, elements, { live = false } = {}) {
+  const template = elements.eventTemplate.content.cloneNode(true);
+  const card = template.querySelector(".event-card");
+  syncMessageCard(card, event, state, { live });
   return template;
 }
 
-function renderPriorityCard(event, state, elements) {
-  const template = elements.priorityTemplate.content.cloneNode(true);
-  const card = template.querySelector(".priority-card");
-  const platformBadge = template.querySelector(".platform-badge");
-  const user = template.querySelector(".event-user");
-  const months = template.querySelector(".priority-months");
+function syncPriorityCard(card, event, state) {
+  const platformBadge = card.querySelector(".platform-badge");
+  const user = card.querySelector(".event-user");
+  const months = card.querySelector(".priority-months");
 
   card.dataset.id = event.id;
+  card.dataset.viewType = "priority";
   card.classList.toggle("is-selected", event.id === state.overlayId);
   card.classList.toggle("is-gifted", Number.isFinite(event.giftCount) && event.giftCount > 0);
 
@@ -137,6 +223,13 @@ function renderPriorityCard(event, state, elements) {
   setTextContent(user, `${event.user}`);
   setTextContent(months, formatMonths(event.months ?? event.tier));
 
+  return card;
+}
+
+function renderPriorityCard(event, state, elements) {
+  const template = elements.priorityTemplate.content.cloneNode(true);
+  const card = template.querySelector(".priority-card");
+  syncPriorityCard(card, event, state);
   return template;
 }
 
@@ -196,19 +289,22 @@ export function createStreamerView(elements) {
       elements.priorityList,
       priorityEvents,
       "Nenhum sub ou membro para esta visão.",
-      (event) => renderPriorityCard(event, state, elements)
+      (event) => renderPriorityCard(event, state, elements),
+      (node, event) => syncPriorityCard(node, event, state)
     );
     renderCollection(
       elements.superchatList,
       superchatEvents,
       "Nenhum superchat para esta visão.",
-      (event) => createMessageCard(event, state, elements)
+      (event) => createMessageCard(event, state, elements),
+      (node, event) => syncMessageCard(node, event, state)
     );
     renderCollection(
       elements.chatList,
       chatEvents,
       "Nenhuma mensagem de chat ao vivo.",
-      (event) => createMessageCard(event, state, elements, { live: true })
+      (event) => createMessageCard(event, state, elements, { live: true }),
+      (node, event) => syncMessageCard(node, event, state, { live: true })
     );
 
     renderDetail(focusedEvent);

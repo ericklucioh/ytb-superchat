@@ -96,6 +96,40 @@ export function inferPlatform(value) {
   return null;
 }
 
+export function inferEventType(source, platform, hasDonation, hasMembership) {
+  const explicitType = String(source?.eventType || source?.type || "").toLowerCase();
+
+  if (explicitType === "message" || explicitType === "sub" || explicitType === "member" || explicitType === "superchat") {
+    return explicitType;
+  }
+
+  if (explicitType.includes("superchat") || explicitType.includes("donation") || explicitType.includes("paid")) {
+    return "superchat";
+  }
+
+  if (explicitType.includes("member") || explicitType.includes("membership") || explicitType.includes("sponsor")) {
+    return platform === "twitch" ? "sub" : "member";
+  }
+
+  if (explicitType.includes("sub")) {
+    return "sub";
+  }
+
+  if (Number.isFinite(parseAmount(hasDonation))) {
+    return "superchat";
+  }
+
+  if (hasDonation && String(hasDonation).trim()) {
+    return "superchat";
+  }
+
+  if (hasMembership && String(hasMembership).trim()) {
+    return platform === "twitch" ? "sub" : "member";
+  }
+
+  return "message";
+}
+
 export function hashString(value) {
   let hash = 2166136261;
   for (let index = 0; index < value.length; index += 1) {

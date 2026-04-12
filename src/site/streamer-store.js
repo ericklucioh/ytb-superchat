@@ -4,7 +4,6 @@ import { cleanText } from "./streamer-text.js";
 export function createStreamerStore({
   storageKey,
   roomKey,
-  maxEvents,
   maxLiveMessages
 }) {
   const normalizer = createEventNormalizer();
@@ -49,7 +48,6 @@ export function createStreamerStore({
     }
 
     sanitized.events = Array.from(byId.values());
-    enforceLimit(sanitized.events);
     sanitized.events.sort((a, b) => b.timestamp - a.timestamp);
 
     if (sanitized.overlayId && !sanitized.events.some((event) => event.id === sanitized.overlayId) && !liveEvents.some((event) => event.id === sanitized.overlayId)) {
@@ -105,7 +103,6 @@ export function createStreamerStore({
     }
 
     state.events.push(event);
-    enforceLimit(state.events);
     state.events.sort((a, b) => b.timestamp - a.timestamp);
     persistState();
     return true;
@@ -208,6 +205,7 @@ export function createStreamerStore({
     const superchats = visible.filter((event) => event.type === "superchat").length;
 
     return {
+      liveMessages: liveEvents.length,
       twitchSubs,
       youtubeMembers,
       totalCombined,
@@ -215,17 +213,6 @@ export function createStreamerStore({
       totalEvents: state.events.length,
       currentFilter: state.filter
     };
-  }
-
-  function enforceLimit(events) {
-    if (events.length <= maxEvents) {
-      return;
-    }
-
-    events.sort((a, b) => a.timestamp - b.timestamp);
-    while (events.length > maxEvents) {
-      events.shift();
-    }
   }
 
   function enforceLiveLimit() {
