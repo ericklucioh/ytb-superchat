@@ -37,7 +37,7 @@
   "content_scripts": [
 	  {
 		"css": ["main.css"],
-		"js": ["sources/shared-runtime.js", "jquery.js", "sources/youtube.js"],
+		"js": ["sources/shared-runtime.js", "sources/avatar-helpers.js", "jquery.js", "sources/youtube.js"],
 		"matches": ["https://youtube.com/live_chat*", "https://www.youtube.com/live_chat*", "https://studio.youtube.com/live_chat*"]
 	  },
 	  {
@@ -47,12 +47,12 @@
 	  },
 	  {
 		"css": ["main.css"],
-		"js": ["sources/shared-runtime.js", "jquery.js", "sources/twitch.js"],
+		"js": ["sources/shared-runtime.js", "sources/avatar-helpers.js", "jquery.js", "sources/twitch.js"],
 		"matches": ["https://www.twitch.tv/popout/*"]
 	  },
 	  {
 		"css": ["main.css"],
-		"js": ["sources/shared-runtime.js", "sources/kick.js"],
+		"js": ["sources/shared-runtime.js", "sources/avatar-helpers.js", "sources/kick.js"],
 		"matches": ["https://kick.com/popout/*/chat", "https://kick.com/*/popout/*/chat", "https://kick.com/*/chatroom"]
 	  },
 	  {

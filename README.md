@@ -1,110 +1,86 @@
-# Chat Overlay for YouTube, Twitch & more
+# YTB Superchat
 
-Chrome extension and local overlay project for highlighting live chat messages in OBS, plus a separate streamer dashboard for monitoring Twitch and YouTube together.
+Overlay and streamer dashboard for Twitch and YouTube live chat.
 
-## What this fork does
+This repo is split into two parts:
 
-- Keeps the OBS overlay flow intact inside `extension/`
-- Adds a streamer panel in `src/index.html`
-- Unifies Twitch + YouTube into one live control surface
-- Persists dashboard state in `localStorage`
-- Lets you click a chat item in the dashboard to send it to the OBS overlay
+- `src/` - the streamer dashboard and local site
+- `extension/` - the Chrome extension and OBS overlay
 
-## Recommended workflow
+## What this project does
 
-This fork is designed to be opened with a local web server such as Live Server.
+- Captures Twitch and YouTube live chat
+- Shows messages in a streamer dashboard
+- Sends selected messages to the OBS overlay
+- Persists dashboard state locally
+- Supports superchats, subs, members, and normal chat messages
 
-- `src/index.html` is the main site and streamer control panel
-- `extension/index.html` is the OBS overlay page
-- The Chrome extension lives under `extension/` and is still used to capture Twitch and YouTube chat events
-- `npm run build` creates `out/chrome-extension.zip` with only the `extension/` files
-- The site implementation lives under `src/site/`
+## Project Structure
+
+- [`README.md`](README.md) - project overview and setup
+- [`src/README.md`](src/README.md) - streamer dashboard and local site
+- [`extension/README.md`](extension/README.md) - Chrome extension and OBS overlay
 
 ## Run locally
 
-### Recommended on Windows: PowerShell
-
-Start a local server from the project root:
-
-```powershell
-.\src\scripts\serve.ps1
+```bash
+npm run dev
 ```
 
-Open the pages in your browser:
+The local server defaults to `http://localhost:8000`.
 
-```powershell
-.\src\scripts\open-site.ps1
-.\src\scripts\open-overlay.ps1 -Session YOUR_SESSION_ID
-```
+Useful URLs:
 
-Or start the server and open the site in one step:
+- `http://localhost:8000/src/index.html` - streamer dashboard
+- `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID` - OBS overlay
 
-```powershell
-.\src\scripts\dev.ps1
-```
-
-The default server port is `8000`.
-
-### Alternative: npm scripts
-
-If you prefer Node tooling:
+## Build
 
 ```bash
-npm run open:site
-npm run serve
-npm run open:streamer
-npm run open:overlay
+npm run build
 ```
 
-You can override the port with a `.env` file or in PowerShell:
+This creates:
 
-```powershell
-$env:PORT=9000; npm run serve
-```
+- `out/` - static site build
+- `out/chrome-extension.zip` - packaged Chrome extension
 
-Or create a local `.env` file from `.env.example`.
+## Chrome extension
 
-### Alternative: VS Code Live Server
-
-Open the folder in VS Code and start Live Server from:
-
-- `src/index.html`
-- `extension/index.html`
-
-## Extension install
+Load `extension/` unpacked in Chrome while developing:
 
 1. Open `chrome://extensions`
-2. Enable `Developer mode`
-3. Click `Load unpacked`
-4. Select this repository folder
-
-Then open Twitch or YouTube popout chat with the extension loaded.
+2. Enable Developer mode
+3. Click Load unpacked
+4. Select the `extension/` folder
 
 ## Session flow
 
-- The streamer panel stores the current session in `localStorage`
+- The dashboard stores the current session ID in `localStorage`
 - The dashboard can also read `?session=...` from the URL
-- The overlay uses the same session ID to receive the selected message
+- The extension uses the same session ID to send data to the overlay
 
-## Files of interest
+## Main files
 
-- `src/index.html` - main site and streamer dashboard source
-- `extension/index.html` - OBS overlay renderer
-- `src/site/streamer-app.js` - dashboard bootstrap, state sync, rendering, and overlay trigger
-- `src/site/streamer-store.js` - persisted state and event normalization
-- `src/site/streamer-view.js` - DOM rendering helpers for the streamer panel
-- `src/site/streamer-utils.js` - shared formatters and payload helpers
-- `extension/sources/youtube.js` - YouTube chat capture
-- `extension/sources/twitch.js` - Twitch chat capture
+- [`src/index.html`](src/index.html) - streamer dashboard entry point
+- [`src/site/streamer-app.js`](src/site/streamer-app.js) - dashboard bootstrap and socket flow
+- [`src/site/streamer-store.js`](src/site/streamer-store.js) - persisted state and normalization
+- [`src/site/streamer-view.js`](src/site/streamer-view.js) - UI rendering helpers
+- [`src/site/streamer-text.js`](src/site/streamer-text.js) - shared text, parsing, and normalization helpers
+- [`src/site/streamer-currency.js`](src/site/streamer-currency.js) - currency parsing and formatting
+- [`src/site/streamer-events.js`](src/site/streamer-events.js) - event normalization, payload building, and comparisons
+- [`src/site/streamer-rates.js`](src/site/streamer-rates.js) - BRL conversion and rate caching
+- [`src/site/streamer-utils.js`](src/site/streamer-utils.js) - compatibility re-export for shared helpers
+- [`extension/index.html`](extension/index.html) - OBS overlay renderer
+- [`extension/sources/youtube.js`](extension/sources/youtube.js) - YouTube chat capture
+- [`extension/sources/twitch.js`](extension/sources/twitch.js) - Twitch chat capture
 
 ## Notes
 
-- `src/index.html` is the page you should open for the main site and dashboard source
-- The OBS overlay is under `extension/index.html`
-- For testing, reload the extension and refresh the chat tabs after changing the code
-- If PowerShell script execution is blocked, you may need to allow local scripts with your execution policy
-- If you use the npm opener for the overlay, set `SESSION` as an environment variable or in `.env`
+- The overlay still depends on the browser tab/page being open for the chat sources.
+- If you change extension code, rebuild and reload the extension.
+- If you change the dashboard code, refresh the local site.
 
-## Original project
+## Origin
 
-This fork is based on the work of Steve Seguin and the original live chat overlay project.
+This project is based on the original live chat overlay work by Steve Seguin, with a streamer dashboard and Twitch/YouTube workflow layered on top.

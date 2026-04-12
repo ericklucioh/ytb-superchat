@@ -1,4 +1,5 @@
-import { VALID_FILTERS, VALID_STATUSES, createEventNormalizer, cleanText } from "./streamer-utils.js";
+import { VALID_FILTERS, VALID_STATUSES, createEventNormalizer } from "./streamer-events.js";
+import { cleanText } from "./streamer-text.js";
 
 export function createStreamerStore({
   storageKey,

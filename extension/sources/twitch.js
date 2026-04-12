@@ -1,4 +1,5 @@
 var runtime = window.OverlayRuntime;
+var avatarHelpers = window.OverlayAvatarHelpers || {};
 var channel = runtime.generateStreamID();
 var feedChannel = channel + ":feed";
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
@@ -61,10 +62,6 @@ function pushFeedMessage(data){
 }
 
 function extractTwitchAvatarFromDom(element) {
-	if (!element || !element.querySelector) {
-		return "";
-	}
-
 	var selectors = [
 		"img[alt*='avatar']",
 		"img[alt*='Avatar']",
@@ -75,14 +72,7 @@ function extractTwitchAvatarFromDom(element) {
 		"img[src*='ttvnw.net']"
 	];
 
-	for (var i = 0; i < selectors.length; i += 1) {
-		var avatarNode = element.querySelector(selectors[i]);
-		if (avatarNode && avatarNode.src) {
-			return avatarNode.src;
-		}
-	}
-
-	return "";
+	return avatarHelpers.extractAvatarSrcFromDom ? avatarHelpers.extractAvatarSrcFromDom(element, selectors) : "";
 }
 
 function startTwitchConnections() {

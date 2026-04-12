@@ -1,4 +1,5 @@
-import { labelForFilter, platformIconMarkup, formatAmount, formatBrlAmount, formatCurrencyAmount, formatMonths, formatStatus, formatType, formatTime } from "./streamer-utils.js";
+import { formatAmount, formatBrlAmount, formatCurrencyAmount } from "./streamer-currency.js";
+import { formatMonths, formatStatus, formatType, formatTime, labelForFilter, platformIconMarkup } from "./streamer-events.js";
 
 function setTextContent(node, value) {
   if (node) {

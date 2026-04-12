@@ -1,5 +1,6 @@
 (function () {
 	var runtime = window.OverlayRuntime;
+	var avatarHelpers = window.OverlayAvatarHelpers || {};
 	var channel = runtime.generateStreamID();
 	var feedChannel = channel + ":feed";
 	var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
@@ -46,10 +47,6 @@
 	}
 
 	function extractYoutubeAvatar(element) {
-		if (!element) {
-			return "";
-		}
-
 		var selectors = [
 			"#img",
 			"img.avatar",
@@ -59,15 +56,12 @@
 			"img[src*='googleusercontent.com']"
 		];
 
-		for (var i = 0; i < selectors.length; i += 1) {
-			var avatarNode = element.querySelector(selectors[i]);
-			if (avatarNode && avatarNode.src) {
-				var src = avatarNode.src;
-				src = src.replace("=s32-", "=s128-");
-				src = src.replace("=s64-", "=s128-");
-				src = src.replace("=s88-", "=s128-");
-				return src;
-			}
+		var src = avatarHelpers.extractAvatarSrcFromDom ? avatarHelpers.extractAvatarSrcFromDom(element, selectors) : "";
+		if (src) {
+			src = src.replace("=s32-", "=s128-");
+			src = src.replace("=s64-", "=s128-");
+			src = src.replace("=s88-", "=s128-");
+			return src;
 		}
 
 		return "";

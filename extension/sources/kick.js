@@ -1,5 +1,6 @@
 (function () {
 	var runtime = window.OverlayRuntime;
+	var avatarHelpers = window.OverlayAvatarHelpers || {};
 	var soca = null;
 	var channel = runtime.generateStreamID();
 	var outputCounter = 0;
@@ -284,11 +285,13 @@
 	}
 
 	function extractAvatarFromDom(element) {
-		var avatarNode = element.querySelector("img[alt*='avatar'], img[alt*='Avatar'], img[class*='avatar'], img[class*='profile'], picture img");
-		if (avatarNode && avatarNode.src) {
-			return avatarNode.src;
-		}
-		return "";
+		return avatarHelpers.extractAvatarSrcFromDom ? avatarHelpers.extractAvatarSrcFromDom(element, [
+			"img[alt*='avatar']",
+			"img[alt*='Avatar']",
+			"img[class*='avatar']",
+			"img[class*='profile']",
+			"picture img"
+		]) : "";
 	}
 
 	async function getKickAvatarImage(username) {
