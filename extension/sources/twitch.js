@@ -60,6 +60,31 @@ function pushFeedMessage(data){
 	});
 }
 
+function extractTwitchAvatarFromDom(element) {
+	if (!element || !element.querySelector) {
+		return "";
+	}
+
+	var selectors = [
+		"img[alt*='avatar']",
+		"img[alt*='Avatar']",
+		"img[class*='avatar']",
+		"img[class*='profile']",
+		"picture img",
+		"img[src*='static-cdn.jtvnw.net']",
+		"img[src*='ttvnw.net']"
+	];
+
+	for (var i = 0; i < selectors.length; i += 1) {
+		var avatarNode = element.querySelector(selectors[i]);
+		if (avatarNode && avatarNode.src) {
+			return avatarNode.src;
+		}
+	}
+
+	return "";
+}
+
 function startTwitchConnections() {
 	setTimeout(function () {
 		actionwtf();
@@ -127,10 +152,14 @@ function sendTwitchFeed(element) {
 	}
 
 	var chatimg = "";
+	var avatarFromDom = extractTwitchAvatarFromDom(element);
+	if (avatarFromDom) {
+		chatimg = avatarFromDom;
+	}
 	if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
-		chatimg = chrome.runtime.getURL("twitch.png");
+		chatimg = chatimg || chrome.runtime.getURL("twitch.png");
 	} else {
-		chatimg = "twitch.png";
+		chatimg = chatimg || "twitch.png";
 	}
 
 	var donationNode = $(element).find("[class*='donation'], [class*='tip'], [data-tip], [data-gifted], [class*='train']");
@@ -202,6 +231,11 @@ function sendTwitchFeed(element) {
 		hasMembership: !!chatmembership,
 		messagePreview: String(chatmessage).slice(0, 80)
 	});
+
+	if (avatarFromDom) {
+		pushFeedMessage(data);
+		return;
+	}
 
 	fetchWithTimeout("https://api.socialstream.ninja/twitch/avatar?username="+encodeURIComponent(data.chatname)).then(response => {
 		response.text().then(function (text) {

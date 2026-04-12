@@ -45,6 +45,34 @@
 		].includes(element.tagName.toUpperCase());
 	}
 
+	function extractYoutubeAvatar(element) {
+		if (!element) {
+			return "";
+		}
+
+		var selectors = [
+			"#img",
+			"img.avatar",
+			".avatar img",
+			"yt-img-shadow img",
+			"img[src*='yt3.ggpht.com']",
+			"img[src*='googleusercontent.com']"
+		];
+
+		for (var i = 0; i < selectors.length; i += 1) {
+			var avatarNode = element.querySelector(selectors[i]);
+			if (avatarNode && avatarNode.src) {
+				var src = avatarNode.src;
+				src = src.replace("=s32-", "=s128-");
+				src = src.replace("=s64-", "=s128-");
+				src = src.replace("=s88-", "=s128-");
+				return src;
+			}
+		}
+
+		return "";
+	}
+
 	function sendYoutubeFeed(element) {
 		if (!isYoutubeFeedNode(element) || element.dataset.feedSent) {
 			return;
@@ -64,11 +92,7 @@
 		}
 
 		var chatmessage = $(element).find("#message").html();
-		var chatimg = $(element).find("#img").attr('src');
-		if (chatimg) {
-			chatimg = chatimg.replace("=s32-", "=s128-");
-			chatimg = chatimg.replace("=s64-", "=s128-");
-		}
+		var chatimg = extractYoutubeAvatar(element);
 		var chatdonation = $(element).find("#purchase-amount").html();
 		var chatmembership = $(element).find(".yt-live-chat-membership-item-renderer #header-subtext").html();
 		var chatsticker = $(element).find(".yt-live-chat-paid-sticker-renderer #img").attr("src");
