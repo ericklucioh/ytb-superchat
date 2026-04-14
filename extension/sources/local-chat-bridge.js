@@ -133,7 +133,7 @@
 
     function isLegacyOverlayUrl(url) {
       const value = String(url || "");
-      return value.includes("api.overlay.ninja");
+      return value.includes("ytb.ericklucioh.com");
     }
 
     function createSocketEvent(type, socket, detail) {

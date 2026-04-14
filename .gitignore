@@ -24,6 +24,7 @@ Desktop.ini
 .vscode/
 .idea/
 
+extension.zip
 # Temporary files
 *.tmp
 *.temp

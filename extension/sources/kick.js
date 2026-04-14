@@ -27,7 +27,7 @@
 		}
 		soca.connect();
 		runtime.persistStreamId(channel);
-		chrome.runtime.lastError;
+		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	}
 
 	function pushMessage(data) {

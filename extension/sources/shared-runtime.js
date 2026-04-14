@@ -118,6 +118,30 @@
     }
   }
 
+  function getRuntimeUrl(path) {
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
+        return chrome.runtime.getURL(path);
+      }
+    } catch {
+      //
+    }
+
+    return path;
+  }
+
+  function ignoreRuntimeError() {
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime) {
+        return chrome.runtime.lastError;
+      }
+    } catch {
+      //
+    }
+
+    return undefined;
+  }
+
   function applyOverlaySettings(item, root = document.documentElement, defaults = {}) {
     if (!item || !root) {
       return;
@@ -321,6 +345,8 @@
     loadSettings,
     getCachedSettings,
     persistStreamId,
+    getRuntimeUrl,
+    ignoreRuntimeError,
     applyOverlaySettings,
     createSocketBridge,
     sendBridgeMessage,

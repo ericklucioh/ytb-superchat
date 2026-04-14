@@ -20,7 +20,7 @@ var outputCounter = 0; // used to avoid doubling up on old messages if lag or wh
 
 var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
 
-function actionwtf(){ // steves personal socket server service
+function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
 
 	soca = new WebSocket("wss://api.overlay.ninja");

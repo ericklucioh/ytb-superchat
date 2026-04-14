@@ -20,13 +20,13 @@
 		}
 	}
 
-	function actionwtf(){ // steves personal socket server service
+	function actionwtf(){ // legacy overlay connection
 		if (!alreadyPrompted){
 			alreadyPrompted=true;
 			prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 		}
 		runtime.persistStreamId(channel);
-		chrome.runtime.lastError;
+		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	}
 
 	function pushFeedMessage(data){
@@ -213,7 +213,7 @@
 		channel = item.streamID;
 	  } else {
 		runtime.persistStreamId(channel);
-		chrome.runtime.lastError;
+		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	  }
 
 	  ensureLocalBridge();

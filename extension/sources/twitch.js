@@ -20,13 +20,13 @@ function syncSession(nextSession) {
 	}
 }
 
-function actionwtf(){ // steves personal socket server service
+function actionwtf(){ // legacy overlay connection
 	if (!alreadyPrompted){
 		alreadyPrompted=true;
 	}
 
 	runtime.persistStreamId(channel);
-	chrome.runtime.lastError;
+	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 }
 
 function pushFeedMessage(data){
@@ -147,11 +147,7 @@ function sendTwitchFeed(element) {
 	if (avatarFromDom) {
 		chatimg = avatarFromDom;
 	}
-	if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
-		chatimg = chatimg || chrome.runtime.getURL("twitch.png");
-	} else {
-		chatimg = chatimg || "twitch.png";
-	}
+	chatimg = chatimg || (runtime.getRuntimeUrl ? runtime.getRuntimeUrl("twitch.png") : "twitch.png");
 
 	var donationNode = $(element).find("[class*='donation'], [class*='tip'], [data-tip], [data-gifted], [class*='train']");
 	if (donationNode.length && !chatdonation) {
@@ -292,7 +288,7 @@ runtime.loadSettings(properties, function(item){
     channel = item.streamID;
   } else {
 	runtime.persistStreamId(channel);
-	chrome.runtime.lastError;
+	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
   }
 
   ensureLocalBridge();
