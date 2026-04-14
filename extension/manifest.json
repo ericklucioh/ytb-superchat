@@ -1,11 +1,11 @@
 {
-  "name": "Chat Overlay for Youtube, Twitch & more",
-  "description": "Add live chat from Youtube, Twitch, Restream and more to your OBS as a browser overlay. Feature requests accepted!",
+  "name": "Portal do Streamer - Eloh",
+  "description": "Captura chats ao vivo de plataformas como YouTube, Twitch e Kick para o portal do Streamer: ytb.ericklucioh.com",
   "manifest_version": 3,
-  "version": "2.0.0",
+  "version": "0.0.1",
   "homepage_url": "https://ytb.ericklucioh.com/",
   "icons": {
-    "128": "icons/icon-128.png"
+    "128": "icons/logoWhite.png"
   },
   "permissions": [
     "storage"
