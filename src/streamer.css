@@ -36,6 +36,9 @@ body {
 
 body {
   font-family: var(--font);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  font-kerning: normal;
   color: var(--text);
   background:
     radial-gradient(circle at top left, rgba(145, 70, 255, 0.16), transparent 34%),
@@ -243,7 +246,6 @@ body {
   padding: 8px 10px;
   font-size: 0.78rem;
   font-family: var(--font-ui);
-  font-synthesis: none;
 }
 
 .filter-button.is-active {
@@ -260,7 +262,6 @@ body {
   color: var(--text);
   font: inherit;
   font-family: var(--font-ui);
-  font-synthesis: none;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
@@ -332,7 +333,6 @@ body {
   color: var(--text);
   font: inherit;
   font-family: var(--font-ui);
-  font-synthesis: none;
   font-weight: 700;
   cursor: pointer;
   font-size: 0.84rem;
@@ -449,7 +449,6 @@ body {
   color: var(--text);
   font: inherit;
   font-family: var(--font-ui);
-  font-synthesis: none;
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;

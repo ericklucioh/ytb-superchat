@@ -93,7 +93,7 @@ function prepMessage(ele){
  
   if (!chatimg){
 	  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-		  chatimg = chrome.runtime.getURL("polleverywhere.png");
+		  chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("polleverywhere.png") : "polleverywhere.png";
 	  } else {
 		  chatimg = "polleverywhere.png";
 	  }

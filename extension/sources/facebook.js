@@ -187,7 +187,7 @@ function prepMessage(ele){
 			});
 		} else {
 			if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-				data.chatimg = chrome.runtime.getURL("facebook.png");
+				data.chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("facebook.png") : "facebook.png";
 			} else {
 				data.chatimg = "facebook.png";
 			}

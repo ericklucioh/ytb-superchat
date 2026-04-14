@@ -106,7 +106,7 @@ function prepMessage(ele){
   
   if (!chatimg){
 	  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-		  chatimg = chrome.runtime.getURL("youtube.png");
+		  chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("youtube.png") : "youtube.png";
 	  } else {
 		  chatimg = "youtube.png";
 	  }

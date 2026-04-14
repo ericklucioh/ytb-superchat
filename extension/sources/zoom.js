@@ -167,7 +167,7 @@ function prepMessage(ele){
 					});
 			  } else {
 					if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-						data.chatimg = chrome.runtime.getURL("zoom.png");
+						data.chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("zoom.png") : "zoom.png";
 					} else {
 						data.chatimg = "zoom.png";
 					}
@@ -181,7 +181,7 @@ function prepMessage(ele){
 			});
 		} else {
 			if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-				data.chatimg = chrome.runtime.getURL("zoom.png");
+				data.chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("zoom.png") : "zoom.png";
 			} else {
 				data.chatimg = "zoom.png";
 			}

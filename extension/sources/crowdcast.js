@@ -151,7 +151,7 @@ function prepMessage(ele){
 			});
 		} else {
 			if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-				data.chatimg = chrome.runtime.getURL("unknown.png");
+				data.chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("unknown.png") : "unknown.png";
 			} else {
 				data.chatimg = "unknown.png";
 			}

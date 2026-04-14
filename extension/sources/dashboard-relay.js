@@ -72,7 +72,9 @@
 
       const script = document.createElement("script");
       script.id = "overlay-dashboard-page-shim";
-      script.src = chrome.runtime.getURL("sources/dashboard-page-shim.js");
+      script.src = runtime.getRuntimeUrl
+        ? runtime.getRuntimeUrl("sources/dashboard-page-shim.js")
+        : "sources/dashboard-page-shim.js";
       script.async = false;
       script.onload = () => {
         try {

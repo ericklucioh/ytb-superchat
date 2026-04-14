@@ -580,7 +580,7 @@
 			channel = item.streamID;
 		} else {
 			runtime.persistStreamId(channel);
-			chrome.runtime.lastError;
+			runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 		}
 
 		showOnlyFirstName = !!item.showOnlyFirstName;

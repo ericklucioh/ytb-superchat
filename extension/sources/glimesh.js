@@ -93,7 +93,7 @@ $("body").unbind("click").on("click", ".bubble", function () { //  #chat .chat-m
   var chatimg = $(this).find('.avatar-ring > img').attr("src");
   if (!chatimg){
 	  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-		  chatimg = chrome.runtime.getURL("glimesh.png");
+		  chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("glimesh.png") : "glimesh.png";
 	  } else {
 		  chatimg = "glimesh.png";
 	  }
@@ -195,7 +195,7 @@ $(function(){
   var chatmessage = "Sample chat message!";
   var chatimg;
   if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-	  chatimg = chrome.runtime.getURL("glimesh.png");
+	  chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("glimesh.png") : "glimesh.png";
   } else {
 	  chatimg = "glimesh.png";
   }

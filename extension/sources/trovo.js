@@ -94,7 +94,7 @@ $("body").unbind("click").on("click", ".message-user", function () { //  #chat .
   } catch(e){}
   if (!chatimg){
 	  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-		  chatimg = chrome.runtime.getURL("trovo.png");
+		  chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("trovo.png") : "trovo.png";
 	  } else {
 		  chatimg = "trovo.png";
 	  }
@@ -196,7 +196,7 @@ $(function(){
   var chatmessage = "Sample chat message!";
   var chatimg;
   if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL){
-	  chatimg = chrome.runtime.getURL("trovo.png");
+	  chatimg = runtime.getRuntimeUrl ? runtime.getRuntimeUrl("trovo.png") : "trovo.png";
   } else {
 	  chatimg = "trovo.png";
   }
