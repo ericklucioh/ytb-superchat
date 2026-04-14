@@ -79,12 +79,45 @@ function createExtensionZip(sourceDir, destinationZip) {
     return;
   }
 
+  const pythonCandidates = ['python3', 'python'];
+  const pythonScript = [
+    'import os',
+    'import sys',
+    'import zipfile',
+    '',
+    'source_dir = sys.argv[1]',
+    'destination_zip = sys.argv[2]',
+    '',
+    'with zipfile.ZipFile(destination_zip, "w", compression=zipfile.ZIP_DEFLATED) as archive:',
+    '    for root, _, files in os.walk(source_dir):',
+    '        for file_name in files:',
+    '            file_path = os.path.join(root, file_name)',
+    '            arcname = os.path.relpath(file_path, source_dir)',
+    '            archive.write(file_path, arcname)'
+  ].join('\n');
+
+  for (const python of pythonCandidates) {
+    const result = spawnSync(python, ['-c', pythonScript, sourceDir, destinationZip], {
+      stdio: 'inherit'
+    });
+
+    if (result.error?.code === 'ENOENT') {
+      continue;
+    }
+
+    if (result.status === 0) {
+      return;
+    }
+
+    throw new Error(`Failed to create Chrome extension zip with ${python}.`);
+  }
+
   const result = spawnSync('zip', ['-r', destinationZip, '.'], {
     cwd: sourceDir,
     stdio: 'inherit'
   });
 
   if (result.status !== 0) {
-    throw new Error('Failed to create Chrome extension zip with zip.');
+    throw new Error('Failed to create Chrome extension zip with zip or python.');
   }
 }

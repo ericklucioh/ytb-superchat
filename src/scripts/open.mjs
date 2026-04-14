@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -22,7 +22,7 @@ if (process.platform === "win32") {
 } else if (process.platform === "darwin") {
   spawn("open", [url], { detached: true, stdio: "ignore" }).unref();
 } else {
-  spawn("xdg-open", [url], { detached: true, stdio: "ignore" }).unref();
+  openUrlOnLinux(url);
 }
 
 function getPort() {
@@ -53,4 +53,22 @@ function readDotEnvValue(key) {
   }
 
   return "";
+}
+
+function openUrlOnLinux(url) {
+  const commands = [
+    ["xdg-open", [url]],
+    ["gio", ["open", url]],
+    ["gnome-open", [url]],
+    ["kde-open", [url]]
+  ];
+
+  for (const [command, args] of commands) {
+    const result = spawnSync(command, args, { stdio: "ignore", detached: true });
+    if (!result.error) {
+      return;
+    }
+  }
+
+  console.error(`Could not open the browser automatically. Open this URL manually: ${url}`);
 }
