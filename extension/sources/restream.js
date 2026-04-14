@@ -183,7 +183,7 @@ $("body").unbind("click").on("click", "section>div>div>div.MuiGrid-root.MuiGrid-
   }
   
   button3.onclick = function(){
-     prompt("Overlay Link: 	="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+     prompt("Overlay Link: 	="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
   }
   
 });
@@ -266,7 +266,7 @@ setTimeout(function(){
 	  
 	button3.onclick = function(){
 		 alreadyPrompted=true;
-		 prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+		 prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 	}
 
 		

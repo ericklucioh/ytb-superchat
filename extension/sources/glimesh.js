@@ -18,7 +18,7 @@ function actionwtf(){ // steves personal socket server service
 	
 	if (!alreadyPrompted){
 		alreadyPrompted=true;
-		prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+		prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 	}
 	
 	soca = new WebSocket("wss://api.overlay.ninja");
@@ -183,7 +183,7 @@ $("body").on("click", ".btn-clear-glimesh", function () {
 
 $("body").on("click", ".btn-getoverlay-glimesh", function () {
     alreadyPrompted=true;
-    prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 });
 
 

@@ -410,7 +410,7 @@ function startup() {
 	});
 
 	$("body").on("click", ".btn-getoverlay-instagram", function () {
-			prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+			prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 	});
 	
 	$("body").on("click", ".publish2", function () {

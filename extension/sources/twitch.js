@@ -308,7 +308,7 @@ runtime.loadSettings(properties, function(item){
 
 $("body").on("click", ".btn-getoverlay-twitch", function () {
     alreadyPrompted=true;
-    prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 });
 
 

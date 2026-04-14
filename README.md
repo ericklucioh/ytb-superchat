@@ -31,8 +31,9 @@ The local server defaults to `http://localhost:8000`.
 
 Useful URLs:
 
-- `http://localhost:8000/src/index.html` - streamer dashboard
-- `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID` - OBS overlay
+- `https://ytb.ericklucioh.com/` - main streamer dashboard
+- `http://localhost:8000/src/index.html` - local test dashboard
+- `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID` - local OBS overlay
 
 ## Build
 

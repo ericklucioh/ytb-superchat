@@ -43,6 +43,7 @@ The local server defaults to port `8000`.
 
 Useful URLs:
 
+- `https://ytb.ericklucioh.com/`
 - `http://localhost:8000/src/index.html`
 - `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID`
 

@@ -246,7 +246,7 @@ function startup() {
 					
 					newNode.querySelector(".btn-push-facebook").onclick = function(){prepMessage(this.parentNode.parentNode.parentNode.parentNode.parentNode);};
 					newNode.querySelector(".btn-getoverlay-facebook").onclick = function(){
-						prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 					};
 					newNode.querySelector(".btn-clear-facebook").onclick = function(){pushMessage(false);}
 				}

@@ -241,7 +241,7 @@ $("body").on("click", ".btn-clear-twitter", function () {
 });
 
 $("body").on("click", ".btn-getoverlay-twitter", function () {
-    prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 });
 
 
@@ -366,7 +366,6 @@ setTimeout(function(){preStartup();},1000);
 var preStartupInteval = setInterval(function(){preStartup();},5000);
 
 })();
-
 
 
 

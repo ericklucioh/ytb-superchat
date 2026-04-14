@@ -177,7 +177,7 @@ function startup() {
 						main[j].querySelector(".btn-getoverlay-pollev").onclick = function(event){
 							event.preventDefault();
 							event.stopPropagation();
-							prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+							prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 							return false;
 						};
 						

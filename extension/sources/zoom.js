@@ -261,7 +261,7 @@ function detectPoll(){
 		};
 		
 		main.querySelector(".btn-getoverlay-zoom").onclick = function(){
-			prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+			prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 		};
 		
 		main.querySelector(".btn-clear-zoom").onclick = function(){
@@ -302,7 +302,7 @@ function startup() {
 					};
 					
 					main[j].querySelector(".btn-getoverlay-zoom").onclick = function(){
-						prompt("Overlay Link: https://chat.overlay.ninja?session="+channel+"\nAdd as a browser source; set height to 250px", "https://chat.overlay.ninja?session="+channel);
+						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 					};
 					
 					main[j].querySelector(".btn-clear-zoom").onclick = function(){
