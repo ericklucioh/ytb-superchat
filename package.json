@@ -9,6 +9,11 @@
     "build": "node src/scripts/build.mjs",
     "open:site": "node src/scripts/open.mjs site",
     "open:streamer": "node src/scripts/open.mjs site",
-    "open:overlay": "node src/scripts/open.mjs overlay"
+    "open:overlay": "node src/scripts/open.mjs overlay",
+    "dev:linux": "sh src/scripts/dev.sh",
+    "serve:linux": "sh src/scripts/serve.sh",
+    "open:site:linux": "sh src/scripts/open-site.sh",
+    "open:streamer:linux": "sh src/scripts/open-streamer.sh",
+    "open:overlay:linux": "sh src/scripts/open-overlay.sh"
   }
 }

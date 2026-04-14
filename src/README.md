@@ -54,9 +54,11 @@ npm run serve
 
 You can also set a custom port:
 
-```powershell
-$env:PORT=9000; npm run serve
+```bash
+PORT=9000 npm run serve
 ```
+
+Linux shell wrappers are also available under `src/scripts/*.sh` if you want to run the helpers directly.
 
 ## Build
 
