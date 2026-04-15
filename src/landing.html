@@ -1,165 +1,762 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YTB Superchat</title>
-  <meta name="description" content="Landing page do YTB Superchat. O portal principal fica em /portal.">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal do Streamer - Eloh</title>
+  <link rel="icon" type="image/svg+xml" href="icons/logoWhite.png">
+  <meta
+    name="description"
+    content="Centralize chats ao vivo de YouTube, Twitch e Kick em uma única interface com suporte a overlays para OBS."
+  />
   <style>
     :root {
       color-scheme: dark;
       --bg: #07111f;
-      --bg-2: #0c1d33;
-      --panel: rgba(11, 20, 34, 0.86);
-      --panel-border: rgba(151, 181, 224, 0.18);
-      --text: #eff5ff;
-      --muted: #aac0de;
-      --accent: #8bd0ff;
-      --accent-strong: #d9f1ff;
-      --shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+      --bg-2: #0d1b31;
+      --panel: rgba(10, 18, 31, 0.82);
+      --panel-2: rgba(255, 255, 255, 0.04);
+      --border: rgba(146, 184, 232, 0.18);
+      --text: #eff6ff;
+      --muted: #a9bfdc;
+      --accent: #7fd1ff;
+      --accent-2: #dff5ff;
+      --success: #7fffd4;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
+      --radius: 28px;
+      --max: 1180px;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html,
-    body {
-      min-height: 100%;
-      margin: 0;
+    html {
+      scroll-behavior: smooth;
     }
 
     body {
+      margin: 0;
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 32px;
+      font: 400 16px/1.6 Inter, Segoe UI, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--text);
-      font: 400 16px/1.5 "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(139, 208, 255, 0.2), transparent 28%),
-        radial-gradient(circle at bottom right, rgba(63, 108, 179, 0.22), transparent 26%),
+        radial-gradient(circle at top left, rgba(127, 209, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(70, 105, 173, 0.24), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(43, 79, 140, 0.24), transparent 28%),
         linear-gradient(160deg, var(--bg), var(--bg-2));
     }
 
-    .shell {
-      width: min(760px, 100%);
-      padding: 40px;
-      border: 1px solid var(--panel-border);
-      border-radius: 28px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
+    a {
+      color: inherit;
+    }
+
+    .container {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(7, 17, 31, 0.55);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-badge {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      color: #07111f;
+      font-weight: 900;
+      box-shadow: 0 12px 30px rgba(127, 209, 255, 0.25);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+    }
+
+    .cta,
+    .ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      padding: 0 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      transition: transform 140ms ease, opacity 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .cta:hover,
+    .ghost:hover {
+      transform: translateY(-1px);
+    }
+
+    .cta {
+      color: #07111f;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      box-shadow: 0 16px 34px rgba(127, 209, 255, 0.22);
+    }
+
+    .ghost {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+    }
+
+    .hero {
+      padding: 72px 0 38px;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 28px;
+      align-items: center;
     }
 
     .eyebrow {
-      margin: 0 0 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.24em;
-      font-size: 0.77rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 18px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(127, 209, 255, 0.08);
+      border: 1px solid rgba(127, 209, 255, 0.16);
       color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.74rem;
+      font-weight: 700;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(2.4rem, 5vw, 4.6rem);
-      line-height: 0.95;
-      letter-spacing: -0.05em;
+      font-size: clamp(2.9rem, 6vw, 5.4rem);
+      line-height: 0.93;
+      letter-spacing: -0.06em;
+      max-width: 10ch;
     }
 
-    .lead {
+    .hero p.lead {
+      margin: 20px 0 0;
       max-width: 58ch;
-      margin: 18px 0 0;
       color: var(--muted);
       font-size: 1.08rem;
     }
 
-    .actions {
+    .hero-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 14px;
-      margin-top: 28px;
+      margin-top: 30px;
     }
 
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      padding: 0 18px;
-      border-radius: 999px;
-      text-decoration: none;
-      font-weight: 700;
-      transition: transform 120ms ease, background 120ms ease, color 120ms ease, border-color 120ms ease;
-    }
-
-    .button:hover {
-      transform: translateY(-1px);
-    }
-
-    .button-primary {
-      color: #07111f;
-      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
-    }
-
-    .button-secondary {
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.04);
-    }
-
-    .meta {
-      margin: 28px 0 0;
-      color: rgba(239, 245, 255, 0.72);
+    .hero-note {
+      margin-top: 16px;
+      color: rgba(239, 246, 255, 0.7);
       font-size: 0.95rem;
     }
 
-    .meta a {
-      color: var(--accent-strong);
-      text-decoration: none;
+    .panel {
+      position: relative;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      border-radius: var(--radius);
     }
 
-    .meta a:hover {
-      text-decoration: underline;
+    .hero-card {
+      padding: 24px;
+      overflow: hidden;
     }
 
-    @media (max-width: 640px) {
-      body {
-        padding: 18px;
+    .glow {
+      position: absolute;
+      inset: auto -20% -25% auto;
+      width: 240px;
+      height: 240px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(127, 209, 255, 0.22), transparent 62%);
+      pointer-events: none;
+    }
+
+    .screen {
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(18, 31, 52, 0.95), rgba(7, 15, 27, 0.98));
+      overflow: hidden;
+    }
+
+    .screen-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dots span {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .screen-body {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .chat-row,
+    .overlay-row,
+    .stat-row {
+      display: grid;
+      gap: 10px;
+    }
+
+    .chat-bubble,
+    .overlay-box,
+    .mini-card {
+      border-radius: 18px;
+      padding: 14px 14px;
+      background: var(--panel-2);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .chat-bubble strong,
+    .overlay-box strong,
+    .mini-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .tag {
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    section {
+      padding: 28px 0;
+    }
+
+    .section-head {
+      max-width: 700px;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(2rem, 3.3vw, 3rem);
+      letter-spacing: -0.05em;
+      line-height: 1.02;
+    }
+
+    .section-head p {
+      margin: 12px 0 0;
+      color: var(--muted);
+    }
+
+    .grid-3,
+    .grid-4,
+    .steps,
+    .faq,
+    .footer-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .steps {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 22px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .card h3,
+    .card h4 {
+      margin: 0 0 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+    }
+
+    .icon {
+      width: 46px;
+      height: 46px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, rgba(223, 245, 255, 0.95), rgba(127, 209, 255, 0.78));
+      color: #07111f;
+      font-weight: 800;
+    }
+
+    .list {
+      margin: 14px 0 0;
+      padding-left: 18px;
+    }
+
+    .step-num {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      background: rgba(127, 209, 255, 0.12);
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .highlight {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .callout {
+      padding: 28px;
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      background:
+        radial-gradient(circle at top right, rgba(127, 209, 255, 0.18), transparent 26%),
+        rgba(10, 18, 31, 0.88);
+      box-shadow: var(--shadow);
+    }
+
+    .callout h3 {
+      margin: 0 0 10px;
+      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+      letter-spacing: -0.04em;
+    }
+
+    .callout p {
+      color: var(--muted);
+    }
+
+    .footer {
+      padding: 34px 0 54px;
+      color: rgba(239, 246, 255, 0.72);
+    }
+
+    .footer-grid {
+      grid-template-columns: 1.2fr 0.8fr;
+      align-items: start;
+      gap: 20px;
+    }
+
+    .footer small {
+      display: block;
+      margin-top: 14px;
+      color: rgba(239, 246, 255, 0.52);
+    }
+
+    code {
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      font-size: 0.92em;
+    }
+
+    @media (max-width: 1080px) {
+      .hero-grid,
+      .highlight,
+      .footer-grid,
+      .grid-4,
+      .steps {
+        grid-template-columns: 1fr 1fr;
       }
 
-      .shell {
-        padding: 28px 22px;
-        border-radius: 22px;
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .nav-inner,
+      .nav-links,
+      .hero-actions,
+      .hero-grid,
+      .highlight,
+      .grid-4,
+      .steps,
+      .footer-grid {
+        grid-template-columns: 1fr;
       }
 
-      .actions {
+      .nav-inner {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 38px;
+      }
+
+      .hero-actions {
+        display: flex;
         flex-direction: column;
       }
 
-      .button {
+      .cta,
+      .ghost {
         width: 100%;
+      }
+
+      .container {
+        width: min(calc(100% - 22px), var(--max));
+      }
+
+      .card,
+      .callout,
+      .hero-card {
+        padding: 20px;
       }
     }
   </style>
 </head>
 <body>
-  <main class="shell">
-    <p class="eyebrow">YTB Superchat</p>
-    <h1>Home livre, portal separado.</h1>
-    <p class="lead">
-      A raiz do site fica livre para landing page, documentacao ou campanha.
-      O dashboard atual continua acessivel em <strong>/portal</strong>.
-    </p>
-    <div class="actions">
-      <a class="button button-primary" href="/portal">Abrir portal</a>
-      <a class="button button-secondary" href="/src/index.html">Abrir compatibilidade antiga</a>
+  <header class="nav">
+    <div class="container nav-inner">
+      <a class="brand" href="#top">
+        <span class="brand-badge">E</span>
+        <span>Portal do Streamer - Eloh</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#privacidade">Privacidade</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="cta" href="/portal">Abrir portal</a>
     </div>
-    <p class="meta">
-      O fluxo do OBS e da extensao continua separado. Se voce estiver desenvolvendo localmente,
-      use <a href="/portal">/portal</a> para o painel e mantenha <a href="/src/index.html">/src/index.html</a>
-      apenas como alias temporario.
-    </p>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Extensão + painel web + overlay</p>
+          <h1>Todos os chats da live em um só lugar.</h1>
+          <p class="lead">
+            Centralize mensagens de <strong>YouTube</strong>, <strong>Twitch</strong> e <strong>Kick</strong>
+            em tempo real, com uma interface pensada para streamers que usam overlays no OBS e precisam de velocidade,
+            clareza e controle local.
+          </p>
+          <div class="hero-actions">
+            <a class="cta" href="/portal">Entrar no portal</a>
+            <a class="ghost" href="#como-funciona">Ver como funciona</a>
+          </div>
+          <p class="hero-note">
+            O painel principal continua disponível em <code>/portal</code>. A raiz do site pode ser usada para apresentação,
+            campanha ou documentação do projeto.
+          </p>
+          <div class="tag-row">
+            <span class="tag">Tempo real</span>
+            <span class="tag">Processamento local</span>
+            <span class="tag">Compatível com OBS</span>
+            <span class="tag">Sem API externa</span>
+          </div>
+        </div>
+
+        <aside class="panel hero-card" aria-label="Prévia visual do painel">
+          <div class="glow"></div>
+          <div class="screen">
+            <div class="screen-top">
+              <div class="dots"><span></span><span></span><span></span></div>
+              <span>Painel unificado de chats</span>
+            </div>
+            <div class="screen-body">
+              <div class="chat-row">
+                <div class="chat-bubble">
+                  <strong>YouTube • @user123</strong>
+                  Curti demais o overlay novo da live 👏
+                </div>
+                <div class="chat-bubble">
+                  <strong>Twitch • chatmaster</strong>
+                  Dá pra destacar essa mensagem no OBS?
+                </div>
+                <div class="chat-bubble">
+                  <strong>Kick • viewer_live</strong>
+                  Tudo aparecendo em um painel só. Muito bom.
+                </div>
+              </div>
+              <div class="overlay-row">
+                <div class="overlay-box">
+                  <strong>Overlay selecionado</strong>
+                  Mensagem pronta para destaque em cena.
+                </div>
+              </div>
+              <div class="stat-row">
+                <div class="mini-card">
+                  <strong>Captura local</strong>
+                  Extensão lê o DOM do chat popout e sincroniza no navegador.
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="recursos">
+      <div class="container">
+        <div class="section-head">
+          <h2>Feito para quem transmite e precisa acompanhar tudo.</h2>
+          <p>
+            O Eloh foi pensado para reduzir distração, reunir canais de conversa em um único lugar e facilitar o uso de mensagens em overlays durante a transmissão.
+          </p>
+        </div>
+        <div class="grid-4">
+          <article class="card">
+            <div class="icon">💬</div>
+            <h3>Chats centralizados</h3>
+            <p>Reúna mensagens de diferentes plataformas em uma interface única e fácil de monitorar.</p>
+          </article>
+          <article class="card">
+            <div class="icon">⚡</div>
+            <h3>Resposta imediata</h3>
+            <p>As mensagens são capturadas em tempo real pela extensão, sem depender de APIs externas.</p>
+          </article>
+          <article class="card">
+            <div class="icon">🎛️</div>
+            <h3>Controle no painel</h3>
+            <p>Selecione mensagens, organize visualização e prepare conteúdo para destaque ao vivo.</p>
+          </article>
+          <article class="card">
+            <div class="icon">🎥</div>
+            <h3>Pronto para OBS</h3>
+            <p>Use as mensagens capturadas em overlays e cenas com fluxo mais simples para a transmissão.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="como-funciona">
+      <div class="container">
+        <div class="section-head">
+          <h2>Como funciona na prática</h2>
+          <p>
+            O processo foi desenhado para ser local, leve e direto. Você abre os chats, a extensão captura, e o painel exibe tudo centralizado.
+          </p>
+        </div>
+        <div class="steps">
+          <article class="card">
+            <span class="step-num">1</span>
+            <h4>Abra os chats popout</h4>
+            <p>YouTube, Twitch e Kick são usados como fonte das mensagens em tempo real.</p>
+          </article>
+          <article class="card">
+            <span class="step-num">2</span>
+            <h4>A extensão lê o chat</h4>
+            <p>Os content scripts acompanham o DOM das páginas suportadas e identificam novas mensagens.</p>
+          </article>
+          <article class="card">
+            <span class="step-num">3</span>
+            <h4>Dados ficam no navegador</h4>
+            <p>As mensagens são processadas e armazenadas localmente usando o storage da extensão.</p>
+          </article>
+          <article class="card">
+            <span class="step-num">4</span>
+            <h4>O painel unifica tudo</h4>
+            <p>A interface web consulta os dados locais e mostra os chats em uma única visualização.</p>
+          </article>
+          <article class="card">
+            <span class="step-num">5</span>
+            <h4>Gere overlays</h4>
+            <p>Escolha mensagens específicas e leve esse conteúdo para o OBS ou ferramentas similares.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container highlight">
+        <div class="callout">
+          <h3>Sem intermediários. Sem servidor obrigatório.</h3>
+          <p>
+            A proposta do projeto é manter o fluxo o mais direto possível: a extensão captura, o navegador processa e o painel consome os dados localmente.
+          </p>
+          <p>
+            Isso reduz complexidade, evita dependência de serviços externos e mantém a operação mais leve para o streamer.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Estrutura do projeto</h3>
+          <ul class="list">
+            <li><strong>content_scripts</strong> → captura dos chats nas plataformas</li>
+            <li><strong>service_worker</strong> → controle da extensão</li>
+            <li><strong>storage</strong> → comunicação entre extensão e interface</li>
+            <li><strong>dashboard</strong> → exibição, seleção e controle dos chats</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="privacidade">
+      <div class="container">
+        <div class="section-head">
+          <h2>Privacidade e processamento local</h2>
+          <p>
+            O projeto foi desenhado para priorizar simplicidade e controle do usuário sobre os dados acessados durante a transmissão.
+          </p>
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <h3>Nada é enviado para fora</h3>
+            <p>Nenhum dado precisa ser transmitido para servidores externos para que o painel funcione.</p>
+          </article>
+          <article class="card">
+            <h3>Somente mensagens públicas</h3>
+            <p>A extensão atua em páginas de chat suportadas e lida apenas com o conteúdo público exibido nelas.</p>
+          </article>
+          <article class="card">
+            <h3>Sem coleta pessoal</h3>
+            <p>O foco é exibir mensagens ao vivo, sem coletar informações pessoais privadas do usuário.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="container">
+        <div class="section-head">
+          <h2>Tecnologias utilizadas</h2>
+          <p>Stack simples, direta e focada no navegador.</p>
+        </div>
+        <div class="grid-4">
+          <article class="card"><h3>Manifest V3</h3><p>Base moderna para a extensão Chrome.</p></article>
+          <article class="card"><h3>JavaScript</h3><p>Lógica de captura, sincronização e interface.</p></article>
+          <article class="card"><h3>Chrome Storage API</h3><p>Armazenamento local temporário e comunicação interna.</p></article>
+          <article class="card"><h3>Dashboard web</h3><p>Painel visual para leitura e controle dos chats.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="container">
+        <div class="section-head">
+          <h2>Pontos importantes antes de usar</h2>
+          <p>Algumas limitações fazem parte da proposta técnica atual do projeto.</p>
+        </div>
+        <div class="faq grid-3">
+          <article class="card">
+            <h3>Quais plataformas são suportadas?</h3>
+            <p>O fluxo descrito hoje considera YouTube, Twitch e Kick por meio dos chats popout.</p>
+          </article>
+          <article class="card">
+            <h3>Pode quebrar com mudanças de layout?</h3>
+            <p>Sim. Como a captura depende da estrutura do DOM das plataformas, alterações visuais podem exigir ajustes.</p>
+          </article>
+          <article class="card">
+            <h3>Usa API oficial?</h3>
+            <p>Não. A proposta é operar localmente, sem depender das APIs oficiais das plataformas para leitura do chat.</p>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="card">
+        <h3>Pronto para centralizar sua live?</h3>
+        <p>
+          Use a raiz do site como apresentação do projeto e mantenha o dashboard em <code>/portal</code>.
+          Para suporte ou feedback, entre em contato por <strong>ericklucioh@gmail.com</strong>.
+        </p>
+        <div class="hero-actions">
+          <a class="cta" href="/portal">Abrir portal</a>
+          <a class="ghost" href="/src/index.html">Abrir alias antigo</a>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Licença</h3>
+        <p>
+          Este projeto é distribuído para uso pessoal e educacional. Para uso comercial ou redistribuição, entre em contato com o autor.
+        </p>
+        <small>Portal do Streamer - Eloh</small>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
