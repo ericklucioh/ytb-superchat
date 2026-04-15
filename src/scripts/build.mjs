@@ -35,6 +35,7 @@ const excludedNames = new Set([
   'mock.json',
   'README.md',
   'REQUISITOS.md',
+  'src',
   '.next',
   'node_modules',
   'out'
@@ -53,16 +54,38 @@ for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
   fs.cpSync(source, destination, { recursive: true, force: true });
 }
 
-fs.copyFileSync(path.join(rootDir, 'src', 'index.html'), path.join(outDir, 'index.html'));
-fs.copyFileSync(path.join(rootDir, 'src', 'streamer.css'), path.join(outDir, 'streamer.css'));
-fs.copyFileSync(path.join(rootDir, 'src', 'logoWhite.svg'), path.join(outDir, 'logoWhite.svg'));
-fs.copyFileSync(path.join(rootDir, 'src', 'youtube.png'), path.join(outDir, 'youtube.png'));
-fs.copyFileSync(path.join(rootDir, 'src', 'twitch.png'), path.join(outDir, 'twitch.png'));
-fs.cpSync(path.join(rootDir, 'src', 'site'), path.join(outDir, 'site'), { recursive: true, force: true });
+fs.copyFileSync(path.join(rootDir, 'src', 'landing.html'), path.join(outDir, 'index.html'));
+fs.cpSync(path.join(rootDir, 'src'), path.join(outDir, 'portal'), { recursive: true, force: true });
+writeRedirectPage(path.join(outDir, 'src', 'index.html'), '/portal');
 
 createExtensionZip(extensionDir, zipPath);
 console.log(`Built static site in ${path.relative(rootDir, outDir)}`);
 console.log(`Built Chrome extension zip at ${path.relative(rootDir, zipPath)}`);
+
+function writeRedirectPage(filePath, location) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(
+    filePath,
+    [
+      '<!DOCTYPE html>',
+      '<html lang="pt-BR">',
+      '<head>',
+      '  <meta charset="utf-8">',
+      '  <meta http-equiv="refresh" content="0; url=' + location + '">',
+      '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+      '  <title>Redirecionando...</title>',
+      '  <script>',
+      '    window.location.replace(' + JSON.stringify(location) + ');',
+      '  </script>',
+      '</head>',
+      '<body>',
+      '  <p>Redirecting to <a href="' + location + '">' + location + '</a>...</p>',
+      '</body>',
+      '</html>',
+      ''
+    ].join('\n')
+  );
+}
 
 function createExtensionZip(sourceDir, destinationZip) {
   fs.rmSync(destinationZip, { force: true });

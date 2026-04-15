@@ -15,8 +15,10 @@ $serverArgs = @(
 Start-Process -FilePath "powershell" -ArgumentList $serverArgs | Out-Null
 Start-Sleep -Seconds 2
 
-$siteUrl = "http://localhost:$Port/src/index.html"
-Start-Process $siteUrl
+Write-Host "Home: http://localhost:$Port/"
+Write-Host "Portal: http://localhost:$Port/portal"
+
+Start-Process "http://localhost:$Port/portal"
 
 if ($Session) {
   $overlayUrl = "http://localhost:$Port/extension/index.html?session=$Session"

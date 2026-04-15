@@ -4,6 +4,7 @@ This folder contains the streamer dashboard and the shared site code used by the
 
 ## What lives here
 
+- `landing.html` - the public landing page for `/`
 - `index.html` - the main dashboard page
 - `streamer.css` - styling for the dashboard UI
 - `logoWhite.svg`, `youtube.png`, `twitch.png` - local assets used by the site
@@ -44,7 +45,9 @@ The local server defaults to port `8000`.
 Useful URLs:
 
 - `https://ytb.ericklucioh.com/`
-- `http://localhost:8000/src/index.html`
+- `https://ytb.ericklucioh.com/portal`
+- `http://localhost:8000/`
+- `http://localhost:8000/portal`
 - `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID`
 
 If you want to serve manually:
@@ -83,3 +86,4 @@ The dashboard accepts a session in a few ways:
 - Superchat conversion is used internally for ordering and totals in the dashboard.
 - The OBS overlay keeps the original currency display.
 - The site does not capture chat on its own. It consumes events coming from the Chrome extension bridge, and still uses the OBS overlay socket only for the selection path.
+- `/src/index.html` is kept as a temporary redirect to `/portal` for compatibility.

@@ -31,8 +31,10 @@ The local server defaults to `http://localhost:8000`.
 
 Useful URLs:
 
-- `https://ytb.ericklucioh.com/` - main streamer dashboard
-- `http://localhost:8000/src/index.html` - local test dashboard
+- `https://ytb.ericklucioh.com/` - landing page
+- `https://ytb.ericklucioh.com/portal` - main streamer dashboard
+- `http://localhost:8000/` - local landing page
+- `http://localhost:8000/portal` - local dashboard
 - `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID` - local OBS overlay
 
 ## Build
@@ -64,7 +66,8 @@ Load `extension/` unpacked in Chrome while developing:
 
 ## Main files
 
-- [`src/index.html`](src/index.html) - streamer dashboard entry point
+- [`src/landing.html`](src/landing.html) - landing page for the site root
+- [`src/index.html`](src/index.html) - streamer dashboard entry point used by `/portal`
 - [`src/site/streamer-app.js`](src/site/streamer-app.js) - dashboard bootstrap and local bridge flow
 - [`src/site/streamer-store.js`](src/site/streamer-store.js) - persisted state and normalization
 - [`src/site/streamer-view.js`](src/site/streamer-view.js) - UI rendering helpers

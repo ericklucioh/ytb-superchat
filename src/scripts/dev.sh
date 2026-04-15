@@ -17,6 +17,9 @@ trap cleanup EXIT INT TERM
 sleep 2
 node "$SCRIPT_DIR/open.mjs" site
 
+printf 'Home: http://localhost:%s/\n' "$PORT"
+printf 'Portal: http://localhost:%s/portal\n' "$PORT"
+
 if [ -n "$SESSION" ]; then
   printf 'Overlay: http://localhost:%s/extension/index.html?session=%s\n' "$PORT" "$SESSION"
 fi

@@ -1,10 +1,11 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import url from "node:url";
 
 const rootDir = process.cwd();
 const port = getPort();
+const landingFile = path.join(rootDir, "src", "landing.html");
+const portalRoot = path.join(rootDir, "src");
 
 const mimeTypes = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -22,6 +23,27 @@ const mimeTypes = new Map([
 const server = http.createServer((req, res) => {
   const requestUrl = new URL(req.url || "/", "http://localhost");
   const pathname = decodeURIComponent(requestUrl.pathname);
+
+  if (pathname === "/src" || pathname === "/src/" || pathname === "/src/index.html") {
+    redirect(res, "/portal");
+    return;
+  }
+
+  if (pathname === "/portal" || pathname === "/portal/") {
+    serveFile(path.join(portalRoot, "index.html"), res);
+    return;
+  }
+
+  if (pathname.startsWith("/portal/")) {
+    const relativePath = pathname.slice("/portal/".length);
+    servePortalFile(relativePath, res);
+    return;
+  }
+
+  if (pathname === "/" || pathname === "/index.html") {
+    serveFile(landingFile, res);
+    return;
+  }
 
   if (pathname === "/chrome-extension.zip") {
     const zipPath = path.join(rootDir, "out", "chrome-extension.zip");
@@ -44,11 +66,6 @@ const server = http.createServer((req, res) => {
       return;
     }
 
-    if (pathname === "/" || pathname === "/index.html") {
-      serveFile(path.join(rootDir, "src", "index.html"), res);
-      return;
-    }
-
     res.statusCode = 404;
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.end("Not found");
@@ -57,6 +74,8 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => {
   console.log(`Serving ${rootDir}`);
+  console.log(`http://localhost:${port}/`);
+  console.log(`http://localhost:${port}/portal`);
   console.log(`http://localhost:${port}/src/index.html`);
   console.log(`http://localhost:${port}/extension/index.html?session=YOUR_SESSION_ID`);
 });
@@ -103,6 +122,27 @@ function resolvePath(pathname) {
   const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
   const normalized = path.normalize(relative);
   return path.join(rootDir, normalized);
+}
+
+function servePortalFile(relativePath, res) {
+  const normalized = path.normalize(relativePath || "index.html");
+  const filePath = path.join(portalRoot, normalized);
+  fs.stat(filePath, (err, stats) => {
+    if (!err && stats.isFile()) {
+      serveFile(filePath, res);
+      return;
+    }
+
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.end("Not found");
+  });
+}
+
+function redirect(res, location) {
+  res.statusCode = 302;
+  res.setHeader("Location", location);
+  res.end();
 }
 
 function serveFile(filePath, res) {

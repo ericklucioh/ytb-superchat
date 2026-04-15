@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YTB Superchat</title>
+  <meta name="description" content="Landing page do YTB Superchat. O portal principal fica em /portal.">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --bg-2: #0c1d33;
+      --panel: rgba(11, 20, 34, 0.86);
+      --panel-border: rgba(151, 181, 224, 0.18);
+      --text: #eff5ff;
+      --muted: #aac0de;
+      --accent: #8bd0ff;
+      --accent-strong: #d9f1ff;
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      color: var(--text);
+      font: 400 16px/1.5 "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(139, 208, 255, 0.2), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(63, 108, 179, 0.22), transparent 26%),
+        linear-gradient(160deg, var(--bg), var(--bg-2));
+    }
+
+    .shell {
+      width: min(760px, 100%);
+      padding: 40px;
+      border: 1px solid var(--panel-border);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .eyebrow {
+      margin: 0 0 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.24em;
+      font-size: 0.77rem;
+      color: var(--accent);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 5vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .lead {
+      max-width: 58ch;
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 120ms ease, background 120ms ease, color 120ms ease, border-color 120ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-primary {
+      color: #07111f;
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+    }
+
+    .button-secondary {
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .meta {
+      margin: 28px 0 0;
+      color: rgba(239, 245, 255, 0.72);
+      font-size: 0.95rem;
+    }
+
+    .meta a {
+      color: var(--accent-strong);
+      text-decoration: none;
+    }
+
+    .meta a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 18px;
+      }
+
+      .shell {
+        padding: 28px 22px;
+        border-radius: 22px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <p class="eyebrow">YTB Superchat</p>
+    <h1>Home livre, portal separado.</h1>
+    <p class="lead">
+      A raiz do site fica livre para landing page, documentacao ou campanha.
+      O dashboard atual continua acessivel em <strong>/portal</strong>.
+    </p>
+    <div class="actions">
+      <a class="button button-primary" href="/portal">Abrir portal</a>
+      <a class="button button-secondary" href="/src/index.html">Abrir compatibilidade antiga</a>
+    </div>
+    <p class="meta">
+      O fluxo do OBS e da extensao continua separado. Se voce estiver desenvolvendo localmente,
+      use <a href="/portal">/portal</a> para o painel e mantenha <a href="/src/index.html">/src/index.html</a>
+      apenas como alias temporario.
+    </p>
+  </main>
+</body>
+</html>

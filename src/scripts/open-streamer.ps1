@@ -2,5 +2,5 @@ param(
   [int]$Port = 8000
 )
 
-$url = "http://localhost:$Port/src/index.html"
+$url = "http://localhost:$Port/portal"
 Start-Process $url
