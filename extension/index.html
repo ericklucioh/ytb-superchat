@@ -4,6 +4,7 @@
 	<meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
 	<meta content="utf-8" http-equiv="encoding" />
 	<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
+	<base href="/overlay/">
 	<title>Overlay Window</title>
 	<meta name="title" content="YouTube Chat Overlay" />
 	<script src="jquery.js"></script>
@@ -619,7 +620,7 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 		socket.onclose = function (){
 			setTimeout(function(){
 				conCon+=1;
-				socket = new WebSocket("wss://api.overlay.ninja"); // version 1.x.x of the app.
+				socket = new WebSocket(getOverlaySocketUrl()); // version 1.x.x of the app.
 				setupSocket();
 			},100*conCon);
 		};
@@ -641,7 +642,18 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 		});
 	}
 	
-	var socket = new WebSocket("wss://api.overlay.ninja"); // version 1.x.x of the app.
+	function getOverlaySocketUrl() {
+		var params = new URLSearchParams(window.location.search);
+		var explicit = params.get("ws");
+		if (explicit) {
+			return explicit;
+		}
+
+		var protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+		return protocol + "//" + window.location.host + "/ws";
+	}
+
+	var socket = new WebSocket(getOverlaySocketUrl()); // version 1.x.x of the app.
 	setupSocket();
 	if (roomID.length === 10){ // version 0.x.x of the app.  Run it for now also, just in case user on old version still. Will be deprecated eventually.
 		console.error("Old versions of this app are no longer supported. Please go to ytb.ericklucioh.com and update your extension to the newest version if having issues");
@@ -842,5 +854,3 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 	</script>
 	</body>
 </html>
-
-

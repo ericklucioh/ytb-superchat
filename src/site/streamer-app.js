@@ -7,6 +7,7 @@ import { createChatBridge } from "./chat-bridge.js";
 
 const STORAGE_KEY = "overlay_state";
 const ROOM_KEY = "overlay_room_id";
+const DEFAULT_OVERLAY_API_BASE_URL = "http://localhost:8080";
 const MAX_LIVE_MESSAGES = 500;
 
 function boot() {
@@ -315,34 +316,36 @@ function boot() {
   }
 
   function sendOverlayPacket(roomId, packet) {
-    const socket = new WebSocket("wss://api.overlay.ninja");
-    let sent = false;
+    const baseUrl = resolveOverlayApiBaseUrl();
+    if (!baseUrl) {
+      return;
+    }
 
-    socket.addEventListener("open", () => {
-      socket.send(JSON.stringify({ join: roomId }));
-      window.setTimeout(() => {
-        if (sent) {
-          return;
-        }
-        sent = true;
-        socket.send(JSON.stringify(packet));
-        window.setTimeout(() => {
-          try {
-            socket.close();
-          } catch {
-            // ignore close errors
-          }
-        }, 200);
-      }, 60);
+    fetch(`${baseUrl.replace(/\/$/, "")}/api/event`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        session: roomId,
+        ...packet
+      })
+    }).catch((error) => {
+      console.warn("Failed to send overlay packet", error);
     });
+  }
 
-    socket.addEventListener("error", () => {
-      try {
-        socket.close();
-      } catch {
-        // ignore close errors
-      }
-    });
+  function resolveOverlayApiBaseUrl() {
+    const stored = cleanText(localStorage.getItem("overlay_backend_base_url") || "");
+    if (stored) {
+      return stored;
+    }
+
+    if (window.__OVERLAY_API_BASE_URL__) {
+      return String(window.__OVERLAY_API_BASE_URL__).trim();
+    }
+
+    return DEFAULT_OVERLAY_API_BASE_URL;
   }
 
   function scheduleRender() {

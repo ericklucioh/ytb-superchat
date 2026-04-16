@@ -38,6 +38,47 @@
 
   const settingsCache = new Map();
   const streamIdListeners = new Set();
+  const LEGACY_OVERLAY_HOST = "api.overlay.ninja";
+  const DEFAULT_OVERLAY_WS_URL = resolveDefaultOverlayWebSocketUrl();
+
+  function resolveDefaultOverlayWebSocketUrl() {
+    try {
+      if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getManifest) {
+        const homepage = chrome.runtime.getManifest().homepage_url;
+        if (homepage) {
+          const parsed = new URL(homepage);
+          const protocol = parsed.protocol === "https:" ? "wss:" : "ws:";
+          return `${protocol}//${parsed.host}/ws`;
+        }
+      }
+    } catch {
+      //
+    }
+
+    return "ws://localhost:8080/ws";
+  }
+
+  function resolveOverlayWebSocketUrl(url) {
+    const value = String(url || "");
+    if (!value.includes(LEGACY_OVERLAY_HOST)) {
+      return value;
+    }
+
+    return DEFAULT_OVERLAY_WS_URL;
+  }
+
+  if (typeof global.WebSocket === "function" && !global.__OverlayWebSocketPatched) {
+    const NativeWebSocket = global.WebSocket;
+    global.__OverlayWebSocketPatched = true;
+    global.WebSocket = function OverlayWebSocket(url, protocols) {
+      return new NativeWebSocket(resolveOverlayWebSocketUrl(url), protocols);
+    };
+    global.WebSocket.prototype = NativeWebSocket.prototype;
+    global.WebSocket.CONNECTING = NativeWebSocket.CONNECTING;
+    global.WebSocket.OPEN = NativeWebSocket.OPEN;
+    global.WebSocket.CLOSING = NativeWebSocket.CLOSING;
+    global.WebSocket.CLOSED = NativeWebSocket.CLOSED;
+  }
 
   if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -350,6 +391,7 @@
     applyOverlaySettings,
     createSocketBridge,
     sendBridgeMessage,
-    watchStreamId
+    watchStreamId,
+    resolveOverlayWebSocketUrl
   };
 })(window);
