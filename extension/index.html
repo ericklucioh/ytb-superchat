@@ -8,6 +8,7 @@
 	<meta name="title" content="YouTube Chat Overlay" />
 	<script src="jquery.js"></script>
 	<style>
+/* Removido: estilos legacy de botões e clear */
 :root {
     /* basic colors */
     --keyer-bg-color: #000; /* change for a chroma key if you want, beware profile avatars may key out */
@@ -125,17 +126,7 @@ div#message > div {
 #tooltip{
 	display:none;
 }
-.btn-clear {
-    position: absolute;
-    z-index: 99999;
-    bottom: calc(var(--comment-area-height) + 60px);
-    right: 20px;
-    font-size: 30px;
-    border: 1px #bbb solid;
-    border-radius: 4px;
-    color: #fff;
-    background: #444;
-}
+
 .highlighted-comment {
     background-color: var(--highlighted-comment-bg-color) !important;
 }
