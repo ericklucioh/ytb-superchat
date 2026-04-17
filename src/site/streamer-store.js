@@ -4,23 +4,30 @@ import { cleanText } from "./streamer-text.js";
 export function createStreamerStore({
   storageKey,
   roomKey,
-  maxLiveMessages
+  maxLiveMessages,
+  initialRoomId = ""
 }) {
   const normalizer = createEventNormalizer();
-  let state = loadState();
+  let currentStorageKey = storageKeyFor(initialRoomId);
+  let state = loadState(currentStorageKey, initialRoomId);
   let liveEvents = [];
 
-  function loadState() {
+  function storageKeyFor(roomId) {
+    const normalizedRoomId = cleanText(roomId || "");
+    return normalizedRoomId ? `${storageKey}:${normalizedRoomId}` : `${storageKey}:default`;
+  }
+
+  function loadState(key, roomId = "") {
     try {
-      const raw = localStorage.getItem(storageKey);
+      const raw = localStorage.getItem(key);
       if (!raw) {
-        return sanitizeState({ version: 1, filter: "active", overlayId: "", events: [] });
+        return sanitizeState({ version: 1, filter: "active", overlayId: "", events: [], roomId });
       }
 
       return sanitizeState(JSON.parse(raw));
     } catch {
-      const reset = sanitizeState({ version: 1, filter: "active", overlayId: "", events: [] });
-      localStorage.setItem(storageKey, JSON.stringify(reset));
+      const reset = sanitizeState({ version: 1, filter: "active", overlayId: "", events: [], roomId });
+      localStorage.setItem(key, JSON.stringify(reset));
       return reset;
     }
   }
@@ -58,7 +65,7 @@ export function createStreamerStore({
   }
 
   function persistState() {
-    localStorage.setItem(storageKey, JSON.stringify(state));
+    localStorage.setItem(currentStorageKey, JSON.stringify(state));
   }
 
   function persistRoom(roomId) {
@@ -66,24 +73,23 @@ export function createStreamerStore({
   }
 
   function connectRoom(roomId) {
-    if (state.roomId && state.roomId !== roomId) {
-      liveEvents = [];
-      state = {
-        version: 1,
-        filter: "active",
-        roomId,
-        overlayId: "",
-        events: []
-      };
-      persistState();
-    } else if (!state.roomId) {
-      state.roomId = roomId;
-      state.overlayId = state.overlayId || "";
-      persistState();
+    const nextRoom = cleanText(roomId || "");
+    if (!nextRoom) {
+      return state;
     }
 
-    state.roomId = roomId;
-    persistRoom(roomId);
+    const nextStorageKey = storageKeyFor(nextRoom);
+
+    if (state.roomId && state.roomId !== nextRoom) {
+      persistState();
+      liveEvents = [];
+    }
+
+    currentStorageKey = nextStorageKey;
+    state = loadState(currentStorageKey, nextRoom);
+    state.roomId = nextRoom;
+    persistState();
+    persistRoom(nextRoom);
     return state;
   }
 
@@ -231,6 +237,9 @@ export function createStreamerStore({
       return liveEvents;
     },
     normalizer,
+    getStorageKey(roomId = state.roomId) {
+      return storageKeyFor(roomId);
+    },
     connectRoom,
     insertEvent,
     updateStatus,

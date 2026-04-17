@@ -41,18 +41,19 @@ function boot() {
     return;
   }
 
-  const store = createStreamerStore({
-    storageKey: STORAGE_KEY,
-    roomKey: ROOM_KEY,
-    maxLiveMessages: MAX_LIVE_MESSAGES
-  });
-  const view = createStreamerView(elements);
-  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
-
   const params = new URLSearchParams(window.location.search);
   const urlRoom = cleanText(params.get("session") || params.get("s") || "");
   const storedRoom = cleanText(localStorage.getItem(ROOM_KEY) || "");
-  const initialRoom = urlRoom || storedRoom || store.state.roomId || "";
+  const initialRoom = urlRoom || storedRoom || "";
+
+  const store = createStreamerStore({
+    storageKey: STORAGE_KEY,
+    roomKey: ROOM_KEY,
+    maxLiveMessages: MAX_LIVE_MESSAGES,
+    initialRoomId: initialRoom
+  });
+  const view = createStreamerView(elements);
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
 
   let renderQueued = false;
   let summaryOpen = false;
@@ -192,7 +193,7 @@ function boot() {
   });
 
   window.addEventListener("storage", (event) => {
-    if (event.key !== STORAGE_KEY || !event.newValue) {
+    if (event.key !== store.getStorageKey() || !event.newValue) {
       return;
     }
 

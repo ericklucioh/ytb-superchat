@@ -167,6 +167,66 @@ func TestWebSocketRehydratesStoredOverlayOnJoin(t *testing.T) {
 	}
 }
 
+func TestSessionIsolationBetweenRooms(t *testing.T) {
+	router, _ := newTestRouter(t)
+	server := httptest.NewServer(router)
+	t.Cleanup(server.Close)
+
+	doJSONRequest(t, server.URL+"/api/event", http.MethodPost, `{"session":"room-a","msg":true,"contents":{"chatname":"Ada A","chatmessage":"Hello A"}}`).Body.Close()
+	doJSONRequest(t, server.URL+"/api/event", http.MethodPost, `{"session":"room-b","msg":true,"contents":{"chatname":"Ada B","chatmessage":"Hello B"}}`).Body.Close()
+
+	checkSession := func(sessionID, expectedName, expectedMessage string) {
+		resp := doJSONRequest(t, server.URL+"/api/session?session="+sessionID, http.MethodGet, "")
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("unexpected session status for %s: %d", sessionID, resp.StatusCode)
+		}
+
+		var payload map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode session response for %s: %v", sessionID, err)
+		}
+
+		if payload["session"] != sessionID {
+			t.Fatalf("unexpected session id for %s: %#v", sessionID, payload["session"])
+		}
+
+		events, ok := payload["events"].([]any)
+		if !ok || len(events) != 1 {
+			t.Fatalf("expected one event for %s, got %#v", sessionID, payload["events"])
+		}
+
+		event, ok := events[0].(map[string]any)
+		if !ok {
+			t.Fatalf("unexpected event shape for %s: %#v", sessionID, events[0])
+		}
+
+		if event["user"] != expectedName {
+			t.Fatalf("unexpected user for %s: %#v", sessionID, event["user"])
+		}
+		if event["message"] != expectedMessage {
+			t.Fatalf("unexpected message for %s: %#v", sessionID, event["message"])
+		}
+	}
+
+	checkSession("room-a", "Ada A", "Hello A")
+	checkSession("room-b", "Ada B", "Hello B")
+
+	connA, readerA, _ := dialWebSocket(t, server.URL, "/ws?session=room-a")
+	defer connA.Close()
+	payloadA := readWebSocketTextFrame(t, readerA)
+	if !strings.Contains(string(payloadA), `"chatname":"Ada A"`) || !strings.Contains(string(payloadA), `"chatmessage":"Hello A"`) {
+		t.Fatalf("expected room-a overlay payload, got: %s", string(payloadA))
+	}
+
+	connB, readerB, _ := dialWebSocket(t, server.URL, "/ws?session=room-b")
+	defer connB.Close()
+	payloadB := readWebSocketTextFrame(t, readerB)
+	if !strings.Contains(string(payloadB), `"chatname":"Ada B"`) || !strings.Contains(string(payloadB), `"chatmessage":"Hello B"`) {
+		t.Fatalf("expected room-b overlay payload, got: %s", string(payloadB))
+	}
+}
+
 func newTestRouter(t *testing.T) (*http.ServeMux, *session.Manager) {
 	t.Helper()
 

@@ -47,7 +47,12 @@
         port = null;
       }
 
-      port = chrome.runtime.connect({ name: buildPortName(role, currentSession) });
+      try {
+        port = chrome.runtime.connect({ name: buildPortName(role, currentSession) });
+      } catch {
+        port = null;
+        return null;
+      }
       attachPort(port);
       return port;
     }

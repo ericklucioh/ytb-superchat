@@ -230,9 +230,6 @@ function prepMessage(ele){
     next();
   });
 };
-var loaded=false;
-
-
 $("body").on("click", ".btn-clear-twitter", function () {
   pushMessage(false);
   $(".hl-c-cont").addClass("fadeout").delay(300).queue(function(){
@@ -296,72 +293,7 @@ chrome.storage.sync.get(properties, function(item){
 });
 
 
-$("body").on("click", "#startupbutton", function () {
-    document.getElementById("startupbutton").remove();
-	clearTimeout(preStartupInteval);
-	startup();
-});
-
-document.getElementById("startupbutton")
-
-function checkButtons(){
-	var bases = document.querySelector('main[role="main"]').querySelectorAll('article[role="article"]');
-	for (var i=0;i<bases.length;i++) {
-		try {
-			if (!bases[i].dataset.set){
-				bases[i].dataset.set=true;
-				var button  = document.createElement("button");
-				button.onclick = prepMessage;
-				button.innerHTML = "Show Overlay";
-				button.style = "    width: 60px;    height: 60px;    padding: 4px;  margin: 10px; background-color: #c7f6c7; cursor:pointer;"
-				button.className = "btn-push-twitter";
-				button.targetEle = bases[i]
-				//bases[i].appendChild(button);
-				try{
-					bases[i].querySelector('[data-testid="tweet"]').childNodes[0].appendChild(button);
-				}catch(e){
-					bases[i].appendChild(button);
-				}
-			}
-		} catch(e){}
-	}
-	
-	if (!document.getElementById("overlaybutton")){ // aria-label="Tweeter" //  ;
-		try {
-			var eles = document.querySelector('header[role="banner"]').querySelectorAll('[data-testid="SideNav_NewTweet_Button"]');
-			var ele = eles[eles.length - 1].parentNode;
-		} catch(e){
-			var ele = document.querySelector('header[role="banner"]').querySelectorAll('a[aria-label="Tweet"]')[0].parentNode;
-		}
-		ele.outerHTML += '<button id="overlaybutton" class="btn-clear-twitter">CLEAR OVERLAY</button>';
-	}
-}
-function startup() {
-	checkButtons();
-	setInterval(function(){
-		checkButtons();
-	}, 2000);
-}
-
-function preStartup(){
-	if (!(document.getElementById("overlaybutton") || document.getElementById("startupbutton"))){
-		try{
-			document.querySelector('header[role="banner"]').querySelectorAll('a[aria-label="Tweet"]')[0].parentNode.outerHTML += '<button id="startupbutton" class="btn-clear-twitter">Enable Overlay Service</button>';
-		} catch (e){
-			var eles = document.querySelector('header[role="banner"]').querySelectorAll('a[aria-label][role="link"]');
-			var ele = eles[eles.length - 1].parentNode;
-			ele.outerHTML += '<button id="startupbutton" class="btn-clear-twitter">Enable Overlay Service</button>';
-			
-		}
-	}
-}
-
-setTimeout(function(){preStartup();},1000);
-
-var preStartupInteval = setInterval(function(){preStartup();},5000);
-
 })();
-
 
 
 

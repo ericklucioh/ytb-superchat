@@ -242,22 +242,6 @@
 
 
 
-#startupbutton{
-	display: block;
-    position: relative;
-    left: 0;
-    bottom: 0px;
-    z-index: 100;
-    background-color: #CFC;
-    margin: 5px;
-    padding: 10px;
-	max-width:100%;
-	cursor: pointer;
-	border-radius: 20px;
-	animation: 0.5s linear fadein;
-	width: 225px;
-	font-size:0.8em;
-}
 
 .highlight-trovo {
 	max-height: 220px;
@@ -392,16 +376,6 @@ highlight-chat.preview {
     from {
         transform: rotate(9deg) translate3D(-250px, 0, 0);
     }
-}
-.btn-push-twitter{
-	width: 60px;    
-	height: 60px;   
-	padding: 4px;  
-	margin: 10px; 
-	background-color: #c7f6c7;
-	cursor:pointer;
-	border-radius: 50px;
-	animation: 1s linear fadein;
 }
 
 .btn-push-slido{
