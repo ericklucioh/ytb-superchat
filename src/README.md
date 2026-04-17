@@ -65,6 +65,7 @@ The browser runtime gets its API URLs from `runtime-env.js`, which is generated 
 - `PORT` - static portal server port
 - `YTB_GO_PORT` - Go backend port used to build the default API/WebSocket URLs
 - `YTB_SESSION_ID` - default session loaded by the portal and overlay in dev
+- `YTB_PORTAL_MOCK` - enables seeded mock cards for layout work
 - `YTB_OVERLAY_API_BASE_URL` - explicit API base override
 - `YTB_OVERLAY_WS_URL` - explicit WebSocket override
 
@@ -98,6 +99,14 @@ To start a preselected session:
 ```bash
 YTB_SESSION_ID=ABC123 npm run dev
 ```
+
+To open the portal in mock mode with seeded cards:
+
+```bash
+YTB_PORTAL_MOCK=1 npm run dev
+```
+
+You can also use `http://localhost:8000/portal?mock=1`.
 
 Linux shell wrappers are also available under `src/scripts/*.sh` if you want to run the helpers directly.
 

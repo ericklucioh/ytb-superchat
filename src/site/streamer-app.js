@@ -4,12 +4,23 @@ import { createCurrencyRateService } from "./streamer-rates.js";
 import { createStreamerStore } from "./streamer-store.js";
 import { createStreamerView } from "./streamer-view.js";
 import { createChatBridge } from "./chat-bridge.js";
+import { loadMockDeck, getMockRoomId } from "./streamer-mock.js";
 
 const STORAGE_KEY = "overlay_state";
 const ROOM_KEY = "overlay_room_id";
 const DEFAULT_OVERLAY_API_BASE_URL = "http://localhost:8080";
 const MAX_LIVE_MESSAGES = 500;
 const PORTAL_LOG_PREFIX = "[portal]";
+
+function isTruthyFlag(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
+function isFalsyFlag(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["0", "false", "no", "off"].includes(normalized);
+}
 
 function boot() {
   const elements = {
@@ -18,6 +29,7 @@ function boot() {
     connectButton: document.getElementById("connect-button"),
     summaryButton: document.getElementById("summary-button"),
     connectionStatus: document.getElementById("connection-status"),
+    mockBadge: document.getElementById("mock-badge"),
     summaryPopup: document.getElementById("summary-popup"),
     detailPopup: document.getElementById("detail-popup"),
     filterGroup: document.getElementById("filter-group"),
@@ -44,10 +56,14 @@ function boot() {
 
   const params = new URLSearchParams(window.location.search);
   const runtimeEnv = window.__YTB_ENV__ || {};
+  const mockMode = params.has("mock")
+    ? !isFalsyFlag(params.get("mock"))
+    : runtimeEnv.portalMockMode === true;
+  const mockRoomId = getMockRoomId();
   const urlRoom = cleanText(params.get("session") || params.get("s") || "");
   const envRoom = cleanText(runtimeEnv.sessionId || "");
   const storedRoom = cleanText(localStorage.getItem(ROOM_KEY) || "");
-  const initialRoom = urlRoom || envRoom || storedRoom || "";
+  const initialRoom = mockMode ? mockRoomId : (urlRoom || envRoom || storedRoom || "");
 
   const store = createStreamerStore({
     storageKey: STORAGE_KEY,
@@ -62,7 +78,7 @@ function boot() {
   let summaryOpen = false;
   let detailId = "";
   const currencyService = createCurrencyRateService({ scheduleRender });
-  const chatBridge = createChatBridge({
+  const chatBridge = mockMode ? createMockBridge() : createChatBridge({
     session: initialRoom,
     onMessage: handleIncomingPayload,
     onReady: () => setStatus("🟢"),
@@ -71,15 +87,25 @@ function boot() {
 
   console.log(PORTAL_LOG_PREFIX, "boot", {
     initialRoom,
+    mockMode,
     overlayApiBaseUrl: resolveOverlayApiBaseUrl()
   });
+
+  if (mockMode) {
+    document.body.dataset.mockMode = "true";
+    if (elements.mockBadge) {
+      elements.mockBadge.hidden = false;
+    }
+  }
 
   elements.sessionInput.value = initialRoom;
   view.syncFilterButtons(store.state.filter);
   view.setSummaryOpen(summaryOpen);
   view.setDetailOpen(false);
 
-  if (initialRoom) {
+  if (mockMode) {
+    void seedMockDeck();
+  } else if (initialRoom) {
     connect(initialRoom);
   } else if (hasChromeStorage) {
     chrome.storage.sync.get(["streamID"], (result) => {
@@ -243,7 +269,9 @@ function boot() {
     elements.sessionInput.value = nextRoom;
     view.syncFilterButtons(store.state.filter);
     setStatus("🟡");
-    chatBridge.setSession(nextRoom);
+    if (!mockMode) {
+      chatBridge.setSession(nextRoom);
+    }
     scheduleRender();
   }
 
@@ -266,6 +294,10 @@ function boot() {
   }
 
   function handleBridgeSession(nextSession) {
+    if (mockMode) {
+      return;
+    }
+
     const session = cleanText(nextSession);
     if (!session || session === store.state.roomId) {
       return;
@@ -485,6 +517,10 @@ function boot() {
   }
 
   function persistSharedRoom(roomId) {
+    if (mockMode) {
+      return;
+    }
+
     if (!hasChromeStorage) {
       return;
     }
@@ -496,6 +532,50 @@ function boot() {
 
   function cleanup() {
     chatBridge.close();
+  }
+
+  async function seedMockDeck() {
+    try {
+      const mockPackets = await loadMockDeck();
+      localStorage.removeItem(store.getStorageKey(mockRoomId));
+      store.connectRoom(mockRoomId);
+      elements.sessionInput.value = mockRoomId;
+      view.syncFilterButtons(store.state.filter);
+      setStatus("🧪 Mock");
+
+      console.log(PORTAL_LOG_PREFIX, "mock-seed", {
+        roomId: mockRoomId,
+        packets: mockPackets.length
+      });
+
+      for (const packet of mockPackets) {
+        if (!packet || packet.feed !== true || !packet.contents) {
+          continue;
+        }
+
+        handleIncomingPayload(packet);
+        sendOverlayPacket(mockRoomId, {
+          msg: true,
+          id: packet.id,
+          contents: packet.contents
+        });
+      }
+
+      scheduleRender();
+    } catch (error) {
+      console.warn("Failed to load mock deck", error);
+      setStatus("Mock indisponível");
+    }
+  }
+
+  function createMockBridge() {
+    return {
+      close() {},
+      setSession() {},
+      publish() {
+        return false;
+      }
+    };
   }
 
 }

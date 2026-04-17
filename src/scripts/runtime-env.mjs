@@ -5,6 +5,7 @@ export function resolveRuntimeEnv() {
   const goPort = readPort(["YTB_GO_PORT", "GO_PORT"], 8080);
   const portalPort = readPort(["PORT"], 8000);
   const sessionId = readText(["YTB_SESSION_ID", "SESSION"]);
+  const portalMockMode = readBool(["YTB_PORTAL_MOCK", "PORTAL_MOCK"]);
   const overlayApiBaseUrl = readText(["YTB_OVERLAY_API_BASE_URL"]) || `http://localhost:${goPort}`;
   const overlayWsUrl = readText(["YTB_OVERLAY_WS_URL"]) || deriveWebSocketUrl(overlayApiBaseUrl, goPort);
 
@@ -12,6 +13,7 @@ export function resolveRuntimeEnv() {
     goPort,
     portalPort,
     sessionId,
+    portalMockMode,
     overlayApiBaseUrl,
     overlayWsUrl
   };
@@ -52,6 +54,25 @@ function readPort(keys, fallback) {
   }
 
   return fallback;
+}
+
+function readBool(keys) {
+  for (const key of keys) {
+    const value = String(process.env[key] || "").trim().toLowerCase();
+    if (!value) {
+      continue;
+    }
+
+    if (["1", "true", "yes", "on"].includes(value)) {
+      return true;
+    }
+
+    if (["0", "false", "no", "off"].includes(value)) {
+      return false;
+    }
+  }
+
+  return false;
 }
 
 function deriveWebSocketUrl(overlayApiBaseUrl, goPort) {

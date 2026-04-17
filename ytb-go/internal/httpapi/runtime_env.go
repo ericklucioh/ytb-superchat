@@ -18,10 +18,11 @@ func serveOverlayRuntimeEnv(w http.ResponseWriter, r *http.Request) {
 }
 
 type runtimeEnv struct {
-	GoPort             int
-	PortalPort         int
-	SessionID          string
-	OverlayApiBaseURL  string
+	GoPort              int
+	PortalPort          int
+	SessionID           string
+	PortalMockMode      bool
+	OverlayApiBaseURL   string
 	OverlayWebSocketURL string
 }
 
@@ -37,6 +38,7 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 	}
 
 	sessionID := firstEnv("YTB_SESSION_ID", "SESSION")
+	portalMockMode := readBool("YTB_PORTAL_MOCK", "PORTAL_MOCK")
 	overlayApiBaseURL := firstEnv("YTB_OVERLAY_API_BASE_URL")
 	if overlayApiBaseURL == "" {
 		scheme := "http"
@@ -59,6 +61,7 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 		GoPort:              goPort,
 		PortalPort:          portalPort,
 		SessionID:           sessionID,
+		PortalMockMode:      portalMockMode,
 		OverlayApiBaseURL:   overlayApiBaseURL,
 		OverlayWebSocketURL: overlayWebSocketURL,
 	}
@@ -66,18 +69,20 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 
 func renderRuntimeEnvScript(env runtimeEnv) string {
 	type payload struct {
-		GoPort             int    `json:"goPort"`
-		PortalPort         int    `json:"portalPort"`
-		SessionID          string `json:"sessionId"`
-		OverlayApiBaseURL  string `json:"overlayApiBaseUrl"`
+		GoPort              int    `json:"goPort"`
+		PortalPort          int    `json:"portalPort"`
+		SessionID           string `json:"sessionId"`
+		PortalMockMode      bool   `json:"portalMockMode"`
+		OverlayApiBaseURL   string `json:"overlayApiBaseUrl"`
 		OverlayWebSocketURL string `json:"overlayWsUrl"`
 	}
 
 	body, _ := json.Marshal(payload{
-		GoPort:             env.GoPort,
-		PortalPort:         env.PortalPort,
-		SessionID:          env.SessionID,
-		OverlayApiBaseURL:  env.OverlayApiBaseURL,
+		GoPort:              env.GoPort,
+		PortalPort:          env.PortalPort,
+		SessionID:           env.SessionID,
+		PortalMockMode:      env.PortalMockMode,
+		OverlayApiBaseURL:   env.OverlayApiBaseURL,
 		OverlayWebSocketURL: env.OverlayWebSocketURL,
 	})
 
@@ -119,6 +124,20 @@ func firstEnv(keys ...string) string {
 	}
 
 	return ""
+}
+
+func readBool(keys ...string) bool {
+	for _, key := range keys {
+		value := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+		switch value {
+		case "1", "true", "yes", "on":
+			return true
+		case "0", "false", "no", "off":
+			return false
+		}
+	}
+
+	return false
 }
 
 func jsString(value string) string {
