@@ -1,5 +1,11 @@
 # Chrome Extension
 
+## Contexto
+A extensão captura mensagens de chat de várias plataformas e entrega os eventos ao portal.
+
+## Objetivo
+Manter a extensão como camada de captura e bridge, sem assumir responsabilidade de renderização do overlay.
+
 This folder contains the browser extension and the legacy OBS overlay assets.
 
 ## What lives here
@@ -26,6 +32,12 @@ The current workflow is:
 3. Send those events to the dashboard bridge running in the browser session
 4. Show the selected message in the OBS browser source
 
+## O Que Existe Hoje
+- Scripts de captura por plataforma
+- Bridge local para envio de eventos
+- Overlay legado ainda presente como asset histórico
+- Integração com o portal já funcionando no caminho principal
+
 ## Main scripts
 
 - [`sources/shared-runtime.js`](sources/shared-runtime.js) - shared socket, settings, and helper runtime
@@ -47,6 +59,12 @@ http://localhost:8080/overlay?session=YOUR_SESSION_ID
 ```
 
 The same session ID is used by the dashboard, the extension, and the backend Go server.
+
+## O Que Precisa Mudar
+- O renderer legado deixa de ser o caminho principal.
+- O OBS passa a consumir o overlay servido pelo backend Go.
+- A extensão deixa de carregar o peso conceitual do overlay.
+- O runtime não deve depender de host externo como rota principal.
 
 ## Install for development
 
@@ -76,3 +94,12 @@ That generates:
 - If the chat UI changes, the selector logic may need a refresh.
 - The OBS overlay receives the original donation currency display, while the dashboard can still use converted BRL values for totals and ordering.
 - Chat ingestion no longer depends on `wss://api.overlay.ninja`; the dashboard now receives chat events through the extension bridge and the overlay is served by the Go backend.
+
+## Critério De Pronto
+- A extensão captura mensagens sem ser dona do overlay
+- O caminho principal não aponta para serviço externo
+- O overlay legado não é o fluxo ativo
+
+## Assunções
+- A extensão ainda existe para capturar chat em pop-up.
+- O renderer legado pode permanecer como histórico, mas não como origem principal.

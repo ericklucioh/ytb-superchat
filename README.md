@@ -1,27 +1,36 @@
 # YTB Superchat
 
-Overlay and streamer dashboard for live chat across Twitch, YouTube, and Kick.
+## Contexto
+Este repositório reúne portal, extensão e backend Go para centralizar chats de lives e exibir mensagens no OBS.
 
-This repo is split into two parts:
+## Objetivo
+Permitir que o streamer acompanhe chats de várias plataformas, selecione mensagens no portal e envie o conteúdo ao overlay servido pelo backend.
 
-- `src/` - the streamer dashboard and local site
-- `extension/` - the Chrome extension and legacy overlay assets
-- `ytb-go/` - the local Go backend for sessions and overlay broadcast
+## Estrutura
+- `src/` - portal estático e site local
+- `extension/` - extensão Chrome e assets legados do overlay
+- `ytb-go/` - backend Go local para sessão e broadcast do overlay
 
 ## What this project does
 
-- Captures Twitch and YouTube live chat
-- Shows messages in a streamer dashboard
-- Sends selected messages to the OBS overlay
-- Persists dashboard state locally
-- Supports superchats, subs, members, and normal chat messages
+- Captures Twitch, YouTube e outras fontes suportadas
+- Mostra mensagens em um dashboard para o streamer
+- Envia mensagens selecionadas ao overlay do OBS
+- Persiste estado local de UI no navegador
+- Suporta superchats, subs, members e chat normal
 
 ## Project Structure
 
-- [`README.md`](README.md) - project overview and setup
-- [`src/README.md`](src/README.md) - streamer dashboard and local site
-- [`extension/README.md`](extension/README.md) - Chrome extension and legacy overlay assets
-- [`ytb-go/README.md`](ytb-go/README.md) - local Go backend
+- [`README.md`](README.md) - visão geral do projeto
+- [`src/README.md`](src/README.md) - portal e site local
+- [`extension/README.md`](extension/README.md) - extensão e overlay legado
+- [`ytb-go/README.md`](ytb-go/README.md) - backend Go local
+
+## O Que Já Funciona
+- Portal com dashboard principal em `/portal`
+- Overlay consumido por `/overlay?session=...`
+- Captura por extensão em várias plataformas
+- Backend Go servindo sessão e broadcast
 
 ## Run locally
 
@@ -29,7 +38,7 @@ This repo is split into two parts:
 npm run dev
 ```
 
-The local server defaults to `http://localhost:8000`.
+O servidor local padrão é `http://localhost:8000`.
 
 Useful URLs:
 
@@ -45,7 +54,7 @@ Useful URLs:
 npm run build
 ```
 
-This creates:
+Isto gera:
 
 - `out/` - static site build
 - `out/portal/overlay/` - overlay assets published by the portal build
@@ -53,7 +62,7 @@ This creates:
 
 ## Chrome extension
 
-Load `extension/` unpacked in Chrome while developing:
+Carregue `extension/` como unpacked no Chrome enquanto desenvolve:
 
 1. Open `chrome://extensions`
 2. Enable Developer mode
@@ -62,10 +71,25 @@ Load `extension/` unpacked in Chrome while developing:
 
 ## Session flow
 
-- The dashboard stores the current session ID in `localStorage`
-- The dashboard can also read `?session=...` from the URL
-- The extension uses the same session ID to send chat data into the dashboard bridge
-- The Go backend stores the overlay state per session and serves the OBS browser source
+- O dashboard guarda o `sessionId` atual em `localStorage`
+- O dashboard também lê `?session=...` da URL
+- A extensão usa o mesmo `sessionId` para mandar chat ao portal
+- O backend Go armazena o overlay por sessão e serve o browser source do OBS
+
+## Papel De Cada Parte
+- Portal:
+  - interface do streamer
+  - seleção de mensagens
+  - controle do overlay
+- Extensão:
+  - captura e normalização
+  - bridge para o portal
+- Backend Go:
+  - sessão
+  - overlay
+  - broadcast em tempo real
+- OBS:
+  - somente consumo do overlay
 
 ## Main files
 
@@ -85,9 +109,10 @@ Load `extension/` unpacked in Chrome while developing:
 
 ## Notes
 
-- The overlay is now served from the portal/backend path.
-- If you change extension code, rebuild and reload the extension.
-- If you change the dashboard code, refresh the local site.
+- O overlay é servido pelo caminho do portal/backend.
+- Se mudar a extensão, rebuild e recarregue a extensão.
+- Se mudar o dashboard, atualize a página local.
+- `out/` é só artefato gerado, nunca origem.
 
 ## Origin
 

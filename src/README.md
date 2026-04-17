@@ -1,5 +1,11 @@
 # Streamer Site
 
+## Contexto
+Esta pasta reúne o portal estático e o código compartilhado do site principal.
+
+## Objetivo
+Servir a interface do streamer, organizar os eventos do chat e disparar o overlay para o backend Go.
+
 This folder contains the streamer dashboard and the shared site code used by the main web app.
 
 ## What lives here
@@ -21,6 +27,18 @@ The dashboard is the control panel for the project:
 - lets you promote a message to the overlay by clicking it
 - stores UI state in `localStorage`
 - sends overlay events to the Go backend
+
+## O Que Existe Hoje
+- Dashboard com filtros, cards e resumo
+- Estado de UI salvo no navegador
+- Bridge local de chat entre extensão e portal
+- Envio de overlay para o backend Go
+
+## O Que Precisa Ser Verdade
+- O portal é estático
+- O estado compartilhado não mora no front
+- O `sessionId` conecta portal, extensão e backend
+- O OBS recebe apenas a URL do overlay
 
 ## Main code files
 
@@ -73,6 +91,12 @@ npm run build
 
 This copies the site into `out/`, publishes the overlay under `out/portal/overlay/`, and also packages the extension zip.
 
+## Critério De Pronto
+- Portal abre em `/portal`
+- Overlay abre em `/overlay?session=...`
+- Estado local do front não confunde sessão compartilhada
+- A seleção de mensagem produz overlay no backend
+
 ## Session flow
 
 The dashboard accepts a session in a few ways:
@@ -88,3 +112,8 @@ The dashboard accepts a session in a few ways:
 - The OBS overlay keeps the original currency display.
 - The site does not capture chat on its own. It consumes events coming from the Chrome extension bridge and publishes overlay updates to the Go backend.
 - `/src/index.html` is kept as a temporary redirect to `/portal` for compatibility.
+
+## Assunções
+- O portal continua estático.
+- O backend Go continua sendo o ponto de verdade para overlay e sessão.
+- O visual atual é a referência de compatibilidade.
