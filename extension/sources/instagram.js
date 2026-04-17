@@ -377,7 +377,7 @@ function startup() {
 			for (var j =0;j<main.length;j++){
 				try{
 					if (!main[j].dataset.set){
-						main[j].innerHTML += '<span><button class="ignore btn-push-instagram">OVERLAY</button></span><span><button class="ignore btn-clear-instagram">CLEAR</button></span><span><button class="ignore btn-getoverlay-instagram" >LINK</button></span>';
+						main[j].innerHTML += '<span><button class="ignore btn-push-instagram">OVERLAY</button></span><span><button class="ignore btn-clear-instagram">CLEAR</button></span>';
 						main[j].dataset.set = true;	
 					}
 				} catch(e){
@@ -409,10 +409,6 @@ function startup() {
 		  pushMessage(false);
 	});
 
-	$("body").on("click", ".btn-getoverlay-instagram", function () {
-			prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-	});
-	
 	$("body").on("click", ".publish2", function () {
 		//console.log(this);
 		prepComment(this);

@@ -185,14 +185,10 @@ function startup() {
 			for (var j =0;j<main.length;j++){
 				if (!main[j].dataset.set){
 					main[j].dataset.set = "true";
-					main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-slido" style="color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-slido"  style="color:red;">CLEAR</a></span><span><a class="btn-getoverlay-slido" >LINK</a></span></div>');
+					main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-slido" style="color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-slido"  style="color:red;">CLEAR</a></span></div>');
 					
 					main[j].querySelector(".btn-push-slido").onclick = function(){
 						prepMessage2(this.parentNode.parentNode.parentNode);
-					};
-					
-					main[j].querySelector(".btn-getoverlay-slido").onclick = function(){
-						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 					};
 					
 					main[j].querySelector(".btn-clear-slido").onclick = function(){
@@ -208,14 +204,10 @@ function startup() {
 				try{
 					if (!main[j].dataset.set){
 						main[j].dataset.set = "true";
-						main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-slido" style="color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-slido"  style="color:red;">CLEAR</a></span><span><a class="btn-getoverlay-slido" >LINK</a></span></div>');
+						main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-slido" style="color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-slido"  style="color:red;">CLEAR</a></span></div>');
 						
 						main[j].querySelector(".btn-push-slido").onclick = function(){
 							prepMessage(this.parentNode.parentNode.parentNode);
-						};
-						
-						main[j].querySelector(".btn-getoverlay-slido").onclick = function(){
-							prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 						};
 						
 						main[j].querySelector(".btn-clear-slido").onclick = function(){

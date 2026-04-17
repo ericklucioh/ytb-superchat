@@ -175,24 +175,10 @@ var keepTrying = setInterval(function(){
 	button2.style.borderRadius = "6px";
 	button2.style.margin = "0 5px";
 	
-	var button3 = document.createElement("button");
-	button3.innerHTML = "Get link";
-	button3.style.cursor = "pointer";
-	button3.style.backgroundColor = "#CCF";
-	button3.style.padding = "5px";
-	button3.style.width = "75px";
-	button3.style.borderRadius = "6px";
-	button2.style.margin = "0 5px";
-	
 	button2.onclick = function(){
 		pushMessage(false);
 	}
 	  
-	button3.onclick = function(){
-		 prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-	}
-		
 	document.querySelector("header").childNodes[0].childNodes[1].appendChild(button2);
-	document.querySelector("header").childNodes[0].childNodes[1].appendChild(button3);
 
 },500);

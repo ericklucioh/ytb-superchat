@@ -3,7 +3,6 @@ var avatarHelpers = window.OverlayAvatarHelpers || {};
 var channel = runtime.generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
-var alreadyPrompted = false;
 var localBridge = null;
 function twitchLog() {}
 var unwatchStreamId = null;
@@ -21,10 +20,6 @@ function syncSession(nextSession) {
 }
 
 function actionwtf(){ // legacy overlay connection
-	if (!alreadyPrompted){
-		alreadyPrompted=true;
-	}
-
 	runtime.persistStreamId(channel);
 	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 }
@@ -266,9 +261,9 @@ $("body").on("click", ".btn-clear-twitch", function () {
 function addButtons(){
 	if (document.getElementById("pushButtonOverlay")){return;}
 	if (document.querySelector(".chat-input__buttons-container")){
-		document.querySelector(".chat-input__buttons-container").innerHTML += '<button  id="pushButtonOverlay" class="btn-clear-twitch">CLEAR</button><button class="btn-getoverlay-twitch">LINK</button>';
+		document.querySelector(".chat-input__buttons-container").innerHTML += '<button  id="pushButtonOverlay" class="btn-clear-twitch">CLEAR</button>';
 	} else if (document.querySelector(".chat-room__content")){
-		document.querySelector(".chat-room__content").lastChild.innerHTML += '<button  id="pushButtonOverlay" class="btn-clear-twitch">CLEAR</button><button class="btn-getoverlay-twitch">LINK</button>';
+		document.querySelector(".chat-room__content").lastChild.innerHTML += '<button  id="pushButtonOverlay" class="btn-clear-twitch">CLEAR</button>';
 	} 
 }
 
@@ -299,12 +294,6 @@ runtime.loadSettings(properties, function(item){
   showOnlyFirstName = !!item.showOnlyFirstName;
   highlightWords = runtime.normalizeHighlightWords(item.highlightWords);
   startTwitchConnections();
-});
-
-
-$("body").on("click", ".btn-getoverlay-twitch", function () {
-    alreadyPrompted=true;
-    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 });
 
 

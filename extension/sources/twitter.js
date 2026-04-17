@@ -240,11 +240,6 @@ $("body").on("click", ".btn-clear-twitter", function () {
   });
 });
 
-$("body").on("click", ".btn-getoverlay-twitter", function () {
-    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-});
-
-
 // Show a placeholder message so you can position the window before the chat is live
 
 var properties = ["color","scale","streamID","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
@@ -338,7 +333,7 @@ function checkButtons(){
 		} catch(e){
 			var ele = document.querySelector('header[role="banner"]').querySelectorAll('a[aria-label="Tweet"]')[0].parentNode;
 		}
-		ele.outerHTML += '<button id="overlaybutton" class="btn-clear-twitter">CLEAR OVERLAY</button><button class="btn-getoverlay-twitter" >SHOW OVERLAY LINK</button>';
+		ele.outerHTML += '<button id="overlaybutton" class="btn-clear-twitter">CLEAR OVERLAY</button>';
 	}
 }
 function startup() {
@@ -366,7 +361,6 @@ setTimeout(function(){preStartup();},1000);
 var preStartupInteval = setInterval(function(){preStartup();},5000);
 
 })();
-
 
 
 

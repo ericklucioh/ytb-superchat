@@ -141,53 +141,6 @@
     opacity: 1;
   }
 }
-.btn-getoverlay-trovo {
-    display: block;
-    position: absolute;
-    left: 160px;
-    bottom: 0px;
-    z-index: 100;
-    background-color: #CEF;
-    margin: 5px;
-    padding: 10px;
-	cursor: pointer;
-}
-.btn-getoverlay-instagram {
-    display: block;
-     float:left;
-    left: 160px;
-    bottom: 0px;
-    z-index: 100;
-    background-color: #CEF;
-    padding: 0 4px;
-    margin: 5px 2px;
-	cursor: pointer;
-	animation: 0.2s linear fadein;
-}
-.btn-getoverlay-twitter {
-    display: block;
-    position: relative;
-    left: 0;
-    bottom: 0px;
-    z-index: 100;
-    background-color: #CEF;
-    margin: 5px;
-    padding: 10px;
-	max-width:100%;
-	cursor: pointer;
-	border-radius: 20px;
-	animation: 0.2s linear fadein;
-	width: 225px;
-}
-
-.btn-getoverlay-pollev {
-    color: #61d0e5;
-    margin: 0 0 0 5px;
-	cursor: pointer;
-    font-size: 3em;
-    z-index: 99999;
-    display: inline-block;
-}
 .btn-clear-pollev {
     color: #e56761;
     margin: 0 0 0 5px;
@@ -205,11 +158,6 @@
     display: inline-block;
 }
 
-.btn-getoverlay-facebook {
-    color: #61d0e5;
-    margin: 0 0 0 5px;
-	cursor: pointer;
-}
 .btn-clear-facebook {
     color: #e56761;
     margin: 0 0 0 5px;
@@ -223,11 +171,6 @@
 
 
 
-.btn-getoverlay-crowdcast {
-    color: #61d0e5;
-    margin: 0 0 0 5px;
-	cursor: pointer;
-}
 .btn-clear-crowdcast {
     color: #e56761;
     margin: 0 0 0 5px;
@@ -240,24 +183,6 @@
 }
 
 
-.btn-getoverlay-zoom {
-	 border-radius: 8px;
-    height: 32px;
-    padding: 0 16px;
-    -webkit-box-sizing: border-box;
-    box-sizing: border-box;
-    outline: 2px solid transparent;
-    outline-offset: 1px;
-    -webkit-transition: all .2s ease-in;
-    -o-transition: .2s all ease-in;
-    transition: all .2s ease-in;
-    border: 1px solid #bababa;
-    font-size: 14px;
-	cursor: pointer;
-	background: #61d0e522;
-    color: rgb(0 115 149);
-    margin: 0 0 0 5px;
-}
 .btn-clear-zoom {
 	 border-radius: 8px;
     height: 32px;
@@ -373,18 +298,6 @@
 }
 
 
-.btn-getoverlay {
-	position: absolute;
-    z-index: 99999;
-    bottom: calc(var(--comment-area-height) + 12px);
-    font-size: 30px;
-    border: 1px #bbb solid;
-    border-radius: 4px;
-    color: #fff;
-    background: #383;
-	cursor: pointer;
-    right: 240px;
-}
 .btn-clear-twitch {
     position: absolute;
     z-index: 99999;
@@ -398,46 +311,6 @@
 	cursor: pointer;
 	z-index:9999px;
 	animation: 1s linear fadein;
-}
-.btn-getoverlay-youtube {
-	position: absolute;
-    z-index: 99999;
-    bottom: 10px;
-    font-size: 30px;
-    border: 1px #bbb solid;
-    border-radius: 4px;
-    color: #fff;
-    background: #383;
-	cursor: pointer;
-    right: 250px;
-	animation: 1s linear fadein;
-}
-.btn-getoverlay-twitch {
-	position: absolute;
-    z-index: 99999;
-    bottom: 2px;
-    font-size: 30px;
-    border: 1px #bbb solid;
-    border-radius: 4px;
-    color: #fff;
-    background: #383;
-	cursor: pointer;
-    right: 250px;
-	z-index:9999px;
-	animation: 1s linear fadein;
-}
-.btn-getoverlay-glimesh {
-	position: absolute;
-    z-index: 99999;
-    bottom: 40px;
-    font-size: 30px;
-    border: 1px #bbb solid;
-    border-radius: 4px;
-    color: #fff;
-    background: #383;
-	cursor: pointer;
-    right: 150px;
-	opacity: 0.7;
 }
 .btn-clear-glimesh {
     position: absolute;
@@ -532,14 +405,6 @@ highlight-chat.preview {
 }
 
 .btn-push-slido{
-	cursor:pointer;
-	border-radius: 15px;
-	animation: 1s linear fadein;
-	background-color: #DDD4;
-    margin: 10px;
-    padding: 4px 11px;
-}
-.btn-getoverlay-slido{
 	cursor:pointer;
 	border-radius: 15px;
 	animation: 1s linear fadein;

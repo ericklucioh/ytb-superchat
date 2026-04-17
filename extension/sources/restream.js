@@ -11,7 +11,6 @@ var channel = generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 
 var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
-var alreadyPrompted = false;
 
 function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
@@ -88,12 +87,6 @@ $("body").unbind("click").on("click", "section>div>div>div.MuiGrid-root.MuiGrid-
 	button2.style.padding = "5px";
 	
 	var button3 = document.createElement("button");
-	button3.innerHTML = "Get Overlay Link";
-	button3.style.cursor = "pointer";
-	button3.style.margin = "10px";
-	button3.style.backgroundColor = "#CCF";
-	button3.style.padding = "5px";
-	
 	if (event.target.tagName.toLowerCase() == "input"){
 		return;
 	} else if (event.target.tagName.toLowerCase() == "button"){
@@ -106,7 +99,6 @@ $("body").unbind("click").on("click", "section>div>div>div.MuiGrid-root.MuiGrid-
 		
 		$(this)[0].parentNode.appendChild(button1);
 		$(this)[0].parentNode.appendChild(button2);
-		$(this)[0].parentNode.appendChild(button3);
 	}
 	
 	if ($(this)[0].childNodes[0].classList.contains("MuiTypography-root")){
@@ -181,11 +173,6 @@ $("body").unbind("click").on("click", "section>div>div>div.MuiGrid-root.MuiGrid-
   button2.onclick = function(){
 	pushMessage(false);
   }
-  
-  button3.onclick = function(){
-     prompt("Overlay Link: 	="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-  }
-  
 });
 
 
@@ -253,25 +240,12 @@ setTimeout(function(){
 	button2.style.backgroundColor = "#FCC";
 	button2.style.padding = "5px";
 	
-	var button3 = document.createElement("button");
-	button3.innerHTML = "Get Overlay Link";
-	button3.style.cursor = "pointer";
-	button3.style.margin = "10px";
-	button3.style.backgroundColor = "#CCF";
-	button3.style.padding = "5px";
-	
 	button2.onclick = function(){
 		pushMessage(false);
 	}
 	  
-	button3.onclick = function(){
-		 alreadyPrompted=true;
-		 prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-	}
-
 		
 	document.querySelector("#root").prepend(button2);
-	document.querySelector("#root").prepend(button3);
 	
 
 	function onElementInsertedTwitch(containerSelector, className, callback) {

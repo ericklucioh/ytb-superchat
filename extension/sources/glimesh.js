@@ -11,16 +11,9 @@ var channel = generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 
 var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
-var alreadyPrompted = false;
-
 function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
-	
-	if (!alreadyPrompted){
-		alreadyPrompted=true;
-		prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-	}
-	
+
 	soca = new WebSocket(OverlayRuntime.DEFAULT_OVERLAY_WS_URL);
 	soca.onclose = function (){
 		setTimeout(function(){soca=false;actionwtf(); },2000);
@@ -181,13 +174,7 @@ $("body").on("click", ".btn-clear-glimesh", function () {
   });
 });
 
-$("body").on("click", ".btn-getoverlay-glimesh", function () {
-    alreadyPrompted=true;
-    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-});
-
-
-document.querySelector("#app").innerHTML += '<highlight-chat style="max-height: 220px;transform: scale(0.2) translate(-199%, 200%); opacity: 0.5;bottom: 40px;width:200%"></highlight-chat><button class="btn-clear-glimesh">CLEAR</button><button class="btn-getoverlay-glimesh" >LINK</button>';
+document.querySelector("#app").innerHTML += '<highlight-chat style="max-height: 220px;transform: scale(0.2) translate(-199%, 200%); opacity: 0.5;bottom: 40px;width:200%"></highlight-chat><button class="btn-clear-glimesh">CLEAR</button>';
 
 
 // Show a placeholder message so you can position the window before the chat is live

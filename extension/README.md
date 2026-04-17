@@ -6,11 +6,10 @@ A extensão captura mensagens de chat de várias plataformas e entrega os evento
 ## Objetivo
 Manter a extensão como camada de captura e bridge, sem assumir responsabilidade de renderização do overlay.
 
-This folder contains the browser extension and the legacy OBS overlay assets.
+This folder contains the browser extension only.
 
 ## What lives here
 
-- `index.html` - the legacy OBS overlay page
 - `manifest.json` - Chrome extension manifest
 - `sources/` - chat capture scripts per platform
 - `settings/` - extension options UI
@@ -48,23 +47,10 @@ The current workflow is:
 - [`sources/twitch.js`](sources/twitch.js) - Twitch chat capture
 - [`settings/options.html`](settings/options.html) - extension settings UI
 
-## OBS overlay
-
-The overlay page is [`index.html`](index.html).
-
-Use it in OBS as a browser source with a session parameter:
-
-```text
-http://localhost:8080/overlay?session=YOUR_SESSION_ID
-```
-
-The same session ID is used by the dashboard, the extension, and the backend Go server.
-
 ## O Que Precisa Mudar
-- O renderer legado deixa de ser o caminho principal.
-- O OBS passa a consumir o overlay servido pelo backend Go.
-- A extensão deixa de carregar o peso conceitual do overlay.
-- O runtime não deve depender de host externo como rota principal.
+- O renderer do overlay não mora mais na extensão.
+- O OBS consome o overlay servido pelo portal/backend Go.
+- A extensão fica só na captura e bridge.
 
 ## Install for development
 
@@ -92,14 +78,13 @@ That generates:
 
 - The extension still depends on the browser page being open.
 - If the chat UI changes, the selector logic may need a refresh.
-- The OBS overlay receives the original donation currency display, while the dashboard can still use converted BRL values for totals and ordering.
-- Chat ingestion no longer depends on `wss://api.overlay.ninja`; the dashboard now receives chat events through the extension bridge and the overlay is served by the Go backend.
+- The dashboard receives chat events through the extension bridge and publishes overlay updates to the Go backend.
 
 ## Critério De Pronto
 - A extensão captura mensagens sem ser dona do overlay
 - O caminho principal não aponta para serviço externo
-- O overlay legado não é o fluxo ativo
+- O overlay não existe mais como página da extensão
 
 ## Assunções
 - A extensão ainda existe para capturar chat em pop-up.
-- O renderer legado pode permanecer como histórico, mas não como origem principal.
+- O renderer do overlay vive no portal/backend Go.

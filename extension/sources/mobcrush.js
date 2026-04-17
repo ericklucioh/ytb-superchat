@@ -11,8 +11,6 @@ var channel = generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 
 var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
-var alreadyPrompted = false;
-
 function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
 
@@ -110,15 +108,10 @@ $("body").on("click", ".btn-clear-twitch", function () {
   pushMessage(false);
 });
 
-$("body").on("click", ".btn-getoverlay-twitch", function () {
-    alreadyPrompted=true;
-    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-});
-
 function addButtons(){
 	if (document.getElementById("pushButtonOverlay")){return;}
 	if (document.querySelector(".meta-messages")){
-		document.querySelector(".meta-messages").innerHTML += '<button  id="pushButtonOverlay" class="btn-clear-twitch">CLEAR</button><button class="btn-getoverlay-twitch">LINK</button>';
+		document.querySelector(".meta-messages").innerHTML += '<button  id="pushButtonOverlay" class="btn-clear-twitch">CLEAR</button>';
 	}
 }
 

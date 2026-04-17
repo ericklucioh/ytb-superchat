@@ -44,9 +44,6 @@ func resolveOverlayDir(flagValue string) string {
 		"out/portal/overlay",
 		"../src/overlay",
 		"src/overlay",
-		"../extension",
-		"extension",
-		filepath.Join("..", "..", "extension"),
 	}
 
 	for _, candidate := range candidates {
@@ -55,7 +52,7 @@ func resolveOverlayDir(flagValue string) string {
 		}
 	}
 
-	return "../extension"
+	return "../src/overlay"
 }
 
 func fileExists(path string) bool {

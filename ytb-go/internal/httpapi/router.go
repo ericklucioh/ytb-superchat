@@ -7,7 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"ytb-go/internal/model"
 	"ytb-go/internal/session"
 	"ytb-go/internal/ws"
 )
@@ -51,7 +53,7 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 		writeCORSOptions(w)
 	})
 	mux.HandleFunc("POST /api/event", func(w http.ResponseWriter, r *http.Request) {
-		handleEventPost(hub, w, r)
+		handleEventPost(sm, hub, w, r)
 	})
 	mux.HandleFunc("OPTIONS /api/event", func(w http.ResponseWriter, r *http.Request) {
 		writeCORSOptions(w)
@@ -142,7 +144,7 @@ func handleRoomsGet(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *
 	})
 }
 
-func handleEventPost(hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
+func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
@@ -170,6 +172,10 @@ func handleEventPost(hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
 			"error": "missing session",
 		})
 		return
+	}
+
+	if event := buildSessionEvent(sessionID, req); event != nil {
+		sm.GetOrCreate(sessionID).AddEvent(*event)
 	}
 
 	hub.Publish(sessionID, body, isClearContents(req.Contents))
@@ -235,4 +241,79 @@ func cleanSession(value string) string {
 func isClearContents(contents json.RawMessage) bool {
 	trimmed := strings.TrimSpace(string(contents))
 	return trimmed == "" || trimmed == "false" || trimmed == "null"
+}
+
+func buildSessionEvent(sessionID string, req eventRequest) *model.Event {
+	if isClearContents(req.Contents) {
+		return nil
+	}
+
+	var contents map[string]any
+	if len(req.Contents) > 0 {
+		_ = json.Unmarshal(req.Contents, &contents)
+	}
+
+	eventType := stringOrDefault(valueString(contents, "eventType"), "overlay")
+	if req.Msg {
+		eventType = stringOrDefault(valueString(contents, "type"), eventType)
+	}
+
+	return &model.Event{
+		Session:         sessionID,
+		Type:            eventType,
+		User:            stringOrDefault(valueString(contents, "chatname"), valueString(contents, "user")),
+		Message:         stringOrDefault(valueString(contents, "chatmessage"), valueString(contents, "message")),
+		Timestamp:       jsonNumberToInt64(valueAny(contents, "timestamp"), time.Now().UTC().UnixMilli()),
+		Currency:        stringOrDefault(valueString(contents, "currency"), ""),
+		ChatImg:         stringOrDefault(valueString(contents, "chatimg"), ""),
+		ChatBadges:      stringOrDefault(valueString(contents, "chatbadges"), ""),
+		BackgroundColor: stringOrDefault(valueString(contents, "backgroundColor"), ""),
+		TextColor:       stringOrDefault(valueString(contents, "textColor"), ""),
+	}
+}
+
+func valueAny(values map[string]any, key string) any {
+	if values == nil {
+		return nil
+	}
+
+	return values[key]
+}
+
+func valueString(values map[string]any, key string) string {
+	if values == nil {
+		return ""
+	}
+
+	if raw, ok := values[key]; ok {
+		if str, ok := raw.(string); ok {
+			return strings.TrimSpace(str)
+		}
+	}
+
+	return ""
+}
+
+func jsonNumberToInt64(value any, fallback int64) int64 {
+	switch v := value.(type) {
+	case float64:
+		return int64(v)
+	case json.Number:
+		if parsed, err := v.Int64(); err == nil {
+			return parsed
+		}
+	case int64:
+		return v
+	case int:
+		return int64(v)
+	}
+
+	return fallback
+}
+
+func stringOrDefault(value, fallback string) string {
+	if strings.TrimSpace(value) != "" {
+		return strings.TrimSpace(value)
+	}
+	return fallback
 }

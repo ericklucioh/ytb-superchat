@@ -191,17 +191,13 @@ function startup() {
 			try{
 				if (!main[j].dataset.set){
 					main[j].dataset.set = "true";
-					main[j].innerHTML += '<span><a class="btn-push-crowdcast">ADD</a></span><span><a class="btn-clear-crowdcast">CLEAR</a></span><span><a class="btn-getoverlay-crowdcast" >LINK</a></span>';
+					main[j].innerHTML += '<span><a class="btn-push-crowdcast">ADD</a></span><span><a class="btn-clear-crowdcast">CLEAR</a></span>';
 					
 					main[j].querySelector(".btn-push-crowdcast").onclick = function(){
 						console.log(this);
 						console.log(this.parentNode);
 						console.log(this.parentNode.parentNode);
 						prepMessage(this.parentNode.parentNode);
-					};
-					
-					main[j].querySelector(".btn-getoverlay-crowdcast").onclick = function(){
-						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 					};
 					
 					main[j].querySelector(".btn-clear-crowdcast").onclick = function(){

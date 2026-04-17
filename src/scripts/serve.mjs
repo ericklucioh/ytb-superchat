@@ -6,7 +6,7 @@ const rootDir = process.cwd();
 const port = getPort();
 const landingFile = path.join(rootDir, "src", "landing.html");
 const portalRoot = path.join(rootDir, "src");
-const overlayRoot = path.join(rootDir, "extension");
+const overlayRoot = path.join(rootDir, "src", "overlay");
 
 const mimeTypes = new Map([
   [".html", "text/html; charset=utf-8"],

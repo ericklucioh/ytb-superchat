@@ -4,7 +4,6 @@
 	var channel = runtime.generateStreamID();
 	var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 	var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
-	var alreadyPrompted = false;
 	var localBridge = null;
 	var unwatchStreamId = null;
 
@@ -21,10 +20,6 @@
 	}
 
 	function actionwtf(){ // legacy overlay connection
-		if (!alreadyPrompted){
-			alreadyPrompted=true;
-			prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-		}
 		runtime.persistStreamId(channel);
 		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	}
@@ -199,11 +194,6 @@
 	  });
 	});
 
-	$("body").on("click", ".btn-getoverlay-youtube", function () {
-		alreadyPrompted=true;
-		prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-	});
-
 	// Restore settings
 
 	var properties = ["color","scale","streamID","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
@@ -229,7 +219,7 @@
 
 
 	setTimeout(function(){
-		$( "yt-live-chat-app" ).before( '<button class="btn-clear-youtube">CLEAR</button><button class="btn-getoverlay-youtube">LINK</button>' );
+		$( "yt-live-chat-app" ).before( '<button class="btn-clear-youtube">CLEAR</button>' );
 		actionwtf();
 	},600);
 

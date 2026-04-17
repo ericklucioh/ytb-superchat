@@ -250,7 +250,7 @@ function detectPoll(){
 		if (main.marked){return}
 		main.marked = true;
 		
-		main.innerHTML += '<span><a class="btn-push-zoom">Q</a></span><span><a class="btn-push-zoom-2">Q+C</a></span><span><a class="btn-clear-zoom">CLR</a></span><span><a class="btn-getoverlay-zoom" >LNK</a></span>';
+		main.innerHTML += '<span><a class="btn-push-zoom">Q</a></span><span><a class="btn-push-zoom-2">Q+C</a></span><span><a class="btn-clear-zoom">CLR</a></span>';
 			
 		main.querySelector(".btn-push-zoom").onclick = function(){
 			prepPoll(document.getElementById("poll__body"), false);
@@ -258,10 +258,6 @@ function detectPoll(){
 		
 		main.querySelector(".btn-push-zoom-2").onclick = function(){
 			prepPoll(document.getElementById("poll__body"), true);
-		};
-		
-		main.querySelector(".btn-getoverlay-zoom").onclick = function(){
-			prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 		};
 		
 		main.querySelector(".btn-clear-zoom").onclick = function(){
@@ -290,24 +286,20 @@ function startup() {
 					main[j].dataset.set = "true";
 					
 					if (main[j].childNodes[0].length == 1){
-						main[j].childNodes[0].innerHTML = '<span><a class="btn-push-zoom">ADD</a></span><span><a class="btn-clear-zoom">CLEAR</a></span><span><a class="btn-getoverlay-zoom" >LINK</a></span>' + main[j].childNodes[0].innerHTML;
+						main[j].childNodes[0].innerHTML = '<span><a class="btn-push-zoom">ADD</a></span><span><a class="btn-clear-zoom">CLEAR</a></span>' + main[j].childNodes[0].innerHTML;
 						
 						
 					} else {
-						main[j].childNodes[0].innerHTML += '<span><a class="btn-push-zoom">ADD</a></span><span><a class="btn-clear-zoom">CLEAR</a></span><span><a class="btn-getoverlay-zoom" >LINK</a></span>';
+						main[j].childNodes[0].innerHTML += '<span><a class="btn-push-zoom">ADD</a></span><span><a class="btn-clear-zoom">CLEAR</a></span>';
 					}
 					
 					main[j].querySelector(".btn-push-zoom").onclick = function(){
 						prepMessage(this.parentNode.parentNode.parentNode);
 					};
 					
-					main[j].querySelector(".btn-getoverlay-zoom").onclick = function(){
-						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-					};
-					
-					main[j].querySelector(".btn-clear-zoom").onclick = function(){
-						pushMessage(false);
-					}
+						main[j].querySelector(".btn-clear-zoom").onclick = function(){
+							pushMessage(false);
+						}
 				}
 			} catch(e){}
 		}

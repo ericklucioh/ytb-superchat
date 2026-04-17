@@ -193,14 +193,10 @@ function startup() {
 			try{
 				if (!main[j].dataset.set){
 					main[j].dataset.set = "true";
-					main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-withyoutube" style="margin-right:10px;color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-withyoutube"  style="margin-right:10px;color:red;">CLEAR</a></span><span><a class="btn-getoverlay-withyoutube" >LINK</a></span></div>');
+					main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-withyoutube" style="margin-right:10px;color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-withyoutube"  style="margin-right:10px;color:red;">CLEAR</a></span></div>');
 					
 					main[j].querySelector(".btn-push-withyoutube").onclick = function(){
 						prepMessage(this.parentNode.parentNode.parentNode.parentNode);
-					};
-					
-					main[j].querySelector(".btn-getoverlay-withyoutube").onclick = function(){
-						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 					};
 					
 					main[j].querySelector(".btn-clear-withyoutube").onclick = function(){
@@ -217,14 +213,10 @@ function startup() {
 			try{
 				if (!main[j].dataset.set){
 					main[j].dataset.set = "true";
-					main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-withyoutube" style="margin-right:10px;color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-withyoutube"  style="margin-right:10px;color:red;">CLEAR</a></span><span><a class="btn-getoverlay-withyoutube" >LINK</a></span></div>');
+					main[j].insertAdjacentHTML('afterbegin', '<div><span><a class="btn-push-withyoutube" style="margin-right:10px;color:green;font-weight:700;">ADD</a></span><span><a class="btn-clear-withyoutube"  style="margin-right:10px;color:red;">CLEAR</a></span></div>');
 					
 					main[j].querySelector(".btn-push-withyoutube").onclick = function(){
 						prepMessage(this.parentNode.parentNode.parentNode);
-					};
-					
-					main[j].querySelector(".btn-getoverlay-withyoutube").onclick = function(){
-						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
 					};
 					
 					main[j].querySelector(".btn-clear-withyoutube").onclick = function(){

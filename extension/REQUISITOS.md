@@ -13,14 +13,13 @@ A extensão "Portal do Streamer - Eloh" captura mensagens de chat ao vivo de mú
 - Captura em pop-outs e chats em páginas suportadas
 - Configuração em `chrome.storage.sync`
 - Bridge para o portal já existente
-- Overlay legado ainda presente como histórico
 
 ## Funcionalidades Principais
 - Captura automática de mensagens de chat em popups/live_chat das plataformas suportadas.
 - Armazena configurações no chrome.storage.sync.
 - Permite customização visual (cores, fontes, layout) via página de opções.
 - Gera e gerencia um streamID único para cada sessão/stream.
-- Fornece dados para o overlay visual do OBS, servido pelo backend Go.
+- Fornece dados ao portal, que publica o overlay visual do OBS no backend Go.
 - Suporte a múltiplas plataformas via scripts dedicados.
 
 ## Regras de Negócio
@@ -31,8 +30,7 @@ A extensão "Portal do Streamer - Eloh" captura mensagens de chat ao vivo de mú
 - Permissões restritas às URLs das plataformas e do portal.
 
 ## O Que Precisa Mudar
-- O overlay não deve ser tratado como responsabilidade principal da extensão.
-- O renderer legado não deve ser o caminho ativo.
+- O overlay não deve existir dentro da extensão.
 - A extensão precisa apenas entregar eventos normalizados ao portal/backend.
 
 ## Pontos de Melhoria/Simplificação
@@ -48,7 +46,6 @@ A extensão "Portal do Streamer - Eloh" captura mensagens de chat ao vivo de mú
 
 ## Estrutura de Arquivos
 - `manifest.json`: Configuração da extensão, permissões e scripts.
-- `index.html`: Overlay visual legado para OBS.
 - `main.css`: Estilos do overlay e opções.
 - `settings/options.html` & `options.js`: Página de opções e lógica de configuração.
 - `sources/`: Scripts para cada plataforma suportada.
@@ -56,5 +53,4 @@ A extensão "Portal do Streamer - Eloh" captura mensagens de chat ao vivo de mú
 ---
 ## Assunções
 - As APIs oficiais entram gradualmente depois.
-- O overlay legado permanece apenas como histórico até deixar de ser necessário.
 - O storage da extensão segue para configurações, não para estado autoritativo do overlay.

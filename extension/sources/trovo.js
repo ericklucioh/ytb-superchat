@@ -11,16 +11,9 @@ var channel = generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 
 var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
-var alreadyPrompted = false;
-
 function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
-	
-	if (!alreadyPrompted){
-		alreadyPrompted=true;
-		prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-	}
-	
+
 	soca = new WebSocket(OverlayRuntime.DEFAULT_OVERLAY_WS_URL);
 	soca.onclose = function (){
 		setTimeout(function(){soca=false;actionwtf(); },2000);
@@ -182,13 +175,7 @@ $("body").on("click", ".btn-clear-trovo", function () {
   });
 });
 
-$("body").on("click", ".btn-getoverlay-trovo", function () {
-    alreadyPrompted=true;
-    prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-});
-
-
-document.querySelector("body").innerHTML += '<button class="btn-clear-trovo">CLEAR</button><button class="btn-getoverlay-trovo" >LINK</button><highlight-chat class="highlight-trovo"></highlight-chat>';
+document.querySelector("body").innerHTML += '<button class="btn-clear-trovo">CLEAR</button><highlight-chat class="highlight-trovo"></highlight-chat>';
 
 
 // Show a placeholder message so you can position the window before the chat is live

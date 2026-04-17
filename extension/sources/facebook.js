@@ -233,11 +233,11 @@ function startup() {
 					
 					if (main[j].childNodes[1].childNodes[1].childNodes[1]){
 						var newNode = main[j].childNodes[1].childNodes[1].childNodes[1].cloneNode();
-						newNode.innerHTML = '<span><a class="btn-push-facebook">ADD</a></span><span><a class="btn-clear-facebook">CLEAR</a></span><span><a class="btn-getoverlay-facebook" >LINK</a></span>';
+						newNode.innerHTML = '<span><a class="btn-push-facebook">ADD</a></span><span><a class="btn-clear-facebook">CLEAR</a></span>';
 						insertAfter(newNode, main[j].childNodes[1].childNodes[1].childNodes[1]) 
 					} else if (main[j].childNodes[1].childNodes[2].childNodes[1]){
 						var newNode = main[j].childNodes[1].childNodes[2].childNodes[1].cloneNode();
-						newNode.innerHTML = '<span><a class="btn-push-facebook">ADD</a></span><span><a class="btn-clear-facebook">CLEAR</a></span><span><a class="btn-getoverlay-facebook" >LINK</a></span>';
+						newNode.innerHTML = '<span><a class="btn-push-facebook">ADD</a></span><span><a class="btn-clear-facebook">CLEAR</a></span>';
 						insertAfter(newNode, main[j].childNodes[1].childNodes[2].childNodes[1]) 
 						
 					}  else {
@@ -245,9 +245,6 @@ function startup() {
 					}
 					
 					newNode.querySelector(".btn-push-facebook").onclick = function(){prepMessage(this.parentNode.parentNode.parentNode.parentNode.parentNode);};
-					newNode.querySelector(".btn-getoverlay-facebook").onclick = function(){
-						prompt("Overlay Link: https://ytb.ericklucioh.com?session="+channel+"\nAdd as a browser source; set height to 250px", "https://ytb.ericklucioh.com?session="+channel);
-					};
 					newNode.querySelector(".btn-clear-facebook").onclick = function(){pushMessage(false);}
 				}
 			} catch(e){}
