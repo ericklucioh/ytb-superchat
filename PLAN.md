@@ -1,79 +1,81 @@
-# Arquitetura Ideal do Clone
+# Plano de Implementação: Portal Estático + Backend Go Como Fonte de Verdade
 
-## Summary
-O ideal neste repositório não é “migrar a URL do overlay”, e sim separar claramente as responsabilidades.
+## Resumo
+O portal continua sendo a camada estática de interface.
+O backend Go vira a fonte de verdade do estado compartilhado.
+A extensão fica só com captura e normalização de chat.
+O OBS consome apenas a URL do overlay servida pelo backend.
 
-A estrutura certa fica assim:
-- `API Go` = núcleo de sessão, room, estado do overlay e transporte em tempo real
-- `Portal` = dashboard + tela do overlay + UI de controle
-- `Extension` = captura de chat e adaptação por plataforma
-- `OBS` = consumidor final do overlay, sem lógica de negócio
+Isso permite vários usuários e várias sessões no mesmo sistema, desde que cada fluxo seja isolado por `sessionId`.
 
-Hoje o projeto ainda está híbrido: a extensão continua carregando o HTML/CSS do overlay e o portal ainda é só dashboard. O ideal é inverter isso e fazer o portal ser a origem oficial do overlay.
+## Mudanças de Implementação
+- **Documentação**
+  - Manter `OBJETIVO.md` como definição da missão do produto.
+  - Manter `PLAN.md` como plano de execução.
+  - Remover os markdowns legados que competem com a arquitetura atual.
 
-## Dependências Certas
-- `OBS` depende apenas do `Portal Overlay URL`, por exemplo `/overlay?session=...`
-- `Portal` depende da `API Go` para publicar overlay, ler estado e sincronizar sessão
-- `Extension` depende da `API Go` e do contrato de sessão, mas não do renderer do overlay
-- `API Go` depende do contrato dos eventos, não da UI da extensão nem do OBS
+- **Modelo de responsabilidade**
+  - Frontend estático:
+    - renderiza dashboard e overlay
+    - guarda apenas estado local de UI
+    - não guarda o estado compartilhado da live
+  - Backend Go:
+    - mantém sessões
+    - armazena o último overlay por sessão
+    - distribui eventos para clientes conectados
+    - expõe `/api/session`, `/api/event`, `/api/rooms`, `/ws` e `/overlay`
+  - Extensão:
+    - captura mensagens das plataformas
+    - normaliza payload
+    - envia eventos para o portal/backend
+    - não é dona do overlay
+  - OBS:
+    - consome somente a URL do overlay
+    - não conhece captura nem dashboard
 
-Em outras palavras:
-- a extensão captura
-- o portal coordena
-- a API centraliza
-- o OBS só exibe
+- **Overlay**
+  - Tirar o renderer do overlay do caminho principal da extensão.
+  - Servir o overlay pelo caminho `/overlay`.
+  - Fazer o Go preferir o overlay gerado pelo build do portal.
+  - Remover dependência ativa de `api.overlay.ninja` no fluxo principal.
 
-## O Que Cada Pilar Deve Fazer
-- `API`
-  - guardar sessão/room
-  - aceitar eventos do dashboard e da extensão
-  - manter último overlay por sessão
-  - expor `health`, `session`, `event`, `rooms` e o stream em tempo real
-  - ser a única fonte de verdade do estado do overlay
-- `Portal`
-  - listar e filtrar mensagens
-  - selecionar mensagem para overlay
-  - abrir/servir a página do overlay
-  - aplicar o visual do overlay usando os assets do portal, não da extensão
-- `Extension`
-  - capturar YouTube/Twitch e demais fontes legadas
-  - normalizar eventos
-  - enviar para a API
-  - persistir `streamID`
-  - não renderizar overlay nem ser dona do CSS do OBS
-- `OBS`
-  - consumir uma URL estável do portal
-  - receber updates em tempo real
-  - não conhecer nenhum detalhe de captura ou dashboard
+- **Multiusuário e sessão**
+  - Tratar `sessionId` como chave de isolamento do estado.
+  - Permitir vários usuários e sessões simultâneos no mesmo backend.
+  - Garantir que cada sessão tenha:
+    - eventos próprios
+    - overlay próprio
+    - conexão própria com OBS
+  - Deixar claro que usuário e sessão não são a mesma coisa.
 
-## O Que Precisa De Quem
-- `API` precisa do contrato de sessão e do payload de overlay
-- `Portal` precisa do estado da API e do visual do overlay
-- `Extension` precisa só do contrato de ingestão e do `streamID`
-- `OBS` precisa só da URL do overlay e do `session`
+- **Build e scripts**
+  - Manter `out/` apenas como artefato gerado.
+  - Não colocar estado em `out/`.
+  - Ajustar build, serve e open para:
+    - gerar o site e o portal estático
+    - publicar o overlay em `/overlay`
+    - abrir URLs corretas em desenvolvimento
 
-## Ideal A Ser Feito
-- mover o HTML/CSS do overlay para o `portal`
-- fazer o build gerar `out/portal/overlay`
-- fazer o Go servir o overlay a partir do build do portal
-- remover o overlay renderer da extensão como caminho principal
-- manter a extensão apenas como coleta e bridge
-- manter o contrato de payload compatível com o que o dashboard já gera hoje
-- eliminar o caminho ativo de `api.overlay.ninja` do fluxo principal
-- deixar o Go como backend real de sessão/overlay, não só como proxy
-
-## Test Plan
-- abrir `/overlay?session=...` e ver o overlay renderizar sozinho
-- selecionar uma mensagem no portal e ver ela aparecer no OBS
-- mandar `contents: false` e ver o overlay limpar
-- confirmar que o dashboard continua funcionando com a extensão instalada
-- confirmar que a extensão ainda captura os chats suportados
-- confirmar que o build gera portal e overlay sem depender da pasta `extension` como renderer
-- confirmar que não existe mais dependência ativa de `api.overlay.ninja` no caminho principal
+## Testes e Validação
+- Validar que o build gera o site, o portal e o overlay sem quebrar o fluxo atual.
+- Validar que o backend Go sobe e responde em:
+  - `/health`
+  - `/api/session`
+  - `/api/event`
+  - `/ws`
+  - `/overlay`
+- Validar o fluxo completo:
+  - extensão captura mensagem
+  - portal recebe e organiza
+  - clique numa mensagem gera overlay
+  - OBS recebe o overlay via backend Go
+- Validar que uma sessão não interfere em outra.
+- Validar que múltiplas sessões podem existir ao mesmo tempo sem conflito de estado.
+- Validar que não existe mais o caminho principal dependente de `api.overlay.ninja`.
 
 ## Assumptions
-- o portal é o dono definitivo do overlay
-- a extensão vira só capturadora/adaptadora
-- o OBS só consome URL
-- a API Go fica como núcleo do sistema
-- o comportamento visual do overlay deve permanecer equivalente ao atual, só mudando de lugar no repo
+- `out/` é somente build gerado, nunca fonte de estado.
+- O portal pode continuar estático desde que o estado compartilhado fique no backend.
+- O backend Go é a fonte de verdade para sessão, overlay e broadcast.
+- O objetivo é remover o overlay legado da extensão do caminho principal, não manter fallback.
+- O comportamento visual do overlay deve permanecer equivalente ao atual, mudando apenas o dono da responsabilidade.

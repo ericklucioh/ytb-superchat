@@ -40,6 +40,10 @@ func resolveOverlayDir(flagValue string) string {
 	}
 
 	candidates := []string{
+		"../out/portal/overlay",
+		"out/portal/overlay",
+		"../src/overlay",
+		"src/overlay",
 		"../extension",
 		"extension",
 		filepath.Join("..", "..", "extension"),

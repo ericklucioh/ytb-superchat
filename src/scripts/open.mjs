@@ -13,7 +13,7 @@ if (!target || !["site", "overlay"].includes(target)) {
 
 const pathPart = target === "site"
   ? "/portal"
-  : `/extension/index.html${session ? `?session=${encodeURIComponent(session)}` : ""}`;
+  : `/overlay${session ? `?session=${encodeURIComponent(session)}` : ""}`;
 
 const url = `http://localhost:${port}${pathPart}`;
 

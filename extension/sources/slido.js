@@ -16,7 +16,7 @@ var connecting = false;
 function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
 	
-	soca = new WebSocket("wss://api.overlay.ninja");
+	soca = new WebSocket(OverlayRuntime.DEFAULT_OVERLAY_WS_URL);
 	soca.onclose = function (){
 		console.error("closed: reconnecting");
 		clearTimeout(connecting);

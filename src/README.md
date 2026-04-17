@@ -19,7 +19,8 @@ The dashboard is the control panel for the project:
 - shows Twitch subs, YouTube members, superchats, and live chat
 - lets you filter messages by status
 - lets you promote a message to the overlay by clicking it
-- stores state in `localStorage`
+- stores UI state in `localStorage`
+- sends overlay events to the Go backend
 
 ## Main code files
 
@@ -48,7 +49,7 @@ Useful URLs:
 - `https://ytb.ericklucioh.com/portal`
 - `http://localhost:8000/`
 - `http://localhost:8000/portal`
-- `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID`
+- `http://localhost:8000/overlay?session=YOUR_SESSION_ID`
 
 If you want to serve manually:
 
@@ -70,7 +71,7 @@ Linux shell wrappers are also available under `src/scripts/*.sh` if you want to 
 npm run build
 ```
 
-This copies the site into `out/` and also packages the extension zip.
+This copies the site into `out/`, publishes the overlay under `out/portal/overlay/`, and also packages the extension zip.
 
 ## Session flow
 
@@ -85,5 +86,5 @@ The dashboard accepts a session in a few ways:
 
 - Superchat conversion is used internally for ordering and totals in the dashboard.
 - The OBS overlay keeps the original currency display.
-- The site does not capture chat on its own. It consumes events coming from the Chrome extension bridge, and still uses the OBS overlay socket only for the selection path.
+- The site does not capture chat on its own. It consumes events coming from the Chrome extension bridge and publishes overlay updates to the Go backend.
 - `/src/index.html` is kept as a temporary redirect to `/portal` for compatibility.

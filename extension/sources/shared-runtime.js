@@ -38,7 +38,6 @@
 
   const settingsCache = new Map();
   const streamIdListeners = new Set();
-  const LEGACY_OVERLAY_HOST = "api.overlay.ninja";
   const DEFAULT_OVERLAY_WS_URL = resolveDefaultOverlayWebSocketUrl();
 
   function resolveDefaultOverlayWebSocketUrl() {
@@ -60,11 +59,7 @@
 
   function resolveOverlayWebSocketUrl(url) {
     const value = String(url || "");
-    if (!value.includes(LEGACY_OVERLAY_HOST)) {
-      return value;
-    }
-
-    return DEFAULT_OVERLAY_WS_URL;
+    return value || DEFAULT_OVERLAY_WS_URL;
   }
 
   if (typeof global.WebSocket === "function" && !global.__OverlayWebSocketPatched) {
@@ -227,7 +222,7 @@
 
   function createSocketBridge({
     getRoomId,
-    url = "wss://api.overlay.ninja",
+    url = DEFAULT_OVERLAY_WS_URL,
     reconnectDelay = 2000,
     onOpen,
     onMessage,
@@ -381,6 +376,7 @@
   global.OverlayRuntime = {
     DEFAULT_SEND_PROPERTIES,
     DEFAULT_SETTINGS_PROPERTIES,
+    DEFAULT_OVERLAY_WS_URL,
     generateStreamID,
     normalizeHighlightWords,
     loadSettings,

@@ -8,5 +8,5 @@ if ($Session) {
   $suffix = "?session=$Session"
 }
 
-$url = "http://localhost:$Port/extension/index.html$suffix"
+$url = "http://localhost:$Port/overlay$suffix"
 Start-Process $url

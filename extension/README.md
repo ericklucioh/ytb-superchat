@@ -1,10 +1,10 @@
 # Chrome Extension
 
-This folder contains the browser extension and the OBS overlay renderer.
+This folder contains the browser extension and the legacy OBS overlay assets.
 
 ## What lives here
 
-- `index.html` - the OBS overlay page
+- `index.html` - the legacy OBS overlay page
 - `manifest.json` - Chrome extension manifest
 - `sources/` - chat capture scripts per platform
 - `settings/` - extension options UI
@@ -43,10 +43,10 @@ The overlay page is [`index.html`](index.html).
 Use it in OBS as a browser source with a session parameter:
 
 ```text
-extension/index.html?session=YOUR_SESSION_ID
+http://localhost:8080/overlay?session=YOUR_SESSION_ID
 ```
 
-The same session ID is used by the dashboard and by the extension.
+The same session ID is used by the dashboard, the extension, and the backend Go server.
 
 ## Install for development
 
@@ -75,4 +75,4 @@ That generates:
 - The extension still depends on the browser page being open.
 - If the chat UI changes, the selector logic may need a refresh.
 - The OBS overlay receives the original donation currency display, while the dashboard can still use converted BRL values for totals and ordering.
-- Chat ingestion no longer depends on `wss://api.overlay.ninja`; the dashboard now receives chat events through the extension bridge.
+- Chat ingestion no longer depends on `wss://api.overlay.ninja`; the dashboard now receives chat events through the extension bridge and the overlay is served by the Go backend.

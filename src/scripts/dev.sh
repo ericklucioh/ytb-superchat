@@ -21,7 +21,7 @@ printf 'Home: http://localhost:%s/\n' "$PORT"
 printf 'Portal: http://localhost:%s/portal\n' "$PORT"
 
 if [ -n "$SESSION" ]; then
-  printf 'Overlay: http://localhost:%s/extension/index.html?session=%s\n' "$PORT" "$SESSION"
+  printf 'Overlay: http://localhost:%s/overlay?session=%s\n' "$PORT" "$SESSION"
 fi
 
 wait "$SERVER_PID"

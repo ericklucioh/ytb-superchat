@@ -17,7 +17,7 @@ var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeigh
 function actionwtf(){ // legacy overlay connection
 	if (soca){return;}
 
-	soca = new WebSocket("wss://api.overlay.ninja");
+	soca = new WebSocket(OverlayRuntime.DEFAULT_OVERLAY_WS_URL);
 	soca.onclose = function (){
 		setTimeout(function(){soca=false;actionwtf(); },2000);
 	};
@@ -366,7 +366,6 @@ setTimeout(function(){preStartup();},1000);
 var preStartupInteval = setInterval(function(){preStartup();},5000);
 
 })();
-
 
 
 

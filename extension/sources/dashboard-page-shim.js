@@ -6,7 +6,6 @@
   const NativeWebSocket = window.WebSocket;
   const PAGE_EVENT = "overlay-local-chat:event";
   const PAGE_READY_EVENT = "overlay-local-chat:page-ready";
-  const SOCKET_URL_MARKER = "api.overlay.ninja";
 
   const feedSockets = new Map();
   const pendingPackets = new Map();

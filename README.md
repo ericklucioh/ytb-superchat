@@ -1,11 +1,12 @@
 # YTB Superchat
 
-Overlay and streamer dashboard for Twitch and YouTube live chat.
+Overlay and streamer dashboard for live chat across Twitch, YouTube, and Kick.
 
 This repo is split into two parts:
 
 - `src/` - the streamer dashboard and local site
-- `extension/` - the Chrome extension and OBS overlay
+- `extension/` - the Chrome extension and legacy overlay assets
+- `ytb-go/` - the local Go backend for sessions and overlay broadcast
 
 ## What this project does
 
@@ -19,7 +20,8 @@ This repo is split into two parts:
 
 - [`README.md`](README.md) - project overview and setup
 - [`src/README.md`](src/README.md) - streamer dashboard and local site
-- [`extension/README.md`](extension/README.md) - Chrome extension and OBS overlay
+- [`extension/README.md`](extension/README.md) - Chrome extension and legacy overlay assets
+- [`ytb-go/README.md`](ytb-go/README.md) - local Go backend
 
 ## Run locally
 
@@ -35,7 +37,7 @@ Useful URLs:
 - `https://ytb.ericklucioh.com/portal` - main streamer dashboard
 - `http://localhost:8000/` - local landing page
 - `http://localhost:8000/portal` - local dashboard
-- `http://localhost:8000/extension/index.html?session=YOUR_SESSION_ID` - local OBS overlay
+- `http://localhost:8000/overlay?session=YOUR_SESSION_ID` - local OBS overlay
 
 ## Build
 
@@ -46,6 +48,7 @@ npm run build
 This creates:
 
 - `out/` - static site build
+- `out/portal/overlay/` - overlay assets published by the portal build
 - `out/chrome-extension.zip` - packaged Chrome extension
 
 ## Chrome extension
@@ -62,7 +65,7 @@ Load `extension/` unpacked in Chrome while developing:
 - The dashboard stores the current session ID in `localStorage`
 - The dashboard can also read `?session=...` from the URL
 - The extension uses the same session ID to send chat data into the dashboard bridge
-- The OBS overlay still uses its own browser-source session flow
+- The Go backend stores the overlay state per session and serves the OBS browser source
 
 ## Main files
 
@@ -76,13 +79,13 @@ Load `extension/` unpacked in Chrome while developing:
 - [`src/site/streamer-events.js`](src/site/streamer-events.js) - event normalization, payload building, and comparisons
 - [`src/site/streamer-rates.js`](src/site/streamer-rates.js) - BRL conversion and rate caching
 - [`src/site/streamer-utils.js`](src/site/streamer-utils.js) - compatibility re-export for shared helpers
-- [`extension/index.html`](extension/index.html) - OBS overlay renderer
+- [`extension/index.html`](extension/index.html) - legacy overlay renderer
 - [`extension/sources/youtube.js`](extension/sources/youtube.js) - YouTube chat capture
 - [`extension/sources/twitch.js`](extension/sources/twitch.js) - Twitch chat capture
 
 ## Notes
 
-- The overlay still depends on the browser tab/page being open for the chat sources.
+- The overlay is now served from the portal/backend path.
 - If you change extension code, rebuild and reload the extension.
 - If you change the dashboard code, refresh the local site.
 

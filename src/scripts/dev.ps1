@@ -21,6 +21,6 @@ Write-Host "Portal: http://localhost:$Port/portal"
 Start-Process "http://localhost:$Port/portal"
 
 if ($Session) {
-  $overlayUrl = "http://localhost:$Port/extension/index.html?session=$Session"
+  $overlayUrl = "http://localhost:$Port/overlay?session=$Session"
   Write-Host "Overlay: $overlayUrl"
 }
