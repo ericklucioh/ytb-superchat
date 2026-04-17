@@ -30,7 +30,7 @@ function getPort() {
 }
 
 function getSession() {
-  return process.env.SESSION || readDotEnvValue("SESSION") || "";
+  return process.env.YTB_SESSION_ID || process.env.SESSION || readDotEnvValue("YTB_SESSION_ID") || readDotEnvValue("SESSION") || "";
 }
 
 function readDotEnvValue(key) {

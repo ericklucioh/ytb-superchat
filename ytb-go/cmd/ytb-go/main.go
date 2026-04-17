@@ -13,13 +13,14 @@ import (
 )
 
 func main() {
-	port := flag.Int("port", 8080, "Port to listen on")
+	port := flag.Int("port", resolveDefaultGoPort(), "Port to listen on")
 	overlayDirFlag := flag.String("overlay-dir", "", "Directory with overlay assets")
 	flag.Parse()
 
 	sm := session.NewManager()
 	hub := ws.NewHub(sm)
 	overlayDir := resolveOverlayDir(*overlayDirFlag)
+	log.Printf("[go:main] overlayDir=%q", overlayDir)
 	router := httpapi.NewRouter(sm, hub, overlayDir)
 
 	addr := fmt.Sprintf(":%d", *port)
@@ -35,7 +36,7 @@ func resolveOverlayDir(flagValue string) string {
 		return flagValue
 	}
 
-	if envValue := os.Getenv("OVERLAY_DIR"); envValue != "" {
+	if envValue := firstEnv("YTB_OVERLAY_DIR", "OVERLAY_DIR"); envValue != "" {
 		return envValue
 	}
 
@@ -58,4 +59,27 @@ func resolveOverlayDir(flagValue string) string {
 func fileExists(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && !info.IsDir()
+}
+
+func resolveDefaultGoPort() int {
+	for _, key := range []string{"YTB_GO_PORT", "GO_PORT"} {
+		if value := os.Getenv(key); value != "" {
+			var port int
+			if _, err := fmt.Sscanf(value, "%d", &port); err == nil && port > 0 {
+				return port
+			}
+		}
+	}
+
+	return 8080
+}
+
+func firstEnv(keys ...string) string {
+	for _, key := range keys {
+		if value := os.Getenv(key); value != "" {
+			return value
+		}
+	}
+
+	return ""
 }

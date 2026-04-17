@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"log"
 	"net"
 	"sync"
 )
@@ -41,6 +42,7 @@ func newClient(hub *Hub, conn net.Conn, reader *bufio.Reader, writer *bufio.Writ
 }
 
 func (c *Client) serve() {
+	log.Printf("[go:ws] client serve start room=%q", c.currentRoom())
 	go c.writeLoop()
 	c.readLoop()
 	c.close()
@@ -90,10 +92,12 @@ func (c *Client) writeLoop() {
 func (c *Client) handlePacket(payload []byte) {
 	var packet wsPacket
 	if err := json.Unmarshal(payload, &packet); err != nil {
+		log.Printf("[go:ws] packet decode failed err=%v", err)
 		return
 	}
 
 	if room := cleanSession(packet.Join); room != "" {
+		log.Printf("[go:ws] packet join room=%q", room)
 		c.hub.join(c, room)
 		return
 	}
@@ -103,9 +107,11 @@ func (c *Client) handlePacket(payload []byte) {
 		room = c.currentRoom()
 	}
 	if room == "" {
+		log.Printf("[go:ws] packet ignored no-room")
 		return
 	}
 
+	log.Printf("[go:ws] packet publish room=%q clear=%t bytes=%d", room, isClearContents(packet.Contents), len(payload))
 	c.hub.Publish(room, payload, isClearContents(packet.Contents))
 }
 
@@ -129,8 +135,10 @@ func (c *Client) enqueue(payload []byte) {
 
 func (c *Client) close() {
 	c.once.Do(func() {
+		room := c.currentRoom()
 		close(c.done)
 		c.hub.leave(c)
+		log.Printf("[go:ws] client close room=%q", room)
 		if c.conn != nil {
 			_ = c.conn.Close()
 		}

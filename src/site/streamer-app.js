@@ -9,6 +9,7 @@ const STORAGE_KEY = "overlay_state";
 const ROOM_KEY = "overlay_room_id";
 const DEFAULT_OVERLAY_API_BASE_URL = "http://localhost:8080";
 const MAX_LIVE_MESSAGES = 500;
+const PORTAL_LOG_PREFIX = "[portal]";
 
 function boot() {
   const elements = {
@@ -42,9 +43,11 @@ function boot() {
   }
 
   const params = new URLSearchParams(window.location.search);
+  const runtimeEnv = window.__YTB_ENV__ || {};
   const urlRoom = cleanText(params.get("session") || params.get("s") || "");
+  const envRoom = cleanText(runtimeEnv.sessionId || "");
   const storedRoom = cleanText(localStorage.getItem(ROOM_KEY) || "");
-  const initialRoom = urlRoom || storedRoom || "";
+  const initialRoom = urlRoom || envRoom || storedRoom || "";
 
   const store = createStreamerStore({
     storageKey: STORAGE_KEY,
@@ -64,6 +67,11 @@ function boot() {
     onMessage: handleIncomingPayload,
     onReady: () => setStatus("🟢"),
     onSession: handleBridgeSession
+  });
+
+  console.log(PORTAL_LOG_PREFIX, "boot", {
+    initialRoom,
+    overlayApiBaseUrl: resolveOverlayApiBaseUrl()
   });
 
   elements.sessionInput.value = initialRoom;
@@ -225,6 +233,10 @@ function boot() {
       return;
     }
 
+    console.log(PORTAL_LOG_PREFIX, "connect", {
+      roomId: nextRoom
+    });
+
     store.connectRoom(nextRoom);
     localStorage.setItem(ROOM_KEY, nextRoom);
     persistSharedRoom(nextRoom);
@@ -259,6 +271,11 @@ function boot() {
       return;
     }
 
+    console.log(PORTAL_LOG_PREFIX, "bridge-session", {
+      from: store.state.roomId,
+      to: session
+    });
+
     store.connectRoom(session);
     localStorage.setItem(ROOM_KEY, session);
     persistSharedRoom(session);
@@ -277,6 +294,8 @@ function boot() {
     if (!normalized) {
       return;
     }
+
+    console.log(PORTAL_LOG_PREFIX, "incoming-payload", summarizePayload(normalized));
 
     if (store.insertEvent(normalized)) {
       scheduleRender();
@@ -322,6 +341,14 @@ function boot() {
       return;
     }
 
+    console.log(PORTAL_LOG_PREFIX, "send-overlay", {
+      roomId,
+      endpoint: `${baseUrl.replace(/\/$/, "")}/api/event`,
+      msg: packet?.msg,
+      clear: packet?.contents === false,
+      id: packet?.id || ""
+    });
+
     fetch(`${baseUrl.replace(/\/$/, "")}/api/event`, {
       method: "POST",
       headers: {
@@ -342,8 +369,10 @@ function boot() {
       return stored;
     }
 
-    if (window.__OVERLAY_API_BASE_URL__) {
-      return String(window.__OVERLAY_API_BASE_URL__).trim();
+    const runtimeEnv = window.__YTB_ENV__ || {};
+    const runtimeApiBase = cleanText(runtimeEnv.overlayApiBaseUrl || window.__OVERLAY_API_BASE_URL__ || "");
+    if (runtimeApiBase) {
+      return runtimeApiBase;
     }
 
     return DEFAULT_OVERLAY_API_BASE_URL;
@@ -400,6 +429,17 @@ function boot() {
       superchatTotals,
       focusedEvent
     });
+  }
+
+  function summarizePayload(payload) {
+    return {
+      id: payload?.id || "",
+      type: payload?.type || "",
+      platform: payload?.platform || "",
+      eventType: payload?.eventType || "",
+      session: payload?.session || "",
+      message: typeof payload?.chatmessage === "string" ? payload.chatmessage.slice(0, 80) : ""
+    };
   }
 
   function setStatus(message) {

@@ -2,7 +2,9 @@
 set -eu
 
 PORT="${PORT:-8000}"
-SESSION="${SESSION:-}"
+SESSION="${YTB_SESSION_ID:-${SESSION:-}}"
+export PORT
+export YTB_SESSION_ID="$SESSION"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
 node "$SCRIPT_DIR/serve.mjs" --port "$PORT" &

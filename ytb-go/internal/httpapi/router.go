@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -62,6 +63,9 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 	mux.HandleFunc("GET /overlay", func(w http.ResponseWriter, r *http.Request) {
 		serveOverlayIndex(overlayDir, w, r)
 	})
+	mux.HandleFunc("GET /overlay/runtime-env.js", func(w http.ResponseWriter, r *http.Request) {
+		serveOverlayRuntimeEnv(w, r)
+	})
 	mux.Handle("/overlay/", overlayHandler(overlayDir))
 
 	return mux
@@ -69,7 +73,9 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 
 func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Request) {
 	sessionID := cleanSession(r.URL.Query().Get("session"))
+	log.Printf("[go:http] GET /api/session session=%q", sessionID)
 	if sessionID == "" {
+		log.Printf("[go:http] GET /api/session -> rooms=%d", len(sm.List()))
 		writeJSON(w, http.StatusOK, map[string]any{
 			"rooms": len(sm.List()),
 		})
@@ -78,6 +84,7 @@ func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Reques
 
 	s, ok := sm.Get(sessionID)
 	if !ok {
+		log.Printf("[go:http] GET /api/session session=%q -> not found", sessionID)
 		writeJSON(w, http.StatusNotFound, map[string]any{
 			"error": "session not found",
 		})
@@ -85,6 +92,7 @@ func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Reques
 	}
 
 	hasOverlay, updatedAt := s.OverlayInfo()
+	log.Printf("[go:http] GET /api/session session=%q events=%d overlay=%t", s.ID, len(s.GetEvents()), hasOverlay)
 	writeJSON(w, http.StatusOK, map[string]any{
 		"session":       s.ID,
 		"events":        s.GetEvents(),
@@ -109,6 +117,7 @@ func handleSessionPost(sm *session.Manager, w http.ResponseWriter, r *http.Reque
 	if sessionID == "" {
 		sessionID = cleanSession(req.ID)
 	}
+	log.Printf("[go:http] POST /api/session session=%q", sessionID)
 	if sessionID == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]any{
 			"error": "missing session",
@@ -118,6 +127,7 @@ func handleSessionPost(sm *session.Manager, w http.ResponseWriter, r *http.Reque
 
 	s := sm.GetOrCreate(sessionID)
 	hasOverlay, updatedAt := s.OverlayInfo()
+	log.Printf("[go:http] POST /api/session session=%q overlay=%t", s.ID, hasOverlay)
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"session":       s.ID,
 		"hasOverlay":    hasOverlay,
@@ -127,6 +137,7 @@ func handleSessionPost(sm *session.Manager, w http.ResponseWriter, r *http.Reque
 
 func handleRoomsGet(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
 	sessions := sm.List()
+	log.Printf("[go:http] GET /api/rooms rooms=%d", len(sessions))
 	payload := make([]map[string]any, 0, len(sessions))
 	for _, s := range sessions {
 		hasOverlay, updatedAt := s.OverlayInfo()
@@ -167,6 +178,7 @@ func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r 
 	if sessionID == "" {
 		sessionID = cleanSession(req.Join)
 	}
+	log.Printf("[go:http] POST /api/event session=%q bodyBytes=%d", sessionID, len(body))
 	if sessionID == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]any{
 			"error": "missing session",
@@ -175,10 +187,12 @@ func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r 
 	}
 
 	if event := buildSessionEvent(sessionID, req); event != nil {
+		log.Printf("[go:http] POST /api/event session=%q event type=%q platform=%q user=%q message=%q", sessionID, event.Type, event.Platform, event.User, truncate(event.Message, 80))
 		sm.GetOrCreate(sessionID).AddEvent(*event)
 	}
 
 	hub.Publish(sessionID, body, isClearContents(req.Contents))
+	log.Printf("[go:http] POST /api/event session=%q published clear=%t", sessionID, isClearContents(req.Contents))
 	writeJSON(w, http.StatusAccepted, map[string]any{
 		"session":  sessionID,
 		"accepted": true,
@@ -197,6 +211,7 @@ func serveOverlayIndex(overlayDir string, w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	log.Printf("[go:http] GET /overlay serve index from %s", overlayDir)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	http.ServeFile(w, r, indexPath)
 }
@@ -270,6 +285,14 @@ func buildSessionEvent(sessionID string, req eventRequest) *model.Event {
 		BackgroundColor: stringOrDefault(valueString(contents, "backgroundColor"), ""),
 		TextColor:       stringOrDefault(valueString(contents, "textColor"), ""),
 	}
+}
+
+func truncate(value string, limit int) string {
+	if limit <= 0 || len(value) <= limit {
+		return value
+	}
+
+	return value[:limit] + "..."
 }
 
 func valueAny(values map[string]any, key string) any {

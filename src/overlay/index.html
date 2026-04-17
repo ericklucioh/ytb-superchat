@@ -7,6 +7,7 @@
 	<base href="/overlay/">
 	<title>Overlay Window</title>
 	<meta name="title" content="YouTube Chat Overlay" />
+	<script src="runtime-env.js"></script>
 	<script src="jquery.js"></script>
 	<style>
 /* Removido: estilos legacy de botões e clear */
@@ -480,10 +481,8 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 	
 	
 	var nextComment = null;
-	var roomID = "test";
-	try{
-		roomID = localStorage.getItem("overlay_room_id") || roomID;
-	} catch(e){}
+	var runtimeEnv = window.__YTB_ENV__ || {};
+	var roomID = runtimeEnv.sessionId || "test";
 	
 	if (urlParams.has("session")){
 		roomID = urlParams.get("session");
@@ -494,8 +493,14 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 		roomID = urlParams.get("s");
 		try{
 			localStorage.setItem("overlay_room_id", roomID);
-}
-{
+		} catch(e){}
+	} else {
+		try{
+			roomID = localStorage.getItem("overlay_room_id") || roomID;
+		} catch(e){}
+	}
+
+	if (urlParams.has("chroma")){
 		var chroma = urlParams.get("chroma") || "0F0";
 		document.body.style.backgroundColor = "#"+chroma;
 	} else if (urlParams.has("transparent")){
@@ -647,6 +652,11 @@ yt-live-chat-membership-item-renderer[is-deleted] {
 		var explicit = params.get("ws");
 		if (explicit) {
 			return explicit;
+		}
+
+		var runtimeSocket = runtimeEnv.overlayWsUrl || window.__OVERLAY_WS_URL__;
+		if (runtimeSocket) {
+			return runtimeSocket;
 		}
 
 		var protocol = window.location.protocol === "https:" ? "wss:" : "ws:";

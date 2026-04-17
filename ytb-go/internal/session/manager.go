@@ -2,6 +2,7 @@ package session
 
 import (
 	"encoding/json"
+	"log"
 	"sync"
 	"time"
 	"ytb-go/internal/model"
@@ -17,6 +18,7 @@ type Session struct {
 }
 
 func NewSession(id string) *Session {
+	log.Printf("[go:session] create session=%q", id)
 	return &Session{
 		ID:           id,
 		Events:       make([]model.Event, 0),
@@ -26,13 +28,16 @@ func NewSession(id string) *Session {
 
 func (s *Session) AddEvent(event model.Event) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.Events = append(s.Events, event)
 	if len(s.Events) > 50 {
 		s.Events = s.Events[1:]
 	}
 	s.touchLocked()
+	total := len(s.Events)
+	sessionID := s.ID
+	s.mu.Unlock()
+
+	log.Printf("[go:session] add-event session=%q type=%q platform=%q user=%q message=%q total=%d", sessionID, event.Type, event.Platform, event.User, truncate(event.Message, 80), total)
 }
 
 func (s *Session) GetEvents() []model.Event {
@@ -46,18 +51,22 @@ func (s *Session) GetEvents() []model.Event {
 
 func (s *Session) SetOverlay(packet []byte) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	sessionID := s.ID
 
 	if len(packet) == 0 {
 		s.LastOverlay = nil
 		s.LastOverlayAt = time.Time{}
 		s.touchLocked()
+		s.mu.Unlock()
+		log.Printf("[go:session] clear-overlay session=%q", sessionID)
 		return
 	}
 
 	s.LastOverlay = append(json.RawMessage(nil), packet...)
 	s.LastOverlayAt = time.Now().UTC()
 	s.touchLocked()
+	s.mu.Unlock()
+	log.Printf("[go:session] set-overlay session=%q bytes=%d", sessionID, len(packet))
 }
 
 func (s *Session) GetOverlay() []byte {
@@ -95,14 +104,16 @@ func NewManager() *Manager {
 
 func (m *Manager) GetOrCreate(id string) *Session {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	if s, ok := m.sessions[id]; ok {
+		m.mu.Unlock()
+		log.Printf("[go:session] get-or-create session=%q hit", id)
 		return s
 	}
 
 	s := NewSession(id)
 	m.sessions[id] = s
+	m.mu.Unlock()
+	log.Printf("[go:session] get-or-create session=%q miss", id)
 	return s
 }
 
@@ -123,4 +134,12 @@ func (m *Manager) List() []*Session {
 		result = append(result, s)
 	}
 	return result
+}
+
+func truncate(value string, limit int) string {
+	if limit <= 0 || len(value) <= limit {
+		return value
+	}
+
+	return value[:limit] + "..."
 }

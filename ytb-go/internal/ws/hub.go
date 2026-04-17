@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -39,9 +40,11 @@ func NewHub(sm *session.Manager) *Hub {
 }
 
 func (h *Hub) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[go:ws] upgrade remote=%s session=%q", r.RemoteAddr, cleanSession(r.URL.Query().Get("session")))
 	conn, reader, writer, hijacked, err := upgradeWebSocket(w, r)
 	if err != nil {
 		if !hijacked {
+			log.Printf("[go:ws] upgrade failed remote=%s err=%v", r.RemoteAddr, err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 		return
@@ -60,6 +63,7 @@ func (h *Hub) Publish(room string, packet []byte, clear bool) {
 		return
 	}
 
+	log.Printf("[go:ws] publish room=%q clear=%t bytes=%d", room, clear, len(packet))
 	if clear {
 		h.sessions.GetOrCreate(room).SetOverlay(nil)
 	} else {
@@ -112,11 +116,14 @@ func (h *Hub) join(client *Client, room string) {
 	state := h.ensureRoom(room)
 	state.mu.Lock()
 	state.clients[client] = struct{}{}
+	clients := len(state.clients)
 	state.mu.Unlock()
 
 	client.setRoom(room)
+	log.Printf("[go:ws] join room=%q clients=%d", room, clients)
 
 	if overlay := h.sessions.GetOrCreate(room).GetOverlay(); len(overlay) > 0 {
+		log.Printf("[go:ws] rehydrate room=%q bytes=%d", room, len(overlay))
 		client.enqueue(overlay)
 	}
 }
@@ -142,6 +149,7 @@ func (h *Hub) leave(client *Client) {
 	state.mu.Lock()
 	delete(state.clients, client)
 	empty := len(state.clients) == 0
+	remaining := len(state.clients)
 	state.mu.Unlock()
 
 	client.setRoom("")
@@ -150,7 +158,11 @@ func (h *Hub) leave(client *Client) {
 		h.mu.Lock()
 		delete(h.rooms, room)
 		h.mu.Unlock()
+		log.Printf("[go:ws] leave room=%q emptied", room)
+		return
 	}
+
+	log.Printf("[go:ws] leave room=%q remaining=%d", room, remaining)
 }
 
 func (h *Hub) ensureRoom(room string) *roomState {

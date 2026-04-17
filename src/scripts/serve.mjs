@@ -1,6 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { renderRuntimeEnvScript } from "./runtime-env.mjs";
 
 const rootDir = process.cwd();
 const port = getPort();
@@ -35,6 +36,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname === "/portal/runtime-env.js") {
+    serveRuntimeEnv(res);
+    return;
+  }
+
   if (pathname.startsWith("/portal/")) {
     const relativePath = pathname.slice("/portal/".length);
     servePortalFile(relativePath, res);
@@ -43,6 +49,11 @@ const server = http.createServer((req, res) => {
 
   if (pathname === "/overlay" || pathname === "/overlay/") {
     serveFile(path.join(overlayRoot, "index.html"), res);
+    return;
+  }
+
+  if (pathname === "/overlay/runtime-env.js") {
+    serveRuntimeEnv(res);
     return;
   }
 
@@ -187,4 +198,10 @@ function serveFile(filePath, res) {
     res.setHeader("Content-Type", mimeTypes.get(ext) || "application/octet-stream");
     res.end(data);
   });
+}
+
+function serveRuntimeEnv(res) {
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+  res.end(renderRuntimeEnvScript());
 }

@@ -41,3 +41,10 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 ## Assunções
 - O armazenamento é em memória nesta etapa.
 - Persistência futura pode entrar depois, sem quebrar o contrato atual.
+
+## Ambiente
+
+- `YTB_GO_PORT` controla a porta do backend Go
+- `YTB_OVERLAY_DIR` aponta para os assets do overlay
+- `GO_PORT` continua aceito como fallback por compatibilidade
+- `OVERLAY_DIR` continua aceito como fallback por compatibilidade

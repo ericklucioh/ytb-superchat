@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { writeRuntimeEnvScript } from './runtime-env.mjs';
 
 const rootDir = process.cwd();
 const extensionDir = path.join(rootDir, 'extension');
@@ -56,6 +57,8 @@ for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
 
 fs.copyFileSync(path.join(rootDir, 'src', 'landing.html'), path.join(outDir, 'index.html'));
 fs.cpSync(path.join(rootDir, 'src'), path.join(outDir, 'portal'), { recursive: true, force: true });
+writeRuntimeEnvScript(path.join(outDir, 'portal', 'runtime-env.js'));
+writeRuntimeEnvScript(path.join(outDir, 'portal', 'overlay', 'runtime-env.js'));
 writeRedirectPage(path.join(outDir, 'src', 'index.html'), '/portal');
 
 createExtensionZip(extensionDir, zipPath);
