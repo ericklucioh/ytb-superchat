@@ -401,6 +401,16 @@ body {
   min-width: 0;
 }
 
+.detail-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .detail-title-wrap h2 {
   margin: 4px 0 0;
   font-size: 1.18rem;

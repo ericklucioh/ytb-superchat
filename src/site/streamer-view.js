@@ -327,6 +327,7 @@ export function createStreamerView(elements) {
 
       const status = event.status || "active";
       const kind = elements.detailPopup.querySelector("[data-detail-kind]");
+      const avatar = elements.detailPopup.querySelector("[data-detail-avatar]");
       const platform = elements.detailPopup.querySelector("[data-detail-platform]");
       const user = elements.detailPopup.querySelector("[data-detail-user]");
       const statusNode = elements.detailPopup.querySelector("[data-detail-status]");
@@ -337,6 +338,17 @@ export function createStreamerView(elements) {
 
       elements.detailPopup.hidden = false;
       setTextContent(kind, formatType(event.type));
+      if (avatar) {
+        const fallback = event.platform === "twitch" ? "twitch.png" : "youtube.png";
+        const src = event.chatimg || fallback;
+        avatar.hidden = false;
+        avatar.src = src;
+        avatar.alt = `${event.user} avatar`;
+        avatar.onerror = () => {
+          avatar.onerror = null;
+          avatar.src = fallback;
+        };
+      }
       if (platform) {
         platform.innerHTML = platformIconMarkup(event.platform);
       }
