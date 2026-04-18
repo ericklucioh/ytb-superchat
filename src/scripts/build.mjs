@@ -22,6 +22,7 @@ const excludedNames = new Set([
   '.env.production.local',
   '.env.production',
   '.env.test',
+  '.codex',
   'package.json',
   'package-lock.json',
   'streamer.js',

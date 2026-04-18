@@ -57,9 +57,10 @@ function boot() {
 
   const params = new URLSearchParams(window.location.search);
   const runtimeEnv = window.__YTB_ENV__ || {};
-  const mockMode = params.has("mock")
+  const mockLayoutEnabled = runtimeEnv.portalMockMode === true;
+  const mockMode = mockLayoutEnabled && (params.has("mock")
     ? !isFalsyFlag(params.get("mock"))
-    : runtimeEnv.portalMockMode === true;
+    : true);
   const mockRoomId = getMockRoomId();
   const urlRoom = cleanText(params.get("session") || params.get("s") || "");
   const envRoom = cleanText(runtimeEnv.sessionId || "");
@@ -94,9 +95,10 @@ function boot() {
 
   if (mockMode) {
     document.body.dataset.mockMode = "true";
-    if (elements.mockBadge) {
-      elements.mockBadge.hidden = false;
-    }
+  }
+
+  if (elements.mockBadge) {
+    elements.mockBadge.hidden = !mockMode;
   }
 
   elements.sessionInput.value = initialRoom;
