@@ -401,16 +401,34 @@ function boot() {
   function resolveOverlayApiBaseUrl() {
     const stored = cleanText(localStorage.getItem("overlay_backend_base_url") || "");
     if (stored) {
-      return stored;
+      return normalizeApiBaseUrl(stored);
     }
 
     const runtimeEnv = window.__YTB_ENV__ || {};
     const runtimeApiBase = cleanText(runtimeEnv.overlayApiBaseUrl || window.__OVERLAY_API_BASE_URL__ || "");
     if (runtimeApiBase) {
-      return runtimeApiBase;
+      return normalizeApiBaseUrl(runtimeApiBase);
     }
 
-    return DEFAULT_OVERLAY_API_BASE_URL;
+    return normalizeApiBaseUrl(DEFAULT_OVERLAY_API_BASE_URL);
+  }
+
+  function normalizeApiBaseUrl(value) {
+    const raw = cleanText(value || "").replace(/\/+$/, "");
+    if (!raw) {
+      return "";
+    }
+
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
+      return raw;
+    }
+
+    if (raw.startsWith("//")) {
+      return `${window.location.protocol}${raw}`;
+    }
+
+    const protocol = window.location.protocol === "http:" ? "http://" : "https://";
+    return `${protocol}${raw}`;
   }
 
   function scheduleRender() {

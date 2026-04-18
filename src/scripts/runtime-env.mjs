@@ -40,14 +40,14 @@ export function writeRuntimeEnvScript(filePath) {
 function resolveOverlayApiBaseUrl(env, goPort) {
   const explicit = readText(env, ["YTB_OVERLAY_API_BASE_URL"]);
   if (explicit) {
-    return explicit;
+    return normalizeUrl(explicit);
   }
 
   if ((env.YTB_APP_ENV || "development") === "production") {
     throw new Error("Missing YTB_OVERLAY_API_BASE_URL in production mode");
   }
 
-  return `http://localhost:${goPort}`;
+  return normalizeUrl(`http://localhost:${goPort}`);
 }
 
 function readText(env, keys) {
@@ -103,4 +103,24 @@ function deriveWebSocketUrl(overlayApiBaseUrl, goPort) {
   } catch {
     return `ws://localhost:${goPort}/ws`;
   }
+}
+
+function normalizeUrl(value) {
+  const raw = String(value || "").trim().replace(/\/+$/, "");
+  if (!raw) {
+    return "";
+  }
+
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
+    return raw;
+  }
+
+  if (raw.startsWith("//")) {
+    return `${typeof window !== "undefined" && window.location ? window.location.protocol : "https:"}${raw}`;
+  }
+
+  const protocol = typeof window !== "undefined" && window.location && window.location.protocol === "http:"
+    ? "http://"
+    : "https://";
+  return `${protocol}${raw}`;
 }
