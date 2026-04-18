@@ -6,11 +6,12 @@ import { createStreamerView } from "./streamer-view.js";
 import { createChatBridge } from "./chat-bridge.js";
 import { loadMockDeck, getMockRoomId } from "./streamer-mock.js";
 
-const STORAGE_KEY = "overlay_state";
-const ROOM_KEY = "overlay_room_id";
-const DEFAULT_OVERLAY_API_BASE_URL = "http://localhost:8080";
-const MAX_LIVE_MESSAGES = 500;
-const PORTAL_LOG_PREFIX = "[portal]";
+const ENV = window.__YTB_ENV__ || {};
+const STORAGE_KEY = ENV.overlayStorageKey || "overlay_state";
+const ROOM_KEY = ENV.overlayRoomKey || "overlay_room_id";
+const DEFAULT_OVERLAY_API_BASE_URL = ENV.overlayApiBaseUrl || "http://localhost:8080";
+const MAX_LIVE_MESSAGES = typeof ENV.overlayMaxLiveMessages === "number" ? ENV.overlayMaxLiveMessages : 500;
+const PORTAL_LOG_PREFIX = ENV.portalLogPrefix || "[portal]";
 
 function isTruthyFlag(value) {
   const normalized = String(value || "").trim().toLowerCase();

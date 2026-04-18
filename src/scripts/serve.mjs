@@ -1,9 +1,11 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { loadAppEnv } from "./app-env.mjs";
 import { renderRuntimeEnvScript } from "./runtime-env.mjs";
 
 const rootDir = process.cwd();
+const appEnv = loadAppEnv(rootDir);
 const port = getPort();
 const landingFile = path.join(rootDir, "src", "landing.html");
 const portalRoot = path.join(rootDir, "src");
@@ -116,30 +118,7 @@ function getPort() {
     }
   }
 
-  return Number(process.env.PORT) || loadDotEnvPort() || 8000;
-}
-
-function loadDotEnvPort() {
-  const envPath = path.join(rootDir, ".env");
-  if (!fs.existsSync(envPath)) {
-    return 0;
-  }
-
-  const text = fs.readFileSync(envPath, "utf8");
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
-
-    const [key, ...rest] = trimmed.split("=");
-    if (key.trim() === "PORT") {
-      const value = rest.join("=").trim().replace(/^["']|["']$/g, "");
-      return Number(value) || 0;
-    }
-  }
-
-  return 0;
+  return Number(appEnv.PORT) || 8000;
 }
 
 function resolvePath(pathname) {

@@ -1,10 +1,10 @@
 import { spawn, spawnSync } from "node:child_process";
-import fs from "node:fs";
-import path from "node:path";
+import { loadAppEnv } from "./app-env.mjs";
 
 const target = process.argv[2];
-const port = getPort();
-const session = getSession();
+const appEnv = loadAppEnv();
+const port = getPort(appEnv);
+const session = getSession(appEnv);
 
 if (!target || !["site", "overlay"].includes(target)) {
   console.error("Usage: node src/scripts/open.mjs <site|overlay>");
@@ -25,34 +25,12 @@ if (process.platform === "win32") {
   openUrlOnLinux(url);
 }
 
-function getPort() {
-  return Number(process.env.PORT || readDotEnvValue("PORT")) || 8000;
+function getPort(env) {
+  return Number(env.PORT) || 8000;
 }
 
-function getSession() {
-  return process.env.YTB_SESSION_ID || process.env.SESSION || readDotEnvValue("YTB_SESSION_ID") || readDotEnvValue("SESSION") || "";
-}
-
-function readDotEnvValue(key) {
-  const envPath = path.join(process.cwd(), ".env");
-  if (!fs.existsSync(envPath)) {
-    return "";
-  }
-
-  const text = fs.readFileSync(envPath, "utf8");
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) {
-      continue;
-    }
-
-    const [entryKey, ...rest] = trimmed.split("=");
-    if (entryKey.trim() === key) {
-      return rest.join("=").trim().replace(/^["']|["']$/g, "");
-    }
-  }
-
-  return "";
+function getSession(env) {
+  return env.YTB_SESSION_ID || env.SESSION || "";
 }
 
 function openUrlOnLinux(url) {

@@ -62,12 +62,15 @@ npm run dev
 The local server defaults to port `8000`.
 The browser runtime gets its API URLs from `runtime-env.js`, which is generated from the current environment:
 
+- `YTB_APP_ENV` - selects `development` or `production`
 - `PORT` - static portal server port
 - `YTB_GO_PORT` - Go backend port used to build the default API/WebSocket URLs
 - `YTB_SESSION_ID` - default session loaded by the portal and overlay in dev
 - `YTB_PORTAL_MOCK` - enables seeded mock cards for layout work
 - `YTB_OVERLAY_API_BASE_URL` - explicit API base override
 - `YTB_OVERLAY_WS_URL` - explicit WebSocket override
+
+Use `.env.development.local` for local work and `.env.production.local` for production builds or CI.
 
 When you run the Go backend separately, it now defaults to the source overlay:
 

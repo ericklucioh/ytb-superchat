@@ -8,6 +8,9 @@ on:
 jobs:
   build-web:
     runs-on: ubuntu-latest
+    env:
+      YTB_APP_ENV: production
+      YTB_OVERLAY_API_BASE_URL: ${{ secrets.YTB_OVERLAY_API_BASE_URL }}
     outputs:
       build-version: ${{ steps.build-id.outputs.version }}
 
@@ -40,6 +43,8 @@ jobs:
 
   build-api:
     runs-on: ubuntu-latest
+    env:
+      YTB_APP_ENV: production
 
     steps:
       - name: Checkout Repository

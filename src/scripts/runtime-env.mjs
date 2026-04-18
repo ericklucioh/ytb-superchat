@@ -1,15 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
+import { loadAppEnv } from "./app-env.mjs";
 
 export function resolveRuntimeEnv() {
-  const goPort = readPort(["YTB_GO_PORT", "GO_PORT"], 8080);
-  const portalPort = readPort(["PORT"], 8000);
-  const sessionId = readText(["YTB_SESSION_ID", "SESSION"]);
-  const portalMockMode = readBool(["YTB_PORTAL_MOCK", "PORTAL_MOCK"]);
-  const overlayApiBaseUrl = readText(["YTB_OVERLAY_API_BASE_URL"]) || `http://localhost:${goPort}`;
-  const overlayWsUrl = readText(["YTB_OVERLAY_WS_URL"]) || deriveWebSocketUrl(overlayApiBaseUrl, goPort);
+  const env = loadAppEnv();
+  const goPort = readPort(env, ["YTB_GO_PORT", "GO_PORT"], 8080);
+  const portalPort = readPort(env, ["PORT"], 8000);
+  const sessionId = readText(env, ["YTB_SESSION_ID", "SESSION"]);
+  const portalMockMode = readBool(env, ["YTB_PORTAL_MOCK", "PORTAL_MOCK"]);
+  const overlayApiBaseUrl = resolveOverlayApiBaseUrl(env, goPort);
+  const overlayWsUrl = readText(env, ["YTB_OVERLAY_WS_URL"]) || deriveWebSocketUrl(overlayApiBaseUrl, goPort);
 
   return {
+    appEnv: env.YTB_APP_ENV || "development",
     goPort,
     portalPort,
     sessionId,
@@ -34,9 +37,22 @@ export function writeRuntimeEnvScript(filePath) {
   fs.writeFileSync(filePath, renderRuntimeEnvScript());
 }
 
-function readText(keys) {
+function resolveOverlayApiBaseUrl(env, goPort) {
+  const explicit = readText(env, ["YTB_OVERLAY_API_BASE_URL"]);
+  if (explicit) {
+    return explicit;
+  }
+
+  if ((env.YTB_APP_ENV || "development") === "production") {
+    throw new Error("Missing YTB_OVERLAY_API_BASE_URL in production mode");
+  }
+
+  return `http://localhost:${goPort}`;
+}
+
+function readText(env, keys) {
   for (const key of keys) {
-    const value = process.env[key];
+    const value = env[key];
     if (typeof value === "string" && value.trim()) {
       return value.trim();
     }
@@ -45,9 +61,9 @@ function readText(keys) {
   return "";
 }
 
-function readPort(keys, fallback) {
+function readPort(env, keys, fallback) {
   for (const key of keys) {
-    const value = Number(process.env[key]);
+    const value = Number(env[key]);
     if (Number.isFinite(value) && value > 0) {
       return value;
     }
@@ -56,9 +72,9 @@ function readPort(keys, fallback) {
   return fallback;
 }
 
-function readBool(keys) {
+function readBool(env, keys) {
   for (const key of keys) {
-    const value = String(process.env[key] || "").trim().toLowerCase();
+    const value = String(env[key] || "").trim().toLowerCase();
     if (!value) {
       continue;
     }
