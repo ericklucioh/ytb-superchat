@@ -42,7 +42,7 @@
     --cheer-gradient-stop1: rgba(0, 79, 120, 0.98);
     --cheer-gradient-stop2: rgba(79, 195, 255, 0.92);
     --cheer-label-color: var(--brand-light-1);
-    --cheer-label-text: 'Cheer';
+    --cheer-label-text: '';
     --cheer-shadow-color: rgba(79, 195, 255, 0.35);
 
 	--image-content-max-height: 300px;
@@ -188,7 +188,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     font-weight: var(--author-font-weight);
     background: var(--author-bg-color);
     color: var(--author-color);
-    padding: 10px 10px 6px 32px;
+    padding: 10px 10px 10px 32px;
     transform: rotate(-0deg);
     z-index: 1;
     border-radius: var(--author-border-radius);
@@ -221,7 +221,7 @@ yt-live-chat-text-message-renderer.shown-comment {
 }
 .hl-message {
     position: absolute;
-    top: 56px;
+    top: 66px;
     width: var(--comment-width);
     font-weight: var(--comment-font-weight);
     padding: var(--comment-padding);
@@ -304,27 +304,16 @@ yt-live-chat-text-message-renderer.shown-comment {
     border-radius: 50%;
     z-index: 1;
 }
-.hl-imgContent {
-    max-height: 300px;
-    max-width: 40%;
-    display: inline-block;
-    position: absolute;
-    margin: 0;
-    padding: 0;
-    right: 0;
-    z-index: 0;
-	top: 12px;
-}
-
 .hl-imgContent > img {
     object-fit: scale-down;
     display: block;
     margin: 0;
     height: calc(100vh - 12px);
-	max-width:100%;
-	max-height: 300px;
-	min-height: calc(var(--author-avatar-size) + 30px);
+    max-width: 100%;
+    max-height: 300px;
+    min-height: calc(var(--author-avatar-size) + 30px);
 }
+
 /* overlay a very faint white layer to bump the blacks above the luma key cutoff */
 .hl-img:after {
     content: '';
@@ -334,7 +323,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     top: 0;
     left: 0;
     border-radius: 50%;
-    position:absolute;
+    position: absolute;
     pointer-events: none;
     z-index: 3;
 }
@@ -344,16 +333,18 @@ yt-live-chat-text-message-renderer.shown-comment {
 }
 
 .hl-badges {
-  display: inline-block;
-  margin-left: 5px;
+    display: inline-block;
+    margin-left: 5px;
 }
 .hl-badges img.yt-live-chat-author-badge-renderer {
-  width: 24px;
-  height: 24px;
+    width: 24px;
+    height: 24px;
 }
 .hl-badges:empty {
-  background-color:#0000;
+    background-color: #0000;
 }
+
+/* SUPERCHAT / CHEER */
 .cheer {
     position: absolute;
     display: block;
@@ -363,87 +354,176 @@ yt-live-chat-text-message-renderer.shown-comment {
     z-index: 3;
     min-width: 128px;
     border-radius: 0px;
-    padding: 30px 5px 0;
+    padding: 34px 10px 10px;
     overflow: hidden;
-    background: linear-gradient(to right, var(--cheer-gradient-stop0), var(--cheer-gradient-stop1), var(--cheer-gradient-stop2));
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0) 28%),
+        linear-gradient(to right, var(--cheer-gradient-stop0), var(--cheer-gradient-stop1), var(--cheer-gradient-stop2));
     color: var(--cheer-color);
     transform: none;
-    border: 1px solid rgba(185, 230, 255, 0.16);
-    box-shadow: 0 16px 34px rgba(0, 13, 33, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    box-shadow:
+        0 0 0 2px rgba(255,255,255,.08) inset,
+        0 10px 24px rgba(0, 13, 33, 0.32),
+        0 0 22px rgba(80, 190, 255, 0.18);
+    font-size: 50px;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(0,0,0,.35);
+    backdrop-filter: blur(3px);
 }
+
 .cheer::before {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    font-size: 18px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     text-align: center;
-    background-color: rgba(0, 13, 33, 0.42);
-    border-radius: 0px;
-    padding: 5px 0 0;
+    background: linear-gradient(180deg, rgba(0, 13, 33, 0.58), rgba(0, 13, 33, 0.30));
+    border-bottom: 1px solid rgba(255,255,255,.14);
+    border-radius: 0 0;
+    padding: 8px 0 6px;
     display: block;
     content: var(--cheer-label-text);
     color: var(--cheer-label-color);
+    text-shadow: 0 1px 2px rgba(0,0,0,.4);
 }
+
 .cheer::after {
-    content: none;
-    display: none;
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0px;
+    pointer-events: none;
+    background: radial-gradient(circle at top left, rgba(255,255,255,.18), transparent 34%);
+    mix-blend-mode: screen;
 }
+
+/* DONATION */
 .donation {
+    position: absolute;
+    display: block;
+    text-align: center;
+    left: 8px;
+    top: 108px;
+    z-index: 3;
+    min-width: 0;
+    border-radius: 0px;
+    padding: 10px 14px;
+    overflow: hidden;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 35%),
+        linear-gradient(135deg, rgba(18, 24, 38, 0.96), rgba(2, 10, 22, 0.94));
+    color: var(--donation-color);
+    transform: none;
+    border: 1px solid rgba(255, 215, 90, 0.95);
+    box-shadow:
+        0 0 0 1px rgba(255, 236, 163, 0.22) inset,
+        0 10px 28px rgba(0, 13, 33, 0.34),
+        0 0 18px rgba(255, 200, 60, 0.16);
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: 0.01em;
+    text-shadow: 0 1px 2px rgba(0,0,0,.45);
+    backdrop-filter: blur(3px);
+}
+
+.donation::before {
+    content: "SUPERCHAT";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 226, 126, 0.95);
+    background: rgba(255, 215, 90, 0.08);
+    border-bottom: 1px solid rgba(255, 215, 90, 0.18);
+    padding: 4px 8px 3px;
+}
+
+.donation {
+    padding-top: 24px;
+}
+
+.donation::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 45%);
+}
+
+.membership,
+.membership-chip {
+    color: white;
     position: absolute;
     display: block;
     text-align: center;
     left: -18px;
     top: 108px;
     z-index: 3;
-    min-width: 0;
-    border-radius: 0px;
-    padding: 8px 12px;
     overflow: hidden;
-    background: rgba(2, 10, 22, 0.92);
-    color: var(--donation-color);
+    padding: 8px 14px;
+    font-size: 28px !important;
+    font-weight: 700;
+    border-radius: 0px;
     transform: none;
-    border: 1px solid rgba(212, 175, 55, 0.92);
-    box-shadow: 0 16px 34px rgba(0, 13, 33, 0.28);
-    font-size: 18px;
-    line-height: 1.2;
-    letter-spacing: -0.01em;
+    backdrop-filter: blur(3px);
+    white-space: nowrap;
+    line-height: 1.15;
+    min-width: 0;
+    border: 1px solid rgba(79, 195, 255, 0.7);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0) 40%),
+        rgba(9, 21, 39, 0.9);
+    box-shadow:
+        0 6px 18px rgba(0, 13, 33, 0.35),
+        0 0 12px rgba(79, 195, 255, 0.15);
+    text-shadow: 0 1px 2px rgba(0,0,0,.4);
 }
-.donation::before {
+.donation.membership,
+.donation.membership-chip {
+    padding-top: 8px;
+    color: white;
+    min-width: 0;
+    border: 1px solid rgba(79, 195, 255, 0.7);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,0) 40%),
+        rgba(9, 21, 39, 0.9);
+    box-shadow:
+        0 6px 18px rgba(0, 13, 33, 0.35),
+        0 0 12px rgba(79, 195, 255, 0.15);
+}
+.membership::before,
+.membership::after,
+.membership-chip::before,
+.membership-chip::after,
+.donation.membership::before,
+.donation.membership::after,
+.donation.membership-chip::before,
+.donation.membership-chip::after {
     content: none;
     display: none;
 }
-.membership {
-    padding: 8px 12px;
-	font-size: 18px !important;
-    border-color: rgba(79, 195, 255, 0.88);
-}
-
-.membership::before {
-    content: none;
-    display: none;
-}
-.donation::after {
-    content: none;
-    display: none;
-}
-
-/* hide chat input to give more space to the chat */
-/*
-#input-panel, yt-live-chat-viewer-engagement-message-renderer {
-	display: none !important;
-}
-*/
 
 yt-live-chat-item-list-renderer {
-	margin-bottom: 20px;
+    margin-bottom: 20px;
 }
 
 yt-live-chat-text-message-renderer {
     font-size: 24px !important;
     line-height: 32px;
 }
-
 
 yt-live-chat-text-message-renderer,
 yt-live-chat-paid-message-renderer,

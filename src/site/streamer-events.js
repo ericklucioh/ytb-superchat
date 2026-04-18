@@ -140,8 +140,10 @@ export function buildOverlayPayload(event) {
     const monthsValue = Number.isFinite(event.months) ? event.months : (Number.isFinite(event.tier) ? event.tier : null);
     const monthsText = Number.isFinite(monthsValue) ? formatMonths(monthsValue) : "";
 
-    payload.hasMembership = `<div class="donation membership">${monthsText || membershipLabel}</div>`;
-    payload.chatmessage = monthsText ? `${membershipLabel} ${monthsText}` : `Novo ${event.type === "sub" ? "sub" : "membro"}`;
+    payload.hasMembership = `<div class="membership-chip">${monthsText || membershipLabel}</div>`;
+    if (!payload.chatmessage) {
+      payload.chatmessage = `Novo ${event.type === "sub" ? "sub" : "membro"}`;
+    }
   }
 
   if (!payload.chatmessage) {
