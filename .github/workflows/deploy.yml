@@ -20,8 +20,10 @@ jobs:
       - name: Load Production API URL
         env:
           YTB_OVERLAY_API_BASE_URL: ${{ secrets.YTB_OVERLAY_API_BASE_URL }}
-        run: echo "YTB_OVERLAY_API_BASE_URL=${{ secrets.YTB_OVERLAY_API_BASE_URL }}" >> "$GITHUB_ENV"
-        # no-op placeholder
+        run: |
+          if [ -n "$YTB_OVERLAY_API_BASE_URL" ]; then
+            echo "YTB_OVERLAY_API_BASE_URL=$YTB_OVERLAY_API_BASE_URL" >> "$GITHUB_ENV"
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
