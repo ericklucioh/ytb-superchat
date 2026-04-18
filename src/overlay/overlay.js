@@ -363,13 +363,23 @@ function processPoll(data){
 	}
 }
 
+function platformBadgeMarkup(platform){
+	var normalized = String(platform || "").toLowerCase();
+	if (normalized !== "twitch") {
+		normalized = "youtube";
+	}
+	var label = normalized === "twitch" ? "Twitch" : "YouTube";
+	return '<span class="hl-platform"><img src="' + normalized + '.png" alt="' + label + '" title="' + label + '"></span>';
+}
+
 function renderChatMarkup(data, addImage){
 	var messageStyle = 'font-size: inherit;';
 	if (!data.hasDonation && !data.hasMembership) {
 		messageStyle = (data.backgroundColor || "") + ' ' + (data.textColor || "") + ' font-size: inherit;';
 	}
 	return '<div class="hl-c-cont highlight-chat">'
-		+ '<div class="hl-name" id="nameDIV">' + data.chatname
+		+ '<div class="hl-name" id="nameDIV">' + platformBadgeMarkup(data.platform || data.type)
+		+ '<span class="hl-name-text">' + data.chatname + '</span>'
 		+ '<div class="hl-badges">' + data.chatbadges + '</div>'
 		+ '</div>'
 		+ '<div id="message" class="hl-message" style="'+messageStyle+'">' + data.chatmessage + '</div>'

@@ -135,16 +135,13 @@ export function buildOverlayPayload(event) {
     }
   }
 
-  if ((event.type === "sub" || event.type === "member") && Number.isFinite(event.tier)) {
-    payload.hasMembership = '<div class="donation membership">' + (event.type === "sub" ? "NEW SUB!" : "NEW MEMBER!") + "</div>";
-    if (!payload.chatmessage) {
-      payload.chatmessage = event.type === "sub" ? "Novo sub!" : "Novo membro!";
-    }
-  } else if (event.type === "sub" || event.type === "member") {
-    payload.hasMembership = '<div class="donation membership">' + (event.type === "sub" ? "NEW SUB!" : "NEW MEMBER!") + "</div>";
-    if (!payload.chatmessage) {
-      payload.chatmessage = event.type === "sub" ? "Novo sub!" : "Novo membro!";
-    }
+  if (event.type === "sub" || event.type === "member") {
+    const membershipLabel = event.type === "sub" ? "Sub" : "Membro";
+    const monthsValue = Number.isFinite(event.months) ? event.months : (Number.isFinite(event.tier) ? event.tier : null);
+    const monthsText = Number.isFinite(monthsValue) ? formatMonths(monthsValue) : "";
+
+    payload.hasMembership = `<div class="donation membership">${monthsText || membershipLabel}</div>`;
+    payload.chatmessage = monthsText ? `${membershipLabel} ${monthsText}` : `Novo ${event.type === "sub" ? "sub" : "membro"}`;
   }
 
   if (!payload.chatmessage) {
