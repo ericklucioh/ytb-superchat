@@ -180,12 +180,12 @@ yt-live-chat-text-message-renderer.shown-comment {
 
 .hl-name {
     position: absolute;
-    top: -20px;
-    left: 118px;
+    top: 10px;
+    left: 108px;
     font-weight: var(--author-font-weight);
     background: var(--author-bg-color);
     color: var(--author-color);
-    padding: 10px;
+    padding: 10px  10px 10px 40px;
     transform: rotate(-0deg);
     z-index: 1;
     border-radius: var(--author-border-radius);
@@ -201,6 +201,7 @@ yt-live-chat-text-message-renderer.shown-comment {
 }
 .hl-message {
     position: absolute;
+    top: 56px;
     width: var(--comment-width);
     font-weight: var(--comment-font-weight);
     padding: var(--comment-padding);
@@ -228,6 +229,7 @@ yt-live-chat-text-message-renderer.shown-comment {
 }
 .hl-message-img {
     position: absolute;
+    top: 76px;
     width: 63%;
     font-weight: var(--comment-font-weight);
     padding: var(--comment-padding);
@@ -264,7 +266,7 @@ yt-live-chat-text-message-renderer.shown-comment {
 }
 .hl-img {
     position: absolute;
-    top: -60;
+    top: -30px;
     z-index: 1;
     left: -5px;
     width: var(--author-avatar-size);
@@ -291,7 +293,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     padding: 0;
     right: 0;
     z-index: 0;
-	top: -18px;
+	top: 12px;
 }
 
 .hl-imgContent > img {
@@ -337,7 +339,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     display: block;
     text-align: center;
     left: 70px;
-    top: 108px;
+    top: 138px;
     z-index: 3;
     min-width: 128px;
     border-radius: 0px;
@@ -371,18 +373,22 @@ yt-live-chat-text-message-renderer.shown-comment {
     position: absolute;
     display: block;
     text-align: center;
-    left: 0px;
-    top: 138px;
+    left: -18px;
+    top: 108px;
     z-index: 3;
     min-width: 128px;
     border-radius: 0px;
-    padding: 30px 5px 0;
+    padding: 10px;
     overflow: hidden;
     background: var(--brand-primary-2);
     color: var(--donation-color);
     transform: none;
-    border: 1px solid rgba(185, 230, 255, 0.16);
+    border: 1px solid rgba(212, 175, 55, 0.92);
     box-shadow: 0 16px 34px rgba(0, 13, 33, 0.28);
+}
+.donation:not(.membership)::before {
+    content: none;
+    display: none;
 }
 .donation::before {
     position: absolute;
@@ -393,7 +399,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     text-align: center;
     background-color: rgba(0, 13, 33, 0.95);
     border-radius: 0px;
-    padding: 5px 0 0;
+    padding: 3px 0 0;
     display: block;
     content: var(--donation-label-text);
     color: var(--donation-label-color);
