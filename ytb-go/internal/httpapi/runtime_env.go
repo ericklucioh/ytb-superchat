@@ -41,14 +41,12 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 	portalMockMode := readBool("YTB_PORTAL_MOCK", "PORTAL_MOCK")
 	overlayApiBaseURL := firstEnv("YTB_OVERLAY_API_BASE_URL")
 	if overlayApiBaseURL == "" {
-		scheme := "http"
-		if r.TLS != nil {
-			scheme = "https"
-		}
-		if r.Host != "" {
-			overlayApiBaseURL = fmt.Sprintf("%s://%s", scheme, r.Host)
+		scheme := requestScheme(r)
+		host := requestHost(r)
+		if host != "" {
+			overlayApiBaseURL = fmt.Sprintf("%s://%s", scheme, host)
 		} else {
-			overlayApiBaseURL = fmt.Sprintf("http://localhost:%d", goPort)
+			overlayApiBaseURL = fmt.Sprintf("%s://localhost:%d", scheme, goPort)
 		}
 	}
 
@@ -65,6 +63,35 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 		OverlayApiBaseURL:   overlayApiBaseURL,
 		OverlayWebSocketURL: overlayWebSocketURL,
 	}
+}
+
+func requestScheme(r *http.Request) string {
+	for _, header := range []string{"X-Forwarded-Proto", "X-Forwarded-Protocol"} {
+		if value := strings.TrimSpace(r.Header.Get(header)); value != "" {
+			if strings.EqualFold(value, "https") {
+				return "https"
+			}
+			if strings.EqualFold(value, "http") {
+				return "http"
+			}
+		}
+	}
+
+	if r.TLS != nil {
+		return "https"
+	}
+
+	return "http"
+}
+
+func requestHost(r *http.Request) string {
+	for _, header := range []string{"X-Forwarded-Host", "X-Original-Host"} {
+		if value := strings.TrimSpace(r.Header.Get(header)); value != "" {
+			return strings.Split(value, ",")[0]
+		}
+	}
+
+	return strings.TrimSpace(r.Host)
 }
 
 func renderRuntimeEnvScript(env runtimeEnv) string {

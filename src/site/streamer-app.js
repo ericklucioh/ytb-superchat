@@ -32,6 +32,7 @@ function boot() {
     connectionStatus: document.getElementById("connection-status"),
     mockBadge: document.getElementById("mock-badge"),
     summaryPopup: document.getElementById("summary-popup"),
+    summaryCopyOverlayButton: document.getElementById("summary-copy-overlay"),
     detailPopup: document.getElementById("detail-popup"),
     filterGroup: document.getElementById("filter-group"),
     currentFilter: document.getElementById("current-filter"),
@@ -155,6 +156,12 @@ function boot() {
       if (event.target.closest("[data-summary-close]")) {
         setSummaryOpen(false);
       }
+    });
+  }
+
+  if (elements.summaryCopyOverlayButton) {
+    elements.summaryCopyOverlayButton.addEventListener("click", () => {
+      void copyOverlayLink();
     });
   }
 
@@ -411,6 +418,61 @@ function boot() {
     }
 
     return normalizeApiBaseUrl(DEFAULT_OVERLAY_API_BASE_URL);
+  }
+
+  async function copyOverlayLink() {
+    const roomId = cleanText(elements.sessionInput.value || store.state.roomId || localStorage.getItem(ROOM_KEY) || "");
+    if (!roomId) {
+      setStatus("Digite um session ID para copiar o overlay");
+      return;
+    }
+
+    const baseUrl = resolveOverlayApiBaseUrl();
+    if (!baseUrl) {
+      setStatus("Base da API não configurada");
+      return;
+    }
+
+    const overlayUrl = `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(roomId)}`;
+
+    try {
+      await navigator.clipboard.writeText(overlayUrl);
+      flashSummaryCopyButton("Copiado");
+    } catch (error) {
+      console.warn("Failed to copy overlay link", error);
+      fallbackCopyText(overlayUrl);
+      flashSummaryCopyButton("Copiado");
+    }
+  }
+
+  function fallbackCopyText(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "true");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand("copy");
+    } catch {
+      //
+    }
+    textarea.remove();
+  }
+
+  function flashSummaryCopyButton(label) {
+    if (!elements.summaryCopyOverlayButton) {
+      return;
+    }
+
+    const originalLabel = elements.summaryCopyOverlayButton.textContent || "Copiar overlay";
+    elements.summaryCopyOverlayButton.textContent = label;
+    window.setTimeout(() => {
+      if (elements.summaryCopyOverlayButton) {
+        elements.summaryCopyOverlayButton.textContent = originalLabel;
+      }
+    }, 1400);
   }
 
   function normalizeApiBaseUrl(value) {

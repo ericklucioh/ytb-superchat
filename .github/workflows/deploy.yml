@@ -10,13 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     env:
       YTB_APP_ENV: production
-      YTB_OVERLAY_API_BASE_URL: ${{ secrets.YTB_OVERLAY_API_BASE_URL }}
     outputs:
       build-version: ${{ steps.build-id.outputs.version }}
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Load Production API URL
+        env:
+          YTB_OVERLAY_API_BASE_URL: ${{ secrets.YTB_OVERLAY_API_BASE_URL }}
+        run: |
+          if [ -n "$YTB_OVERLAY_API_BASE_URL" ]; then
+            echo "YTB_OVERLAY_API_BASE_URL=$YTB_OVERLAY_API_BASE_URL" >> "$GITHUB_ENV"
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
