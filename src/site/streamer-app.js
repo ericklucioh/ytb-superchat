@@ -223,6 +223,15 @@ function boot() {
 
   window.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") {
+      if (summaryOpen && isCopyShortcut(event)) {
+        const target = event.target;
+        const isInsideSummary = elements.summaryPopup && target instanceof Node && elements.summaryPopup.contains(target);
+        if (isInsideSummary) {
+          event.preventDefault();
+          void copyOverlayLink();
+          return;
+        }
+      }
       return;
     }
 
@@ -427,13 +436,7 @@ function boot() {
       return;
     }
 
-    const baseUrl = resolveOverlayApiBaseUrl();
-    if (!baseUrl) {
-      setStatus("Base da API não configurada");
-      return;
-    }
-
-    const overlayUrl = `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(roomId)}`;
+    const overlayUrl = buildOverlayUrl(roomId);
 
     try {
       await navigator.clipboard.writeText(overlayUrl);
@@ -443,6 +446,14 @@ function boot() {
       fallbackCopyText(overlayUrl);
       flashSummaryCopyButton("Copiado");
     }
+  }
+
+  function buildOverlayUrl(roomId) {
+    return `http://chat.ericklucioh.com/overlay?session=${encodeURIComponent(roomId)}`;
+  }
+
+  function isCopyShortcut(event) {
+    return (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "c";
   }
 
   function fallbackCopyText(text) {

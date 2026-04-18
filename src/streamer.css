@@ -270,6 +270,7 @@ body {
 }
 
 .summary-button {
+  flex: 0 0 auto;
   margin-left: auto;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -282,6 +283,7 @@ body {
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
   font-size: 0.84rem;
+  white-space: nowrap;
 }
 
 .summary-button:hover {
