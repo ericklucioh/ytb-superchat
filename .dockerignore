@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+out
+extension
+*.log
+README.md
+PLAN.md
+OBJETIVO.md
+tasks

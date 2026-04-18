@@ -6,11 +6,11 @@ on:
       - main
 
 jobs:
-  build:
+  build-web:
     runs-on: ubuntu-latest
     outputs:
       build-version: ${{ steps.build-id.outputs.version }}
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -22,11 +22,11 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build Project
         run: npm run build
-        
+
       - name: Generate Build ID
         id: build-id
         run: echo "version=$(date +%s)" >> $GITHUB_OUTPUT
@@ -38,10 +38,34 @@ jobs:
           path: ./out/
           retention-days: 1
 
-  deploy:
-    needs: build
+  build-api:
     runs-on: ubuntu-latest
-    
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ytb-go/go.mod
+          cache: true
+
+      - name: Test API
+        working-directory: ytb-go
+        run: go test ./...
+
+      - name: Build API Binary
+        working-directory: ytb-go
+        run: mkdir -p bin && go build -o ./bin/ytb-go ./cmd/ytb-go
+
+      - name: Build Docker Image
+        run: docker build -f ytb-go/Dockerfile -t ytb-go:${{ github.sha }} .
+
+  deploy:
+    needs: build-web
+    runs-on: ubuntu-latest
+
     steps:
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
