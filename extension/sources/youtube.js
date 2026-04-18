@@ -217,12 +217,6 @@
 
 	$("#primary-content").append('<span style="font-size: 0.7em">Aspect Ratio: <span id="aspect-ratio"></span></span>');
 
-
-	setTimeout(function(){
-		$( "yt-live-chat-app" ).before( '<button class="btn-clear-youtube">CLEAR</button>' );
-		actionwtf();
-	},600);
-
 		function onElementInserted(containerSelector,  callback) {
 
 		var onMutationsObserved = function(mutations) {
