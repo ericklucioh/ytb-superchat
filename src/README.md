@@ -69,7 +69,7 @@ The browser runtime gets its API URLs from `runtime-env.js`, which is generated 
 - `YTB_OVERLAY_API_BASE_URL` - explicit API base override
 - `YTB_OVERLAY_WS_URL` - explicit WebSocket override
 
-When you run the Go backend separately, prefer:
+When you run the Go backend separately, it now defaults to the source overlay:
 
 - `YTB_GO_PORT=8080`
 - `YTB_OVERLAY_DIR=src/overlay`

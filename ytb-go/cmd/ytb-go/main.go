@@ -41,10 +41,10 @@ func resolveOverlayDir(flagValue string) string {
 	}
 
 	candidates := []string{
-		"../out/portal/overlay",
-		"out/portal/overlay",
 		"../src/overlay",
 		"src/overlay",
+		"../out/portal/overlay",
+		"out/portal/overlay",
 	}
 
 	for _, candidate := range candidates {

@@ -270,6 +270,10 @@ function processEvent(data){
 			if (!data.hasMembership){
 				data.hasMembership = "";
 			}
+			if (data.hasDonation || data.hasMembership) {
+				data.backgroundColor = "";
+				data.textColor = "";
+			}
 
 			document.getElementById("output").innerHTML = renderChatMarkup(data, addImage);
 
@@ -283,7 +287,7 @@ function processEvent(data){
 			if (document.getElementById("message").innerText.length>limitchar){
 				fontsize = (parseInt((limitchar*100)/document.getElementById("message").innerText.length));
 				if (fontsize<43){fontsize=43;}
-				document.getElementById("message").style = data.backgroundColor +' '+ data.textColor+'; font-size: '+fontsize+'%;';
+				document.getElementById("message").style = 'font-size: '+fontsize+'%;';
 			}
 
 			if (centering){
@@ -360,11 +364,15 @@ function processPoll(data){
 }
 
 function renderChatMarkup(data, addImage){
+	var messageStyle = 'font-size: inherit;';
+	if (!data.hasDonation && !data.hasMembership) {
+		messageStyle = (data.backgroundColor || "") + ' ' + (data.textColor || "") + ' font-size: inherit;';
+	}
 	return '<div class="hl-c-cont highlight-chat">'
 		+ '<div class="hl-name" id="nameDIV">' + data.chatname
 		+ '<div class="hl-badges">' + data.chatbadges + '</div>'
 		+ '</div>'
-		+ '<div id="message" class="hl-message" style="'+data.backgroundColor +' '+ data.textColor +'">' + data.chatmessage + '</div>'
+		+ '<div id="message" class="hl-message" style="'+messageStyle+'">' + data.chatmessage + '</div>'
 		+ '<div class="hl-img"><img src="' + data.chatimg + '" onerror="this.parentNode.style.display=\'none\'"></div>'
 		+ addImage
 		+ data.hasDonation + data.hasMembership + '</div>';

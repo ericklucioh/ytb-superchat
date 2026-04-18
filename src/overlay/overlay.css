@@ -17,12 +17,11 @@
     --keyer-bg-color: #000;
     --comment-color: var(--brand-light-1);
     --comment-bg-color: rgba(2, 10, 22, 0.86);
-    --comment-border-radius: 12px;
+    --comment-border-radius: 0px;
     --comment-font-size: 40px;
     --author-color: var(--brand-light-1);
     --author-bg-color: rgba(14, 68, 97, 0.98);
     --author-avatar-border-color: rgba(79, 195, 255, 0.9);
-    --author-border-radius: 10px;
     --author-avatar-border-size: 3px;
     --author-avatar-size: 124px;
     --author-font-size: 30px;
@@ -265,9 +264,9 @@ yt-live-chat-text-message-renderer.shown-comment {
 }
 .hl-img {
     position: absolute;
-    top: 0;
+    top: -60;
     z-index: 1;
-    left: 0px;
+    left: -5px;
     width: var(--author-avatar-size);
     height: var(--author-avatar-size);
     background-color: var(--author-avatar-border-color);
@@ -341,7 +340,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     top: 108px;
     z-index: 3;
     min-width: 128px;
-    border-radius: 12px;
+    border-radius: 0px;
     padding: 30px 5px 0;
     overflow: hidden;
     background: linear-gradient(to right, var(--cheer-gradient-stop0), var(--cheer-gradient-stop1), var(--cheer-gradient-stop2));
@@ -358,7 +357,7 @@ yt-live-chat-text-message-renderer.shown-comment {
     font-size: 18px;
     text-align: center;
     background-color: rgba(0, 13, 33, 0.42);
-    border-radius: 10px 10px 0 0;
+    border-radius: 0px;
     padding: 5px 0 0;
     display: block;
     content: var(--cheer-label-text);
@@ -372,14 +371,14 @@ yt-live-chat-text-message-renderer.shown-comment {
     position: absolute;
     display: block;
     text-align: center;
-    left: 70px;
-    top: 108px;
+    left: 0px;
+    top: 138px;
     z-index: 3;
     min-width: 128px;
-    border-radius: 12px;
+    border-radius: 0px;
     padding: 30px 5px 0;
     overflow: hidden;
-    background: linear-gradient(to right, var(--donation-gradient-stop0), var(--donation-gradient-stop1), var(--donation-gradient-stop2));
+    background: var(--brand-primary-2);
     color: var(--donation-color);
     transform: none;
     border: 1px solid rgba(185, 230, 255, 0.16);
@@ -392,8 +391,8 @@ yt-live-chat-text-message-renderer.shown-comment {
     width: 100%;
     font-size: 18px;
     text-align: center;
-    background-color: rgba(0, 13, 33, 0.42);
-    border-radius: 10px 10px 0 0;
+    background-color: rgba(0, 13, 33, 0.95);
+    border-radius: 0px;
     padding: 5px 0 0;
     display: block;
     content: var(--donation-label-text);
