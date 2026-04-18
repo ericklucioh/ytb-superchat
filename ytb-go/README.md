@@ -44,6 +44,7 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 
 ## Ambiente
 
+- `PORT` é a porta usada em plataformas como Render
 - `YTB_GO_PORT` controla a porta do backend Go
 - `YTB_OVERLAY_DIR` aponta para os assets do overlay
 - `GO_PORT` continua aceito como fallback por compatibilidade

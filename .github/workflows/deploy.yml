@@ -73,12 +73,37 @@ jobs:
           name: build-output
           path: ./out/
 
+      - name: Install FTP client
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./out/
-          server-dir: /
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          for attempt in 1 2 3; do
+            echo "FTP deploy attempt ${attempt}/3"
+
+            if lftp -u "${FTP_USERNAME}","${FTP_PASSWORD}" "${FTP_SERVER}" <<EOF
+          set ssl:verify-certificate no
+          set ftp:passive-mode true
+          mirror -R --only-newer --verbose ./out/ /
+          bye
+          EOF
+            then
+              echo "FTP deploy succeeded"
+              exit 0
+            fi
+
+            if [ "${attempt}" -lt 3 ]; then
+              echo "FTP deploy failed, retrying in $((attempt * 10))s..."
+              sleep $((attempt * 10))
+            fi
+          done
+
+          echo "FTP deploy failed after 3 attempts"
+          exit 1
           

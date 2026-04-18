@@ -62,7 +62,7 @@ func fileExists(path string) bool {
 }
 
 func resolveDefaultGoPort() int {
-	for _, key := range []string{"YTB_GO_PORT", "GO_PORT"} {
+	for _, key := range []string{"PORT", "YTB_GO_PORT", "GO_PORT"} {
 		if value := os.Getenv(key); value != "" {
 			var port int
 			if _, err := fmt.Sscanf(value, "%d", &port); err == nil && port > 0 {
