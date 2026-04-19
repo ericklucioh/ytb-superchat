@@ -79,6 +79,8 @@ function boot() {
   const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
 
   let renderQueued = false;
+  let lastRenderedFilter = "";
+  let lastRenderKey = "";
   let summaryOpen = false;
   let detailId = "";
   const currencyService = createCurrencyRateService({ scheduleRender });
@@ -521,12 +523,7 @@ function boot() {
       render();
     };
 
-    if (document.visibilityState === "hidden") {
-      window.setTimeout(flush, 0);
-      return;
-    }
-
-    window.requestAnimationFrame(flush);
+    window.setTimeout(flush, document.visibilityState === "hidden" ? 0 : 16);
   }
 
   function render() {
@@ -543,15 +540,40 @@ function boot() {
     const counts = store.getCounts();
     const focusedEvent = detailId ? store.findEventById(detailId) : null;
     const superchatTotals = currencyService.summarizeSuperchatEvents(superchatEvents);
+    const nextRenderKey = [
+      state.roomId,
+      state.filter,
+      state.overlayId || "",
+      detailId || "",
+      counts.totalEvents,
+      counts.twitchSubs,
+      counts.youtubeMembers,
+      counts.totalCombined,
+      counts.superchats,
+      priorityEvents.length,
+      superchatEvents.length,
+      chatEvents.length,
+      superchatTotals.totalBrl.toFixed(2)
+    ].join("|");
 
-    currencyService.warmCurrencyRates(superchatEvents);
+    if (nextRenderKey === lastRenderKey) {
+      return;
+    }
+    lastRenderKey = nextRenderKey;
+
+    if (superchatEvents.length) {
+      currencyService.warmCurrencyRates(superchatEvents);
+    }
 
     if (detailId && !focusedEvent) {
       detailId = "";
       view.setDetailOpen(false);
     }
 
-    view.syncFilterButtons(state.filter);
+    if (lastRenderedFilter !== state.filter) {
+      lastRenderedFilter = state.filter;
+      view.syncFilterButtons(state.filter);
+    }
     view.render({
       state,
       priorityEvents,

@@ -65,8 +65,9 @@ function renderCollection(container, events, emptyText, renderItem, updateItem) 
     state.emptyNode = null;
   }
 
-  const fragment = document.createDocumentFragment();
   const nextIds = new Set();
+  let cursor = container.firstChild;
+
   for (const event of events) {
     let record = state.items.get(event.id);
     let node = record?.node;
@@ -92,7 +93,12 @@ function renderCollection(container, events, emptyText, renderItem, updateItem) 
     }
 
     nextIds.add(event.id);
-    fragment.appendChild(node);
+
+    if (node !== cursor) {
+      container.insertBefore(node, cursor || null);
+    } else {
+      cursor = cursor.nextSibling;
+    }
   }
 
   for (const [id, record] of state.items) {
@@ -103,8 +109,6 @@ function renderCollection(container, events, emptyText, renderItem, updateItem) 
       state.items.delete(id);
     }
   }
-
-  container.appendChild(fragment);
 }
 
 function resolveStatus(event, state, live) {
@@ -240,6 +244,8 @@ function renderPriorityCard(event, state, elements) {
 }
 
 export function createStreamerView(elements) {
+  let renderToken = 0;
+
   function syncFilterButtons(filter) {
     elements.filterGroup.querySelectorAll("[data-filter]").forEach((button) => {
       const active = button.getAttribute("data-filter") === filter;
@@ -277,6 +283,9 @@ export function createStreamerView(elements) {
     superchatTotals,
     focusedEvent
   }) {
+    renderToken += 1;
+    const token = renderToken;
+
     setTextContent(elements.eventTotal, `${counts.totalEvents} eventos salvos`);
     setTextContent(elements.currentFilter, labelForFilter(counts.currentFilter));
     setTextContent(elements.countTwitchSubs, String(counts.twitchSubs));
@@ -291,29 +300,42 @@ export function createStreamerView(elements) {
     setTextContent(elements.superchatCount, String(superchatEvents.length));
     setTextContent(elements.chatCount, String(chatEvents.length));
 
-    renderCollection(
-      elements.priorityList,
-      priorityEvents,
-      "Nenhum sub ou membro para esta visão.",
-      (event) => renderPriorityCard(event, state, elements),
-      (node, event) => syncPriorityCard(node, event, state)
-    );
-    renderCollection(
-      elements.superchatList,
-      superchatEvents,
-      "Nenhum superchat para esta visão.",
-      (event) => createMessageCard(event, state, elements),
-      (node, event) => syncMessageCard(node, event, state)
-    );
-    renderCollection(
-      elements.chatList,
-      chatEvents,
-      "Nenhuma mensagem de chat ao vivo.",
-      (event) => createMessageCard(event, state, elements, { live: true }),
-      (node, event) => syncMessageCard(node, event, state, { live: true })
-    );
+    window.setTimeout(() => {
+      if (token !== renderToken) {
+        return;
+      }
 
-    renderDetail(focusedEvent);
+      renderCollection(
+        elements.priorityList,
+        priorityEvents,
+        "Nenhum sub ou membro para esta visão.",
+        (event) => renderPriorityCard(event, state, elements),
+        (node, event) => syncPriorityCard(node, event, state)
+      );
+      renderCollection(
+        elements.superchatList,
+        superchatEvents,
+        "Nenhum superchat para esta visão.",
+        (event) => createMessageCard(event, state, elements),
+        (node, event) => syncMessageCard(node, event, state)
+      );
+    }, 0);
+
+    window.setTimeout(() => {
+      if (token !== renderToken) {
+        return;
+      }
+
+      renderCollection(
+        elements.chatList,
+        chatEvents,
+        "Nenhuma mensagem de chat ao vivo.",
+        (event) => createMessageCard(event, state, elements, { live: true }),
+        (node, event) => syncMessageCard(node, event, state, { live: true })
+      );
+
+      renderDetail(focusedEvent);
+    }, 0);
 
     function renderDetail(event) {
       if (!elements.detailPopup) {
