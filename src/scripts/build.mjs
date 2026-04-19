@@ -62,6 +62,7 @@ for (const entry of fs.readdirSync(rootDir, { withFileTypes: true })) {
 
 fs.copyFileSync(path.join(rootDir, 'src', 'landing.html'), path.join(outDir, 'index.html'));
 fs.cpSync(path.join(rootDir, 'src'), path.join(outDir, 'portal'), { recursive: true, force: true });
+fs.cpSync(path.join(rootDir, 'src', 'privacy'), path.join(outDir, 'privacy'), { recursive: true, force: true });
 writeRuntimeEnvScript(path.join(outDir, 'portal', 'runtime-env.js'));
 writeRuntimeEnvScript(path.join(outDir, 'portal', 'overlay', 'runtime-env.js'));
 writeRedirectPage(path.join(outDir, 'src', 'index.html'), '/portal');

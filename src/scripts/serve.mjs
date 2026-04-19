@@ -33,6 +33,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (pathname === "/privacy" || pathname === "/privacy/") {
+    serveFile(path.join(portalRoot, "privacy", "index.html"), res);
+    return;
+  }
+
   if (pathname === "/portal" || pathname === "/portal/") {
     serveFile(path.join(portalRoot, "index.html"), res);
     return;
@@ -131,6 +136,11 @@ function servePortalFile(relativePath, res) {
   const normalized = path.normalize(relativePath || "index.html");
   const filePath = path.join(portalRoot, normalized);
   fs.stat(filePath, (err, stats) => {
+    if (!err && stats.isDirectory()) {
+      serveFile(path.join(filePath, "index.html"), res);
+      return;
+    }
+
     if (!err && stats.isFile()) {
       serveFile(filePath, res);
       return;
@@ -146,6 +156,11 @@ function serveOverlayFile(relativePath, res) {
   const normalized = path.normalize(relativePath || "index.html");
   const filePath = path.join(overlayRoot, normalized);
   fs.stat(filePath, (err, stats) => {
+    if (!err && stats.isDirectory()) {
+      serveFile(path.join(filePath, "index.html"), res);
+      return;
+    }
+
     if (!err && stats.isFile()) {
       serveFile(filePath, res);
       return;

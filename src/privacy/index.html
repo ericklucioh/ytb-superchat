@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de Privacidade - Portal do Streamer - Eloh</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: #121b2f;
+      --text: #e8eefc;
+      --muted: #aab7d7;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #7c3aed;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.2), transparent 32%),
+        radial-gradient(circle at top right, rgba(255, 77, 77, 0.12), transparent 28%),
+        linear-gradient(180deg, var(--bg), #060b14);
+      line-height: 1.6;
+    }
+
+    main {
+      width: min(860px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 40px 0 56px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(18, 27, 47, 0.92);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      line-height: 1.1;
+    }
+
+    h2 {
+      margin: 28px 0 10px;
+      font-size: 1.1rem;
+    }
+
+    p,
+    li {
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(124, 58, 237, 0.14);
+      color: #d8c9ff;
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .note {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    a {
+      color: #c4b5fd;
+    }
+
+    code {
+      color: #d8c9ff;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <span class="badge">Política de Privacidade</span>
+      <h1>Portal do Streamer - Eloh</h1>
+      <p>
+        Esta extensão foi criada para capturar mensagens de chats públicos de transmissões ao vivo em plataformas suportadas, como YouTube, e encaminhá-las ao portal do streamer e ao overlay utilizado em programas como o OBS, com a finalidade de centralizar a leitura do chat em um único ambiente.
+      </p>
+
+      <h2>Dados processados</h2>
+      <p>Durante o uso, a extensão pode processar os seguintes dados:</p>
+      <ul>
+        <li>conteúdo das mensagens publicadas em chats públicos de transmissões ao vivo nas plataformas suportadas</li>
+        <li>nome de exibição, identificadores públicos da mensagem ou do autor, quando disponíveis na plataforma de origem</li>
+        <li>identificadores de sessão utilizados para vincular a extensão, o portal do streamer e o overlay</li>
+        <li>preferências visuais salvas no navegador, como cor, fonte e palavras destacadas</li>
+        <li>o identificador da transmissão, como <code>streamID</code>, quando necessário para manter a configuração entre sessões</li>
+      </ul>
+
+      <h2>Como os dados são usados</h2>
+      <p>
+        Os dados são usados exclusivamente para viabilizar a funcionalidade principal da extensão, que consiste em capturar mensagens de chat público, transmitir essas mensagens ao portal do streamer, manter a sessão ativa do usuário e exibir o conteúdo no overlay em tempo real.
+      </p>
+      <p>
+        A extensão não altera o conteúdo original das mensagens e não utiliza os dados para criação de perfis, publicidade, análise comportamental ou qualquer finalidade diferente da operação descrita nesta política.
+      </p>
+
+      <h2>Base de tratamento</h2>
+      <p>
+        O tratamento dos dados ocorre com base na execução da funcionalidade principal da extensão e no interesse legítimo de viabilizar a centralização e exibição do chat público para uso do streamer, sempre dentro dos limites da finalidade aqui descrita.
+      </p>
+
+      <h2>Compartilhamento</h2>
+      <p>
+        As mensagens capturadas e os identificadores técnicos necessários ao funcionamento podem ser transmitidos ao portal do streamer e ao overlay associado, exclusivamente para exibição e operação em tempo real.
+      </p>
+      <p>
+        A extensão não vende dados, não compartilha dados para publicidade e não utiliza os dados coletados para fins alheios ao funcionamento do serviço.
+      </p>
+
+      <h2>Armazenamento e retenção</h2>
+      <p>
+        As preferências do usuário e o <code>streamID</code> podem ser salvos no armazenamento sincronizado do navegador para preservar a configuração entre sessões.
+      </p>
+      <p>
+        As mensagens de chat podem ser armazenadas temporariamente enquanto a sessão da transmissão estiver ativa, pelo tempo necessário para permitir sua leitura centralizada no portal e no overlay. Salvo quando informado de forma diferente em funcionalidade específica do serviço, não há finalidade de manutenção permanente dessas mensagens além do necessário para a operação da sessão.
+      </p>
+
+      <h2>Segurança</h2>
+      <p>
+        São adotadas medidas técnicas razoáveis para reduzir o risco de acesso não autorizado, uso indevido, alteração ou divulgação indevida dos dados processados pela extensão.
+      </p>
+
+      <h2>Direitos e solicitações</h2>
+      <p>
+        Caso aplicável à legislação de proteção de dados da sua localidade, o titular dos dados poderá solicitar informações sobre o tratamento realizado, bem como pedir correção ou exclusão de dados, quando isso for tecnicamente possível e compatível com a natureza pública da origem das mensagens e com o funcionamento do serviço.
+      </p>
+
+      <h2>Contato</h2>
+      <p>
+        Em caso de dúvidas sobre esta política ou para solicitações relacionadas a dados, entre em contato pelo site do projeto, pela página oficial do portal ou pelo canal de suporte informado pelo responsável pelo projeto.
+      </p>
+
+      <p class="note">
+        Última atualização: 18 de abril de 2026.
+      </p>
+    </div>
+  </main>
+</body>
+</html>
