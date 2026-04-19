@@ -62,6 +62,14 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
 
   window.addEventListener("message", handleWindowMessage);
 
+  function handlePageShow() {
+    if (closed || !currentSession) {
+      return;
+    }
+
+    announcePresence(currentSession);
+  }
+
   function announcePresence(nextSession = currentSession) {
     const normalized = cleanSession(nextSession);
     if (normalized) {
@@ -90,6 +98,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
   }
 
   announcePresence(currentSession);
+  window.addEventListener("pageshow", handlePageShow);
 
   function setSession(nextSession) {
     const normalized = cleanSession(nextSession);
@@ -115,6 +124,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
   function close() {
     closed = true;
     window.removeEventListener("message", handleWindowMessage);
+    window.removeEventListener("pageshow", handlePageShow);
     listeners.clear();
   }
 

@@ -16,70 +16,74 @@
   function createChannel({ role, session, onMessage } = {}) {
     let currentSession = cleanSession(session);
     let port = null;
+    let portToken = 0;
     let closed = false;
     let suspended = false;
+    let reconnectTimer = null;
+    let reconnectDelay = 150;
+    let pendingPackets = [];
+    let portListeners = null;
+    const MAX_PENDING_PACKETS = 250;
 
-    function attachPort(nextPort) {
-      if (!nextPort) {
+    function clearReconnectTimer() {
+      if (!reconnectTimer) {
         return;
       }
 
-      nextPort.onMessage.addListener((message) => {
-        if (closed) {
-          return;
-        }
-        if (typeof onMessage === "function") {
-          onMessage(message);
-        }
-      });
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     }
 
-    function disconnectPort() {
-      if (!port) {
+    function resetReconnectDelay() {
+      reconnectDelay = 150;
+    }
+
+    function enqueuePending(packet) {
+      if (!packet) {
+        return;
+      }
+
+      pendingPackets.push(packet);
+      if (pendingPackets.length > MAX_PENDING_PACKETS) {
+        pendingPackets.splice(0, pendingPackets.length - MAX_PENDING_PACKETS);
+      }
+    }
+
+    function detachPortListeners(nextPort, listeners) {
+      if (!nextPort || !listeners) {
         return;
       }
 
       try {
-        port.disconnect();
+        nextPort.onMessage.removeListener(listeners.onMessage);
       } catch {
         //
       }
-      port = null;
-    }
-
-    function connect() {
-      if (closed || typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.connect) {
-        return null;
-      }
-
-      if (port && (port.disconnected || port.error)) {
-        disconnectPort();
-      }
-
-      if (port) {
-        disconnectPort();
-      }
 
       try {
-        port = chrome.runtime.connect({ name: buildPortName(role, currentSession) });
+        nextPort.onDisconnect.removeListener(listeners.onDisconnect);
       } catch {
-        port = null;
-        return null;
+        //
       }
-      suspended = false;
-      attachPort(port);
-      return port;
     }
 
-    function publish(payload) {
-      if (closed) {
-        return false;
+    function scheduleReconnect() {
+      if (closed || suspended || reconnectTimer || port) {
+        return;
       }
 
-      if (!port) {
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        if (closed || suspended || port) {
+          return;
+        }
         connect();
-      }
+      }, reconnectDelay);
 
+      reconnectDelay = Math.min(reconnectDelay * 2, 2000);
+    }
+
+    function sendPacket(payload) {
       if (!port) {
         return false;
       }
@@ -96,6 +100,119 @@
       }
     }
 
+    function flushPending() {
+      if (!port || !pendingPackets.length) {
+        return;
+      }
+
+      const queue = pendingPackets.splice(0);
+      for (let index = 0; index < queue.length; index += 1) {
+        const payload = queue[index];
+        if (!sendPacket(payload)) {
+          pendingPackets = queue.slice(index);
+          disconnectPort();
+          scheduleReconnect();
+          break;
+        }
+      }
+    }
+
+    function disconnectPort() {
+      if (!port) {
+        clearReconnectTimer();
+        return;
+      }
+
+      const nextPort = port;
+      const listeners = portListeners;
+      port = null;
+      portToken = 0;
+      portListeners = null;
+      clearReconnectTimer();
+      detachPortListeners(nextPort, listeners);
+
+      try {
+        nextPort.disconnect();
+      } catch {
+        //
+      }
+    }
+
+    function connect() {
+      if (closed || typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.connect) {
+        return null;
+      }
+
+      if (port) {
+        flushPending();
+        return port;
+      }
+
+      try {
+        const nextPort = chrome.runtime.connect({ name: buildPortName(role, currentSession) });
+        port = nextPort;
+        portToken += 1;
+        suspended = false;
+        const token = portToken;
+        const listeners = {
+          onMessage(message) {
+            if (closed || token !== portToken || port !== nextPort) {
+              return;
+            }
+
+            if (typeof onMessage === "function") {
+              onMessage(message);
+            }
+          },
+          onDisconnect() {
+            if (closed || token !== portToken || port !== nextPort) {
+              return;
+            }
+
+            detachPortListeners(nextPort, listeners);
+            port = null;
+            portListeners = null;
+
+            if (!suspended) {
+              scheduleReconnect();
+            }
+          }
+        };
+        portListeners = listeners;
+        nextPort.onMessage.addListener(listeners.onMessage);
+        nextPort.onDisconnect.addListener(listeners.onDisconnect);
+        resetReconnectDelay();
+        clearReconnectTimer();
+        flushPending();
+        return nextPort;
+      } catch {
+        port = null;
+        portListeners = null;
+        scheduleReconnect();
+        return null;
+      }
+    }
+
+    function publish(payload) {
+      if (closed) {
+        return false;
+      }
+
+      if (!port && !connect()) {
+        enqueuePending(payload);
+        return false;
+      }
+
+      if (!sendPacket(payload)) {
+        enqueuePending(payload);
+        disconnectPort();
+        scheduleReconnect();
+        return false;
+      }
+
+      return true;
+    }
+
     function send(payload) {
       return publish(payload);
     }
@@ -107,11 +224,24 @@
 
     function setSession(nextSession) {
       const normalized = cleanSession(nextSession);
-      if (normalized === currentSession) {
+      if (!normalized) {
         return currentSession;
       }
 
+      const changed = normalized !== currentSession;
       currentSession = normalized;
+
+      if (!changed) {
+        if (!port) {
+          connect();
+        }
+        return currentSession;
+      }
+
+      pendingPackets = [];
+      if (port) {
+        disconnectPort();
+      }
       connect();
       return currentSession;
     }
@@ -136,6 +266,8 @@
 
     function close() {
       closed = true;
+      pendingPackets = [];
+      clearReconnectTimer();
       disconnectPort();
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("pageshow", handlePageShow);
