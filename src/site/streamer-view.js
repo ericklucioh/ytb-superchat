@@ -165,14 +165,14 @@ function syncMessageCard(card, event, state, { live = false } = {}) {
   const meta = card.querySelector(".event-meta");
   const actions = card.querySelector(".event-actions");
   const readButton = card.querySelector('button[data-action="read"]');
-  const hiddenButton = card.querySelector('button[data-action="hidden"]');
+  const favoriteButton = card.querySelector('button[data-action="favorite"]');
   const status = resolveStatus(event, state, live);
 
   card.dataset.id = event.id;
   card.dataset.viewType = "message";
   card.classList.toggle("is-live-message", live);
   card.classList.toggle("is-read", status === "read");
-  card.classList.toggle("is-hidden", status === "hidden");
+  card.classList.toggle("is-favorite", status === "favorite");
   card.classList.toggle("is-superchat", event.type === "superchat");
   card.classList.toggle("is-priority", event.type === "sub" || event.type === "member");
   card.classList.toggle("is-selected", event.id === state.overlayId);
@@ -197,8 +197,8 @@ function syncMessageCard(card, event, state, { live = false } = {}) {
   if (readButton) {
     readButton.classList.toggle("is-active", status === "read");
   }
-  if (hiddenButton) {
-    hiddenButton.classList.toggle("is-active", status === "hidden");
+  if (favoriteButton) {
+    favoriteButton.classList.toggle("is-active", status === "favorite");
   }
 
   if (event.type === "superchat" && eventMetaRow && user && time) {
@@ -356,7 +356,7 @@ export function createStreamerView(elements) {
       const extra = elements.detailPopup.querySelector("[data-detail-extra]");
       const message = elements.detailPopup.querySelector("[data-detail-message]");
       const readButton = elements.detailPopup.querySelector('button[data-detail-action="read"]');
-      const hiddenButton = elements.detailPopup.querySelector('button[data-detail-action="hidden"]');
+      const favoriteButton = elements.detailPopup.querySelector('button[data-detail-action="favorite"]');
 
       elements.detailPopup.hidden = false;
       setTextContent(kind, formatType(event.type));
@@ -403,8 +403,8 @@ export function createStreamerView(elements) {
       if (readButton) {
         readButton.classList.toggle("is-active", status === "read");
       }
-      if (hiddenButton) {
-        hiddenButton.classList.toggle("is-active", status === "hidden");
+      if (favoriteButton) {
+        favoriteButton.classList.toggle("is-active", status === "favorite");
       }
     }
   }

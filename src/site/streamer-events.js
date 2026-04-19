@@ -1,10 +1,18 @@
 import { cleanText, decodeHtmlEntities, extractGiftCount, hashString, inferEventType, inferPlatform, parseAmount, stringOrEmpty, stripHtml, toNumber } from "./streamer-text.js";
 import { extractCurrencyLabel, formatAmount, formatCurrencyAmount } from "./streamer-currency.js";
 
-export const VALID_FILTERS = new Set(["active", "read", "hidden", "all"]);
-export const VALID_STATUSES = new Set(["active", "read", "hidden"]);
+export const VALID_FILTERS = new Set(["active", "read", "favorite", "all"]);
+export const VALID_STATUSES = new Set(["active", "read", "favorite"]);
 export const VALID_PLATFORMS = new Set(["twitch", "youtube"]);
 export const VALID_TYPES = new Set(["message", "sub", "member", "superchat"]);
+
+function normalizeStatusValue(status) {
+  if (status === "hidden") {
+    return "favorite";
+  }
+
+  return status;
+}
 
 export function platformIconMarkup(platform) {
   const src = platform === "twitch" ? "twitch.png" : "youtube.png";
@@ -87,8 +95,9 @@ export function formatStatus(status) {
   switch (status) {
     case "read":
       return "Lido";
+    case "favorite":
     case "hidden":
-      return "Oculto";
+      return "Favorito";
     default:
       return "Ativo";
   }
@@ -98,8 +107,9 @@ export function labelForFilter(filter) {
   switch (filter) {
     case "read":
       return "Lidos";
+    case "favorite":
     case "hidden":
-      return "Ocultos";
+      return "Favoritos";
     case "all":
       return "Tudo";
     default:
@@ -232,7 +242,8 @@ export function createEventNormalizer() {
       return null;
     }
 
-    if (!VALID_STATUSES.has(event.status)) {
+    const normalizedStatus = normalizeStatusValue(event.status);
+    if (!VALID_STATUSES.has(normalizedStatus)) {
       return null;
     }
 
@@ -246,7 +257,7 @@ export function createEventNormalizer() {
       type: event.type,
       user: event.user.trim(),
       timestamp: Math.floor(event.timestamp),
-      status: event.status,
+      status: normalizedStatus,
       ...(event.message ? { message: event.message } : {}),
       ...(event.chatimg ? { chatimg: event.chatimg } : {}),
       ...(event.chatbadges ? { chatbadges: event.chatbadges } : {}),
@@ -392,13 +403,14 @@ export function createEventNormalizer() {
   function normalizeStoredEvent(rawEvent) {
     const explicitCurrency = stringOrEmpty(rawEvent?.currency || "");
     const currency = explicitCurrency || extractCurrencyLabel(rawEvent, rawEvent?.hasDonation);
+    const normalizedStatus = normalizeStatusValue(rawEvent?.status);
     const event = validateEvent({
       id: rawEvent?.id,
       platform: rawEvent?.platform,
       type: rawEvent?.type,
       user: rawEvent?.user,
       timestamp: toNumber(rawEvent?.timestamp),
-      status: VALID_STATUSES.has(rawEvent?.status) ? rawEvent.status : "active",
+      status: VALID_STATUSES.has(normalizedStatus) ? normalizedStatus : "active",
       message: typeof rawEvent?.message === "string" ? rawEvent.message : "",
       chatimg: typeof rawEvent?.chatimg === "string" ? rawEvent.chatimg : "",
       chatbadges: typeof rawEvent?.chatbadges === "string" ? rawEvent.chatbadges : "",

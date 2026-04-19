@@ -492,9 +492,9 @@ body {
   cursor: pointer;
 }
 
-.detail-actions button[data-detail-action="hidden"] {
-  background: rgba(248, 113, 113, 0.12);
-  color: #ffd1d1;
+.detail-actions button[data-detail-action="favorite"] {
+  background: rgba(245, 184, 75, 0.12);
+  color: #ffe2a8;
 }
 
 .detail-actions button[data-detail-action="read"] {
@@ -784,13 +784,13 @@ body {
   min-width: 0;
 }
 
-.event-actions button[data-action="hidden"] {
-  color: #ffe1e1;
-  background: rgba(248, 113, 113, 0.12);
+.event-actions button[data-action="favorite"] {
+  color: #ffe2a8;
+  background: rgba(245, 184, 75, 0.12);
 }
 
 .event-actions button[data-action="read"].is-active,
-.event-actions button[data-action="hidden"].is-active {
+.event-actions button[data-action="favorite"].is-active {
   background: rgba(255, 205, 94, 0.18);
   color: #fff1c9;
   border-color: rgba(255, 205, 94, 0.45);
@@ -809,18 +809,20 @@ body {
   background: linear-gradient(135deg, rgba(255, 199, 72, 0.16), rgba(255, 255, 255, 0.03));
 }
 
-.event-card.is-hidden {
-  opacity: 0.64;
-}
-
 .event-card.is-read .status-badge {
   background: rgba(33, 197, 138, 0.12);
   color: #b8f7d9;
 }
 
-.event-card.is-hidden .status-badge {
-  background: rgba(248, 113, 113, 0.14);
-  color: #ffd1d1;
+.event-card.is-favorite {
+  border-color: rgba(245, 184, 75, 0.3);
+  box-shadow: 0 0 0 1px rgba(245, 184, 75, 0.22), 0 16px 30px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(135deg, rgba(245, 184, 75, 0.16), rgba(255, 255, 255, 0.03));
+}
+
+.event-card.is-favorite .status-badge {
+  background: rgba(245, 184, 75, 0.14);
+  color: #ffe2a8;
 }
 
 .event-card.is-superchat {

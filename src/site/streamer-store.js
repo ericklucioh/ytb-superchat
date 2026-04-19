@@ -1,4 +1,4 @@
-import { VALID_FILTERS, VALID_STATUSES, createEventNormalizer } from "./streamer-events.js";
+import { VALID_FILTERS, createEventNormalizer } from "./streamer-events.js";
 import { cleanText } from "./streamer-text.js";
 
 export function createStreamerStore({
@@ -26,26 +26,42 @@ export function createStreamerStore({
           const legacyRaw = localStorage.getItem(legacyKey);
           if (legacyRaw) {
             const migrated = sanitizeState(JSON.parse(legacyRaw));
-            localStorage.setItem(key, JSON.stringify(migrated));
+            persistStateValue(key, migrated);
             return migrated;
           }
         }
 
-        return sanitizeState({ version: 1, filter: "active", overlayId: "", events: [], roomId });
+        const reset = sanitizeState({ version: 1, filter: "active", overlayId: "", events: [], roomId });
+        persistStateValue(key, reset);
+        return reset;
       }
 
-      return sanitizeState(JSON.parse(raw));
+      const sanitized = sanitizeState(JSON.parse(raw));
+      persistStateValue(key, sanitized);
+      return sanitized;
     } catch {
       const reset = sanitizeState({ version: 1, filter: "active", overlayId: "", events: [], roomId });
-      localStorage.setItem(key, JSON.stringify(reset));
+      persistStateValue(key, reset);
       return reset;
     }
+  }
+
+  function persistStateValue(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function normalizeFilter(filter) {
+    if (filter === "hidden") {
+      return "favorite";
+    }
+
+    return filter;
   }
 
   function sanitizeState(input) {
     const sanitized = {
       version: 1,
-      filter: VALID_FILTERS.has(input?.filter) ? input.filter : "active",
+      filter: VALID_FILTERS.has(normalizeFilter(input?.filter)) ? normalizeFilter(input?.filter) : "active",
       roomId: typeof input?.roomId === "string" ? input.roomId : "",
       overlayId: typeof input?.overlayId === "string" ? input.overlayId : "",
       events: []
@@ -75,7 +91,7 @@ export function createStreamerStore({
   }
 
   function persistState() {
-    localStorage.setItem(currentStorageKey, JSON.stringify(state));
+    persistStateValue(currentStorageKey, state);
   }
 
   function persistRoom(roomId) {
@@ -201,6 +217,7 @@ export function createStreamerStore({
   function syncFromExternalState(rawValue) {
     try {
       state = sanitizeState(JSON.parse(rawValue));
+      persistState();
       return true;
     } catch {
       return false;
@@ -220,7 +237,7 @@ export function createStreamerStore({
   }
 
   function getCounts() {
-    const visible = state.events.filter((event) => event.status !== "hidden");
+    const visible = state.events.filter((event) => event.status !== "favorite");
     const twitchSubs = visible.filter((event) => event.platform === "twitch" && event.type === "sub").length;
     const youtubeMembers = visible.filter((event) => event.platform === "youtube" && event.type === "member").length;
     const totalCombined = twitchSubs + youtubeMembers;
