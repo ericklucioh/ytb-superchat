@@ -6,6 +6,7 @@ var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var localBridge = null;
 function twitchLog() {}
 var unwatchStreamId = null;
+var twitchSweepTimer = null;
 
 function syncSession(nextSession) {
 	var session = String(nextSession || "").replace(/\s+/g, "").trim();
@@ -82,19 +83,39 @@ function startTwitchConnections() {
 
 function isTwitchFeedNode(element) {
 	if (!element || !element.className) {
-		return false;
+		return !!(element && element.querySelector && (
+			element.querySelector("[data-a-target='chat-line-message-body']") ||
+			element.querySelector("[data-test-selector='chat-line-message-body']") ||
+			element.querySelector("span.message")
+		));
 	}
 	var className = String(element.className);
-	return className.indexOf("chat-line__message") !== -1 || className.indexOf("chat-line__message--") !== -1;
+	return className.indexOf("chat-line__message") !== -1
+		|| className.indexOf("chat-line__message--") !== -1
+		|| className.indexOf("chat-message") !== -1
+		|| !!(element.querySelector && (
+			element.querySelector("[data-a-target='chat-line-message-body']") ||
+			element.querySelector("[data-test-selector='chat-line-message-body']") ||
+			element.querySelector("span.message")
+		));
 }
 
-function sendTwitchFeed(element) {
-	if (!isTwitchFeedNode(element) || element.dataset.feedSent) {
+function sendTwitchFeed(element, signature) {
+	if (!isTwitchFeedNode(element)) {
 		twitchLog("skip element", {
-			reason: !isTwitchFeedNode(element) ? "not_twitch_node" : "already_sent",
+			reason: "not_twitch_node",
 			className: element && element.className
 		});
 		return;
+	}
+
+	var nextSignature = signature || buildTwitchMessageSignature(element);
+	if (nextSignature && element.dataset.feedSignature === nextSignature) {
+		twitchLog("skip element", {
+			reason: "already_sent",
+			className: element && element.className
+		});
+		return true;
 	}
 
 	var chatdonation = false;
@@ -154,6 +175,8 @@ function sendTwitchFeed(element) {
 		chatmembership = membershipNode.text().trim() || "SUB";
 	}
 
+	var subscriptionMonths = extractTwitchSubscriptionMonths(element.innerText || "", chatmembership, chatmessage);
+
 	if ($(element).find('.chat-line__message--cheer-amount').length) {
 		chatdonation = chatdonation || $(element).find('.chat-line__message--cheer-amount').html();
 	}
@@ -201,6 +224,7 @@ function sendTwitchFeed(element) {
 	data.chatimg = chatimg;
 	data.hasDonation = hasDonation;
 	data.hasMembership = hasMembership;
+	data.months = subscriptionMonths;
 	data.currency = isBitsDonation ? "BITS" : "";
 	data.type = "twitch";
 	data.platform = "twitch";
@@ -208,6 +232,9 @@ function sendTwitchFeed(element) {
 	data.feed = true;
 	data.timestamp = Date.now();
 
+	if (nextSignature) {
+		element.dataset.feedSignature = nextSignature;
+	}
 	element.dataset.feedSent = "1";
 	twitchLog("captured element", {
 		chatname: chatname,
@@ -218,7 +245,7 @@ function sendTwitchFeed(element) {
 
 	if (avatarFromDom) {
 		pushFeedMessage(data);
-		return;
+		return true;
 	}
 
 	fetchWithTimeout("https://api.socialstream.ninja/twitch/avatar?username="+encodeURIComponent(data.chatname)).then(response => {
@@ -233,6 +260,45 @@ function sendTwitchFeed(element) {
 	}).catch(error => {
 		pushFeedMessage(data);
 	});
+
+	return true;
+}
+
+function buildTwitchMessageSignature(element) {
+	if (!element) {
+		return "";
+	}
+
+	var chatname = $(element).find(".chat-author__display-name").text() || $(element).find("[data-a-target='chat-message-username']").text() || "";
+	var chatmessage = $(element).find('*[data-a-target="chat-line-message-body"]').text() || $(element).find('span.message').text() || element.innerText || "";
+	var badgeText = $(element).find(".chat-line__message-badges, .chat-author__badges, .chat-badge").text() || "";
+	var className = String(element.className || "");
+	return [chatname.trim(), chatmessage.trim(), badgeText.trim(), className].join("|");
+}
+
+function extractTwitchSubscriptionMonths(text, membershipText, messageText) {
+	var haystack = [text, membershipText, messageText].filter(Boolean).join(" ").toLowerCase();
+	if (!haystack) {
+		return NaN;
+	}
+
+	var patterns = [
+		/\bsubscribed\s+for\s+(\d{1,4})\s+months?\b/i,
+		/\b(\d{1,4})\s+months?\b/i,
+		/\bmonth(?:s)?\s*:\s*(\d{1,4})\b/i
+	];
+
+	for (var i = 0; i < patterns.length; i += 1) {
+		var match = haystack.match(patterns[i]);
+		if (match && match[1]) {
+			var value = Number(match[1]);
+			if (Number.isFinite(value) && value > 0) {
+				return value;
+			}
+		}
+	}
+
+	return NaN;
 }
 
 var showOnlyFirstName;
@@ -279,7 +345,7 @@ runtime.loadSettings(properties, function(item){
     showOnlyFirstName: !!item.showOnlyFirstName,
     highlightWordsCount: Array.isArray(item.highlightWords) ? item.highlightWords.length : (typeof item.highlightWords === "string" ? item.highlightWords.split(",").length : 0)
   });
-  if (item.streamID){
+	if (item.streamID){
     channel = item.streamID;
   } else {
 	runtime.persistStreamId(channel);
@@ -293,6 +359,7 @@ runtime.loadSettings(properties, function(item){
   runtime.applyOverlaySettings(item, document.documentElement, { color: "#000" });
   showOnlyFirstName = !!item.showOnlyFirstName;
   highlightWords = runtime.normalizeHighlightWords(item.highlightWords);
+  startTwitchSweep();
   startTwitchConnections();
 });
 
@@ -352,6 +419,11 @@ function collectTwitchMessageNodes(node) {
 		"div.chat-line__message",
 		"[data-a-target='chat-line-message']",
 		"[data-test-selector='chat-line-message']"
+		,
+		"[data-a-target='chat-line-message-body']",
+		"[data-test-selector='chat-line-message-body']",
+		"[data-a-target='chat-message-text']",
+		"div[data-a-target='chat-message']"
 	];
 	var results = [];
 
@@ -378,7 +450,7 @@ function collectTwitchMessageNodes(node) {
 }
 
 function processTwitchCandidate(candidate) {
-	if (!candidate || candidate.dataset.feedSent) {
+	if (!candidate) {
 		return false;
 	}
 
@@ -387,7 +459,11 @@ function processTwitchCandidate(candidate) {
 		className: candidate.className,
 		textPreview: candidate.innerText ? String(candidate.innerText).slice(0, 80) : ""
 	});
-	sendTwitchFeed(candidate);
+	var signature = buildTwitchMessageSignature(candidate);
+	if (signature && candidate.dataset.feedSignature === signature) {
+		return false;
+	}
+	var sent = sendTwitchFeed(candidate, signature) === true;
 
 	// Check for highlight words
 	var chattext = $(candidate).find("#message").text() || candidate.innerText || "";
@@ -400,7 +476,30 @@ function processTwitchCandidate(candidate) {
 	if(highlights.length > 0) {
 		$(candidate).addClass("highlighted-comment");
 	}
-	return true;
+	return sent;
+}
+
+function sweepTwitchMessages() {
+	var candidates = collectTwitchMessageNodes(document);
+	if (!candidates.length) {
+		return false;
+	}
+
+	var processed = false;
+	for (var i = 0; i < candidates.length; i += 1) {
+		processed = processTwitchCandidate(candidates[i]) || processed;
+	}
+	return processed;
+}
+
+function startTwitchSweep() {
+	if (twitchSweepTimer) {
+		return;
+	}
+
+	twitchSweepTimer = setInterval(function () {
+		sweepTwitchMessages();
+	}, 2500);
 }
 
 function scanTwitchNode(node, reason) {

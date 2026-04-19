@@ -21,6 +21,55 @@ export function formatMonths(value) {
   return number === 1 ? "1 mês" : `${formatAmount(number)} meses`;
 }
 
+function extractSubscriptionMonths(source, membershipMarkup, message) {
+  const candidates = [
+    source?.months,
+    source?.subscriptionMonths,
+    source?.subMonths,
+    source?.monthCount
+  ];
+
+  for (const candidate of candidates) {
+    const value = Number(candidate);
+    if (Number.isFinite(value) && value > 0) {
+      return value;
+    }
+  }
+
+  const haystack = [
+    membershipMarkup,
+    message,
+    source?.chatmessage,
+    source?.message,
+    source?.text
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (!haystack) {
+    return null;
+  }
+
+  const patterns = [
+    /\bsubscribed\s+for\s+(\d{1,4})\s+months?\b/i,
+    /\b(\d{1,4})\s+months?\b/i,
+    /\bmonth(?:s)?\s*:\s*(\d{1,4})\b/i
+  ];
+
+  for (const pattern of patterns) {
+    const match = haystack.match(pattern);
+    if (match && match[1]) {
+      const value = Number(match[1]);
+      if (Number.isFinite(value) && value > 0) {
+        return value;
+      }
+    }
+  }
+
+  return null;
+}
+
 export function formatType(type) {
   switch (type) {
     case "sub":
@@ -249,6 +298,7 @@ export function createEventNormalizer() {
     const explicitCurrency = stringOrEmpty(source.currency || "");
     const currency = explicitCurrency || extractCurrencyLabel(source, donationMarkup || hasDonation);
     const giftCount = extractGiftCount(source, membershipMarkup, message);
+    const subscriptionMonths = extractSubscriptionMonths(source, membershipMarkup, message);
     const timestamp = toNumber(source.timestamp ?? payload.timestamp ?? Date.now());
     if (!Number.isFinite(timestamp)) {
       return null;
@@ -321,9 +371,15 @@ export function createEventNormalizer() {
       event.amount = amount;
     }
 
-    if ((type === "sub" || type === "member") && Number.isFinite(tier)) {
-      event.tier = tier;
-      event.months = tier;
+    if ((type === "sub" || type === "member")) {
+      if (Number.isFinite(subscriptionMonths)) {
+        event.months = subscriptionMonths;
+      } else if (Number.isFinite(tier)) {
+        event.tier = tier;
+        event.months = tier;
+      } else if (Number.isFinite(source?.months)) {
+        event.months = Number(source.months);
+      }
     }
 
     if (Number.isFinite(giftCount) && giftCount > 0) {
@@ -354,6 +410,7 @@ export function createEventNormalizer() {
       amount: toNumber(rawEvent?.amount),
       tier: toNumber(rawEvent?.tier),
       months: toNumber(rawEvent?.months),
+      subscriptionMonths: toNumber(rawEvent?.subscriptionMonths),
       giftCount: toNumber(rawEvent?.giftCount)
     });
 

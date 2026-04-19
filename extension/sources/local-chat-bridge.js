@@ -17,6 +17,7 @@
     let currentSession = cleanSession(session);
     let port = null;
     let closed = false;
+    let suspended = false;
 
     function attachPort(nextPort) {
       if (!nextPort) {
@@ -33,18 +34,30 @@
       });
     }
 
+    function disconnectPort() {
+      if (!port) {
+        return;
+      }
+
+      try {
+        port.disconnect();
+      } catch {
+        //
+      }
+      port = null;
+    }
+
     function connect() {
       if (closed || typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.connect) {
         return null;
       }
 
+      if (port && (port.disconnected || port.error)) {
+        disconnectPort();
+      }
+
       if (port) {
-        try {
-          port.disconnect();
-        } catch {
-          //
-        }
-        port = null;
+        disconnectPort();
       }
 
       try {
@@ -53,6 +66,7 @@
         port = null;
         return null;
       }
+      suspended = false;
       attachPort(port);
       return port;
     }
@@ -102,17 +116,45 @@
       return currentSession;
     }
 
+    function suspend() {
+      if (closed) {
+        return;
+      }
+
+      suspended = true;
+      disconnectPort();
+    }
+
+    function resume() {
+      if (closed) {
+        return;
+      }
+
+      suspended = false;
+      connect();
+    }
+
     function close() {
       closed = true;
-      if (port) {
-        try {
-          port.disconnect();
-        } catch {
-          //
-        }
-        port = null;
-      }
+      disconnectPort();
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
     }
+
+    function handlePageHide() {
+      suspend();
+    }
+
+    function handlePageShow() {
+      if (!suspended) {
+        return;
+      }
+
+      resume();
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("pageshow", handlePageShow);
 
     const channel = {
       connect,
