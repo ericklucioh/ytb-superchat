@@ -540,6 +540,8 @@ function boot() {
     const counts = store.getCounts();
     const focusedEvent = detailId ? store.findEventById(detailId) : null;
     const superchatTotals = currencyService.summarizeSuperchatEvents(superchatEvents);
+    const newestLiveId = chatEvents[0]?.id || "";
+    const oldestLiveId = chatEvents[chatEvents.length - 1]?.id || "";
     const nextRenderKey = [
       state.roomId,
       state.filter,
@@ -553,6 +555,8 @@ function boot() {
       priorityEvents.length,
       superchatEvents.length,
       chatEvents.length,
+      newestLiveId,
+      oldestLiveId,
       superchatTotals.totalBrl.toFixed(2)
     ].join("|");
 
