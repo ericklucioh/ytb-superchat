@@ -364,9 +364,19 @@ body {
   text-decoration: none;
 }
 
+.summary-action--danger {
+  border-color: rgba(248, 113, 113, 0.32);
+  background: rgba(248, 113, 113, 0.12);
+  color: #ffd6d6;
+}
+
 .summary-action:hover,
 .summary-close:hover {
   transform: translateY(-1px);
+}
+
+.summary-action--danger:hover {
+  background: rgba(248, 113, 113, 0.18);
 }
 
 .summary-stats {

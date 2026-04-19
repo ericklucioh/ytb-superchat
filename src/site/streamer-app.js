@@ -33,6 +33,7 @@ function boot() {
     mockBadge: document.getElementById("mock-badge"),
     summaryPopup: document.getElementById("summary-popup"),
     summaryCopyOverlayButton: document.getElementById("summary-copy-overlay"),
+    summaryClearHistoryButton: document.getElementById("summary-clear-history"),
     detailPopup: document.getElementById("detail-popup"),
     filterGroup: document.getElementById("filter-group"),
     currentFilter: document.getElementById("current-filter"),
@@ -162,6 +163,12 @@ function boot() {
   if (elements.summaryCopyOverlayButton) {
     elements.summaryCopyOverlayButton.addEventListener("click", () => {
       void copyOverlayLink();
+    });
+  }
+
+  if (elements.summaryClearHistoryButton) {
+    elements.summaryClearHistoryButton.addEventListener("click", () => {
+      void clearCurrentHistory();
     });
   }
 
@@ -346,7 +353,6 @@ function boot() {
       return;
     }
 
-    console.log(PORTAL_LOG_PREFIX, "incoming-payload", summarizePayload(normalized));
 
     if (store.insertEvent(normalized)) {
       scheduleRender();
@@ -608,6 +614,32 @@ function boot() {
       msg: true,
       contents: false
     });
+  }
+
+  async function clearCurrentHistory() {
+    const activeRoom = cleanText(store.state.roomId || elements.sessionInput.value || localStorage.getItem(ROOM_KEY) || "");
+    const hasEvents = store.state.events.length > 0 || store.liveEvents.length > 0;
+    const hasOverlay = Boolean(store.state.overlayId);
+
+    if (!hasEvents && !hasOverlay) {
+      setStatus("Histórico já está vazio");
+      return;
+    }
+
+    const confirmed = window.confirm("Limpar o histórico do painel? A conexão atual será mantida.");
+    if (!confirmed) {
+      return;
+    }
+
+    if (hasOverlay && activeRoom) {
+      sendOverlayClear(activeRoom);
+    }
+
+    store.clearHistory();
+    detailId = "";
+    view.setDetailOpen(false);
+    scheduleRender();
+    setStatus("Histórico limpo");
   }
 
   function persistSharedRoom(roomId) {

@@ -81,27 +81,234 @@ function startTwitchConnections() {
 	}, 500);
 }
 
-function isTwitchFeedNode(element) {
-	if (!element || !element.className) {
-		return !!(element && element.querySelector && (
-			element.querySelector("[data-a-target='chat-line-message-body']") ||
-			element.querySelector("[data-test-selector='chat-line-message-body']") ||
-			element.querySelector("span.message")
-		));
+function getTwitchMessageRootSelector() {
+	return "div.chat-line__message,[data-a-target='chat-line-message'],[data-test-selector='chat-line-message']";
+}
+
+function isTwitchMessageRoot(element) {
+	if (!element || element.nodeType !== 1 || !element.matches) {
+		return false;
 	}
-	var className = String(element.className);
-	return className.indexOf("chat-line__message") !== -1
-		|| className.indexOf("chat-line__message--") !== -1
-		|| className.indexOf("chat-message") !== -1
-		|| !!(element.querySelector && (
-			element.querySelector("[data-a-target='chat-line-message-body']") ||
-			element.querySelector("[data-test-selector='chat-line-message-body']") ||
-			element.querySelector("span.message")
-		));
+	return element.matches(getTwitchMessageRootSelector());
+}
+
+function resolveTwitchMessageRoot(element) {
+	if (!element || element.nodeType !== 1) {
+		return null;
+	}
+
+	if (isTwitchMessageRoot(element)) {
+		return element;
+	}
+
+	if (element.closest) {
+		var closest = element.closest(getTwitchMessageRootSelector());
+		if (closest) {
+			return closest;
+		}
+	}
+
+	var selectors = [
+		"[data-a-target='chat-message-username']",
+		"[data-a-target='chat-line-message-body']",
+		"[data-a-target='chat-message-text']",
+		"[data-a-target='chat-message-cheer-amount']",
+		"[data-test-selector='chat-line-message-body']",
+		"[data-test-selector='message-username']"
+	];
+	for (var i = 0; i < selectors.length; i += 1) {
+		var nodes = element.querySelectorAll ? element.querySelectorAll(selectors[i]) : [];
+		for (var j = 0; j < nodes.length; j += 1) {
+			var root = nodes[j] && nodes[j].closest ? nodes[j].closest(getTwitchMessageRootSelector()) : null;
+			if (root) {
+				return root;
+			}
+		}
+	}
+
+	return null;
+}
+
+function extractTwitchMessageText(root) {
+	if (!root) {
+		return "";
+	}
+
+	var body = root.querySelector("[data-a-target='chat-message-text'], [data-a-target='chat-line-message-body'], [data-test-selector='chat-line-message-body'], span.message");
+	if (body) {
+		return body.innerHTML || body.textContent || "";
+	}
+
+	return root.innerHTML || root.textContent || "";
+}
+
+function extractTwitchAuthorName(root) {
+	if (!root) {
+		return "";
+	}
+
+	var authorNode = root.querySelector("[data-a-target='chat-message-username'], [data-test-selector='message-username'], .chat-author__display-name");
+	var chatname = authorNode ? (authorNode.textContent || "").trim() : "";
+	if (!chatname && root.getAttribute) {
+		chatname = String(root.getAttribute("data-a-user") || "").trim();
+	}
+	return chatname;
+}
+
+function extractTwitchBadgeText(root) {
+	if (!root) {
+		return "";
+	}
+
+	var badges = [];
+	var badgeNodes = root.querySelectorAll("button[data-a-target='chat-badge'] img, [data-a-target='chat-badge'] img, .chat-badge");
+	for (var i = 0; i < badgeNodes.length; i += 1) {
+		var badgeNode = badgeNodes[i];
+		var badgeText = "";
+		if (badgeNode) {
+			badgeText = badgeNode.getAttribute("aria-label") || badgeNode.getAttribute("alt") || badgeNode.textContent || "";
+		}
+		if (badgeText) {
+			badges.push(badgeText);
+		}
+	}
+
+	return badges.join(" ").trim();
+}
+
+function extractTwitchMembershipText(root) {
+	if (!root) {
+		return "";
+	}
+
+	var messageNode = root.querySelector("[data-a-target='chat-message-text'], [data-a-target='chat-line-message-body'], [data-test-selector='chat-line-message-body']");
+	var parts = [
+		root.getAttribute ? root.getAttribute("aria-label") : "",
+		root.getAttribute ? root.getAttribute("data-a-user") : "",
+		extractTwitchBadgeText(root),
+		messageNode ? (messageNode.textContent || "") : ""
+	];
+	return parts.filter(Boolean).join(" ").toLowerCase();
+}
+
+function extractTwitchCheerText(root, membershipText, chatmessage, ariaLabel) {
+	if (!root) {
+		return "";
+	}
+
+	var cheerAmountNode = root.querySelector(".chat-line__message--cheer-amount, [data-a-target='chat-message-cheer-amount']");
+	if (cheerAmountNode) {
+		var cheerText = (cheerAmountNode.textContent || cheerAmountNode.innerText || "").trim();
+		if (cheerText) {
+			return cheerText;
+		}
+	}
+
+	var haystack = [ariaLabel, membershipText, chatmessage, root.innerText || ""].filter(Boolean).join(" ");
+	var cheerMatch = haystack.match(/\b(\d{1,6})\s*bits?\b/i);
+	if (cheerMatch && cheerMatch[1]) {
+		var bitsValue = Number(cheerMatch[1]);
+		if (Number.isFinite(bitsValue) && bitsValue > 0) {
+			return bitsValue === 1 ? "1 bit" : bitsValue + " bits";
+		}
+	}
+
+	return "";
+}
+
+function extractTwitchMessageData(element) {
+	var root = resolveTwitchMessageRoot(element) || element;
+	if (!root) {
+		return null;
+	}
+
+	var chatname = extractTwitchAuthorName(root);
+	if (showOnlyFirstName && chatname) {
+		chatname = chatname.replace(/ .*/, "");
+	}
+	if (!chatname) {
+		chatname = "Twitch";
+	}
+
+	var chatmessage = extractTwitchMessageText(root);
+	var badgeText = extractTwitchBadgeText(root);
+	var membershipText = extractTwitchMembershipText(root);
+	var ariaLabel = root.getAttribute ? String(root.getAttribute("aria-label") || "") : "";
+	var dataUser = root.getAttribute ? String(root.getAttribute("data-a-user") || "") : "";
+	var hasMembership = false;
+	var hasDonation = false;
+	var chatdonation = false;
+	var chatsticker = false;
+
+	if (/[^\w](?:subscribed|subscription|renewed|resub|resubbed|sub gift|gifted sub|membership|subiversary)[^\w]/i.test(" " + membershipText + " ")) {
+		hasMembership = true;
+	}
+	if (/(?:\b(?:cheer|bits?)\b|gifted\s+\d+|gift\s+sub|gifted\s+sub)/i.test(" " + membershipText + " ") || /(?:\bcheer\b|\bbits?\b)/i.test(chatmessage)) {
+		hasDonation = true;
+	}
+	chatdonation = extractTwitchCheerText(root, membershipText, chatmessage, ariaLabel);
+	if (chatdonation) {
+		hasDonation = true;
+	}
+
+	var subscriptionMonths = extractTwitchSubscriptionMonths(ariaLabel + " " + membershipText, badgeText, chatmessage);
+	var avatarFromDom = extractTwitchAvatarFromDom(root);
+	var chatimg = avatarFromDom || (runtime.getRuntimeUrl ? runtime.getRuntimeUrl("twitch.png") : "twitch.png");
+	var eventType = "message";
+	if (hasMembership) {
+		eventType = "sub";
+	} else if (hasDonation) {
+		eventType = "superchat";
+	}
+	if (chatsticker) {
+		eventType = "superchat";
+	}
+
+	var hasMembershipText = hasMembership ? '<div class="donation membership">NEW MEMBER!</div>' : '';
+	var hasDonationText = "";
+	if (chatdonation) {
+		hasDonationText = '<div class="cheer">' + chatdonation + '</div>';
+	}
+
+	var backgroundColor = "";
+	var textColor = "";
+	if (root.style && root.style.getPropertyValue('--yt-live-chat-paid-message-primary-color')) {
+		backgroundColor = "background-color: " + root.style.getPropertyValue('--yt-live-chat-paid-message-primary-color') + ";";
+		textColor = "color: #111;";
+	}
+	if (root.style && root.style.getPropertyValue('--yt-live-chat-sponsor-color')) {
+		backgroundColor = "background-color: " + root.style.getPropertyValue('--yt-live-chat-sponsor-color') + ";";
+		textColor = "color: #111;";
+	}
+
+	var data = {
+		chatname: chatname,
+		chatbadges: badgeText,
+		backgroundColor: backgroundColor,
+		textColor: textColor,
+		chatmessage: chatmessage,
+		chatimg: chatimg,
+		hasDonation: hasDonationText,
+		hasMembership: hasMembershipText,
+		months: subscriptionMonths,
+		currency: hasDonation ? "BITS" : "",
+		type: "twitch",
+		platform: "twitch",
+		eventType: eventType,
+		feed: true,
+		timestamp: Date.now()
+	};
+
+	return {
+		root: root,
+		signature: buildTwitchMessageSignature(root),
+		data: data
+	};
 }
 
 function sendTwitchFeed(element, signature) {
-	if (!isTwitchFeedNode(element)) {
+	var root = resolveTwitchMessageRoot(element) || element;
+	if (!isTwitchMessageRoot(root)) {
 		twitchLog("skip element", {
 			reason: "not_twitch_node",
 			className: element && element.className
@@ -109,141 +316,37 @@ function sendTwitchFeed(element, signature) {
 		return;
 	}
 
-	var nextSignature = signature || buildTwitchMessageSignature(element);
-	if (nextSignature && element.dataset.feedSignature === nextSignature) {
+	var payload = extractTwitchMessageData(root);
+	if (!payload) {
+		return;
+	}
+
+	var nextSignature = signature || payload.signature;
+	if (nextSignature && root.dataset.feedSignature === nextSignature) {
 		twitchLog("skip element", {
 			reason: "already_sent",
-			className: element && element.className
+			className: root && root.className
 		});
 		return true;
 	}
 
-	var chatdonation = false;
-	var chatmembership = false;
-	var chatsticker = false;
-	var chatname = $(element).find(".chat-author__display-name").text();
+	var data = payload.data;
 
-	if (showOnlyFirstName) {
-		chatname = chatname.replace(/ .*/, '');
-	}
-	if (!chatname) {
-		chatname = $(element).find("[data-a-target='chat-message-username']").text() || "Twitch";
-	}
-
-	$(element).find('.bttv-tooltip').html("");
-
-	var chatmessage = $(element).find('*[data-a-target="chat-line-message-body"]').html();
-	if (!chatmessage) {
-		chatmessage = $(element).find('span.message').html();
-	}
-	if (!chatmessage) {
-		chatdonation = $(element).find('.chat-line__message--cheer-amount').html();
-		if (chatdonation) {
-			chatmessage = "";
-			chatdonation = 0;
-			$(element).find(".chat-line__message-container").find('span[data-a-target="chat-message-separator"]').nextAll().each(function(index){
-				if ($(this).find('.chat-line__message--cheer-amount').html()) {
-					chatdonation += parseInt($(this).find('.chat-line__message--cheer-amount').html());
-				}
-				chatmessage += $(this).html();
-			});
-			if (chatdonation == 1) {
-				chatdonation += " bit";
-			} else if (chatdonation > 1) {
-				chatdonation += " bits";
-			}
-		}
-	}
-	if (!chatmessage) {
-		return;
-	}
-
-	var chatimg = "";
-	var avatarFromDom = extractTwitchAvatarFromDom(element);
-	if (avatarFromDom) {
-		chatimg = avatarFromDom;
-	}
-	chatimg = chatimg || (runtime.getRuntimeUrl ? runtime.getRuntimeUrl("twitch.png") : "twitch.png");
-
-	var donationNode = $(element).find("[class*='donation'], [class*='tip'], [data-tip], [data-gifted], [class*='train']");
-	if (donationNode.length && !chatdonation) {
-		chatdonation = donationNode.text().trim();
-	}
-
-	var membershipNode = $(element).find("[class*='subscrib'], [data-subscriber], [data-gifted]");
-	if (membershipNode.length || /subscribed|subscription|renewed|gift/i.test((element.innerText || "").toLowerCase()) || /sub/i.test((element.innerText || "").toLowerCase())) {
-		chatmembership = membershipNode.text().trim() || "SUB";
-	}
-
-	var subscriptionMonths = extractTwitchSubscriptionMonths(element.innerText || "", chatmembership, chatmessage);
-
-	if ($(element).find('.chat-line__message--cheer-amount').length) {
-		chatdonation = chatdonation || $(element).find('.chat-line__message--cheer-amount').html();
-	}
-
-	element.style.backgroundColor = "#666";
-	$(element).addClass("shown-comment");
-
-	var hasDonation = '';
-	if (chatdonation) {
-		hasDonation = '<div class="cheer">' + chatdonation + '</div>';
-	}
-	var isBitsDonation = !!$(element).find('.chat-line__message--cheer-amount').length || /\bbits?\b/i.test(String(chatdonation));
-
-	var hasMembership = '';
-	var eventType = "message";
-	if (chatmembership) {
-		hasMembership = '<div class="donation membership">NEW MEMBER!</div>';
-		eventType = "sub";
-	}
-	if (chatdonation) {
-		eventType = "superchat";
-	}
-	if (chatsticker) {
-		chatmessage = '<img src="' + chatsticker + '">';
-		eventType = "superchat";
-	}
-
-	var backgroundColor = "";
-	var textColor = "";
-	if (element.style.getPropertyValue('--yt-live-chat-paid-message-primary-color')) {
-		backgroundColor = "background-color: " + element.style.getPropertyValue('--yt-live-chat-paid-message-primary-color') + ";";
-		textColor = "color: #111;";
-	}
-	if (element.style.getPropertyValue('--yt-live-chat-sponsor-color')) {
-		backgroundColor = "background-color: " + element.style.getPropertyValue('--yt-live-chat-sponsor-color') + ";";
-		textColor = "color: #111;";
-	}
-
-	var data = {};
-	data.chatname = chatname;
-	data.chatbadges = "";
-	data.backgroundColor = backgroundColor;
-	data.textColor = textColor;
-	data.chatmessage = chatmessage;
-	data.chatimg = chatimg;
-	data.hasDonation = hasDonation;
-	data.hasMembership = hasMembership;
-	data.months = subscriptionMonths;
-	data.currency = isBitsDonation ? "BITS" : "";
-	data.type = "twitch";
-	data.platform = "twitch";
-	data.eventType = eventType;
-	data.feed = true;
-	data.timestamp = Date.now();
+	root.style.backgroundColor = "#666";
+	$(root).addClass("shown-comment");
 
 	if (nextSignature) {
-		element.dataset.feedSignature = nextSignature;
+		root.dataset.feedSignature = nextSignature;
 	}
-	element.dataset.feedSent = "1";
+	root.dataset.feedSent = "1";
 	twitchLog("captured element", {
-		chatname: chatname,
-		hasDonation: !!chatdonation,
-		hasMembership: !!chatmembership,
-		messagePreview: String(chatmessage).slice(0, 80)
+		chatname: data.chatname,
+		hasDonation: !!data.hasDonation,
+		hasMembership: !!data.hasMembership,
+		messagePreview: String(data.chatmessage).slice(0, 80)
 	});
 
-	if (avatarFromDom) {
+	if (payload.data.chatimg && payload.data.chatimg !== (runtime.getRuntimeUrl ? runtime.getRuntimeUrl("twitch.png") : "twitch.png")) {
 		pushFeedMessage(data);
 		return true;
 	}
@@ -265,15 +368,17 @@ function sendTwitchFeed(element, signature) {
 }
 
 function buildTwitchMessageSignature(element) {
-	if (!element) {
+	var root = resolveTwitchMessageRoot(element) || element;
+	if (!root) {
 		return "";
 	}
 
-	var chatname = $(element).find(".chat-author__display-name").text() || $(element).find("[data-a-target='chat-message-username']").text() || "";
-	var chatmessage = $(element).find('*[data-a-target="chat-line-message-body"]').text() || $(element).find('span.message').text() || element.innerText || "";
-	var badgeText = $(element).find(".chat-line__message-badges, .chat-author__badges, .chat-badge").text() || "";
-	var className = String(element.className || "");
-	return [chatname.trim(), chatmessage.trim(), badgeText.trim(), className].join("|");
+	var chatname = extractTwitchAuthorName(root);
+	var chatmessage = extractTwitchMessageText(root);
+	var badgeText = extractTwitchBadgeText(root);
+	var ariaLabel = root.getAttribute ? String(root.getAttribute("aria-label") || "") : "";
+	var dataUser = root.getAttribute ? String(root.getAttribute("data-a-user") || "") : "";
+	return [dataUser.trim(), ariaLabel.trim(), chatname.trim(), String(chatmessage).trim(), badgeText.trim()].join("|");
 }
 
 function extractTwitchSubscriptionMonths(text, membershipText, messageText) {
@@ -418,20 +523,18 @@ function collectTwitchMessageNodes(node) {
 	var selectors = [
 		"div.chat-line__message",
 		"[data-a-target='chat-line-message']",
-		"[data-test-selector='chat-line-message']"
-		,
+		"[data-test-selector='chat-line-message']",
+		"[data-a-target='chat-message-username']",
 		"[data-a-target='chat-line-message-body']",
 		"[data-test-selector='chat-line-message-body']",
 		"[data-a-target='chat-message-text']",
+		"[data-a-target='chat-message-cheer-amount']",
 		"div[data-a-target='chat-message']"
 	];
 	var results = [];
 
-	if (node.tagName) {
-		var tagName = String(node.tagName).toLowerCase();
-		if (tagName === "chat-line__message" || (tagName === "div" && String(node.className || "").indexOf("chat-line__message") !== -1)) {
-			results.push(node);
-		}
+	if (isTwitchMessageRoot(node)) {
+		results.push(node);
 	}
 
 	if (node.querySelectorAll) {
@@ -439,7 +542,10 @@ function collectTwitchMessageNodes(node) {
 			var selector = selectors[i];
 			var found = node.querySelectorAll(selector);
 			for (var j = 0; j < found.length; j += 1) {
-				results.push(found[j]);
+				var root = resolveTwitchMessageRoot(found[j]) || found[j];
+				if (root) {
+					results.push(root);
+				}
 			}
 		}
 	}
@@ -454,27 +560,28 @@ function processTwitchCandidate(candidate) {
 		return false;
 	}
 
+	var root = resolveTwitchMessageRoot(candidate) || candidate;
 	twitchLog("processing candidate", {
-		tagName: candidate.tagName,
-		className: candidate.className,
-		textPreview: candidate.innerText ? String(candidate.innerText).slice(0, 80) : ""
+		tagName: root.tagName,
+		className: root.className,
+		textPreview: root.innerText ? String(root.innerText).slice(0, 80) : ""
 	});
-	var signature = buildTwitchMessageSignature(candidate);
-	if (signature && candidate.dataset.feedSignature === signature) {
+	var signature = buildTwitchMessageSignature(root);
+	if (signature && root.dataset.feedSignature === signature) {
 		return false;
 	}
-	var sent = sendTwitchFeed(candidate, signature) === true;
+	var sent = sendTwitchFeed(root, signature) === true;
 
 	// Check for highlight words
-	var chattext = $(candidate).find("#message").text() || candidate.innerText || "";
+	var chattext = $(root).find("#message").text() || root.innerText || "";
 	var chatWords = chattext.split(" ");
 	if (!highlightWords){
 		highlightWords=[];
 	}
 	var highlights = chatWords.filter(value => highlightWords.includes(value.toLowerCase().replace(/[^a-z0-9]/gi, '')));
-	$(candidate).removeClass("shown-comment");
+	$(root).removeClass("shown-comment");
 	if(highlights.length > 0) {
-		$(candidate).addClass("highlighted-comment");
+		$(root).addClass("highlighted-comment");
 	}
 	return sent;
 }

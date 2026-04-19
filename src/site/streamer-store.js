@@ -8,11 +8,11 @@ export function createStreamerStore({
   initialRoomId = ""
 }) {
   const normalizer = createEventNormalizer();
-  let currentStorageKey = storageKeyFor(initialRoomId);
+  const currentStorageKey = storageKey;
   let state = loadState(currentStorageKey, initialRoomId);
   let liveEvents = [];
 
-  function storageKeyFor(roomId) {
+  function legacyStorageKeyFor(roomId) {
     const normalizedRoomId = cleanText(roomId || "");
     return normalizedRoomId ? `${storageKey}:${normalizedRoomId}` : `${storageKey}:default`;
   }
@@ -21,6 +21,16 @@ export function createStreamerStore({
     try {
       const raw = localStorage.getItem(key);
       if (!raw) {
+        const legacyKeys = [legacyStorageKeyFor(roomId), legacyStorageKeyFor("default")];
+        for (const legacyKey of legacyKeys) {
+          const legacyRaw = localStorage.getItem(legacyKey);
+          if (legacyRaw) {
+            const migrated = sanitizeState(JSON.parse(legacyRaw));
+            localStorage.setItem(key, JSON.stringify(migrated));
+            return migrated;
+          }
+        }
+
         return sanitizeState({ version: 1, filter: "active", overlayId: "", events: [], roomId });
       }
 
@@ -78,15 +88,6 @@ export function createStreamerStore({
       return state;
     }
 
-    const nextStorageKey = storageKeyFor(nextRoom);
-
-    if (state.roomId && state.roomId !== nextRoom) {
-      persistState();
-      liveEvents = [];
-    }
-
-    currentStorageKey = nextStorageKey;
-    state = loadState(currentStorageKey, nextRoom);
     state.roomId = nextRoom;
     persistState();
     persistRoom(nextRoom);
@@ -182,6 +183,21 @@ export function createStreamerStore({
     return true;
   }
 
+  function clearHistory() {
+    const nextState = sanitizeState({
+      version: 1,
+      filter: state.filter,
+      roomId: state.roomId,
+      overlayId: "",
+      events: []
+    });
+
+    state = nextState;
+    liveEvents = [];
+    persistState();
+    return true;
+  }
+
   function syncFromExternalState(rawValue) {
     try {
       state = sanitizeState(JSON.parse(rawValue));
@@ -238,7 +254,7 @@ export function createStreamerStore({
     },
     normalizer,
     getStorageKey(roomId = state.roomId) {
-      return storageKeyFor(roomId);
+      return currentStorageKey;
     },
     connectRoom,
     insertEvent,
@@ -246,6 +262,7 @@ export function createStreamerStore({
     setFilter,
     setOverlayId,
     clearOverlayId,
+    clearHistory,
     syncFromExternalState,
     findEventById,
     getVisibleEvents,

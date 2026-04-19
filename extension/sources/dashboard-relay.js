@@ -45,9 +45,23 @@
       return;
     }
 
-    chrome.storage.sync.set({
-      streamID: normalized
-    });
+    try {
+      chrome.storage.sync.set(
+        {
+          streamID: normalized
+        },
+        () => {
+          if (chrome?.runtime?.lastError) {
+            return;
+          }
+        }
+      );
+    } catch (error) {
+      if (String(error && error.message ? error.message : error).includes("Extension context invalidated")) {
+        return;
+      }
+      throw error;
+    }
   }
 
   function readReadyMarker() {
