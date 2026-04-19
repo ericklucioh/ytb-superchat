@@ -102,7 +102,8 @@ function boot() {
   }
 
   if (elements.mockBadge) {
-    elements.mockBadge.hidden = !mockMode;
+    const explicitMockBadge = params.has("mock") && !isFalsyFlag(params.get("mock"));
+    elements.mockBadge.hidden = !mockMode || !explicitMockBadge;
   }
 
   elements.sessionInput.value = initialRoom;
