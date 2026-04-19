@@ -79,6 +79,7 @@ That generates:
 - The extension still depends on the browser page being open.
 - If the chat UI changes, the selector logic may need a refresh.
 - The dashboard receives chat events through the extension bridge and publishes overlay updates to the Go backend.
+- See [`README-captura-confiavel.md`](README-captura-confiavel.md) for the reliability problem and the delivery options.
 
 ## Critério De Pronto
 - A extensão captura mensagens sem ser dona do overlay
