@@ -87,7 +87,7 @@ function boot() {
   const chatBridge = mockMode ? createMockBridge() : createChatBridge({
     session: initialRoom,
     onMessage: handleIncomingPayload,
-    onReady: () => setStatus("🟢"),
+    onReady: () => setStatus("online"),
     onSession: handleBridgeSession,
     logger: portalLogger.child("bridge")
   });
@@ -123,10 +123,10 @@ function boot() {
         connect(storedChromeRoom);
         return;
       }
-      setStatus("Aguardando session ID");
+      setStatus("aguardando");
     });
   } else {
-    setStatus("Aguardando session ID");
+    setStatus("aguardando");
   }
 
   elements.connectButton.addEventListener("click", () => {
@@ -158,7 +158,7 @@ function boot() {
       setOverlaySessionId(generatedOverlaySession);
       elements.sessionInput.value = generatedOverlaySession;
       void copyTextToClipboard(generatedOverlaySession);
-      setStatus("ID da API gerado.");
+      setStatus("api id gerado");
     });
   }
 
@@ -278,7 +278,7 @@ function boot() {
   function connect(roomId) {
     const nextRoom = cleanText(roomId);
     if (!nextRoom) {
-      setStatus("Digite um session ID para conectar");
+      setStatus("digite session id");
       return;
     }
 
@@ -293,7 +293,7 @@ function boot() {
     persistSharedRoom(nextRoom);
     ensureOverlaySessionIsSeparate(nextRoom);
     view.syncFilterButtons(store.state.filter);
-    setStatus("🟡");
+    setStatus("sync");
     if (!mockMode) {
       const sameRoom = nextRoom === previousRoom;
       if (sameRoom && chatBridge.ready && typeof chatBridge.refreshSession === "function") {
@@ -386,7 +386,7 @@ function boot() {
     localStorage.setItem(ROOM_KEY, session);
     persistSharedRoom(session);
     view.syncFilterButtons(store.state.filter);
-    setStatus("🟡");
+    setStatus("sync");
     scheduleRender();
   }
 
@@ -487,7 +487,7 @@ function boot() {
   async function copyOverlayLink() {
     const overlaySession = getOverlaySessionId();
     if (!overlaySession) {
-      setStatus("Gere um ID da API do overlay para copiar o link");
+      setStatus("gere overlay id");
       return;
     }
 
@@ -710,7 +710,7 @@ function boot() {
     const hasOverlay = Boolean(store.state.overlayId);
 
     if (!hasEvents && !hasOverlay) {
-      setStatus("Histórico já está vazio");
+      setStatus("histórico vazio");
       return;
     }
 
@@ -727,7 +727,7 @@ function boot() {
     detailId = "";
     view.setDetailOpen(false);
     scheduleRender();
-    setStatus("Histórico limpo");
+    setStatus("histórico limpo");
   }
 
   function persistSharedRoom(roomId) {
@@ -755,7 +755,7 @@ function boot() {
       store.connectRoom(mockRoomId);
       elements.sessionInput.value = mockRoomId;
       view.syncFilterButtons(store.state.filter);
-      setStatus("🧪 Mock");
+      setStatus("mock");
 
       portalLogger.debug("mock-seed", {
         roomId: mockRoomId,
@@ -778,7 +778,7 @@ function boot() {
       scheduleRender();
     } catch (error) {
       portalLogger.warn("Failed to load mock deck", error);
-      setStatus("Mock indisponível");
+      setStatus("mock indisponível");
     }
   }
 

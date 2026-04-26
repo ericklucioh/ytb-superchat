@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Painel do Streamer</title>
+  <title>Painel técnico | Erick Lucio</title>
   <base href="/portal/">
   <link rel="stylesheet" href="streamer.css">
+  <link rel="stylesheet" href="site/streamer-brand.css">
   <link rel="icon" type="image/svg+xml" href="logoWhite.svg">
   <script src="runtime-env.js"></script>
 </head>
@@ -14,13 +15,18 @@
   <main class="shell">
     <section class="stats-board stats-board--compact" aria-label="Controle">
       <div class="stats-board-head">
+        <div class="site-brand">
+          <p class="panel-kicker">Erick Lucio</p>
+          <h1>Painel técnico</h1>
+          <p class="site-brand-copy">Triagem ao vivo com leitura objetiva e superfície controlada.</p>
+        </div>
         <div class="filter-group filter-group--inline" id="filter-group" aria-label="Filtros de visualização">
           <button type="button" class="filter-button is-active" data-filter="active">Ativos</button>
           <button type="button" class="filter-button" data-filter="read">Lidos</button>
           <button type="button" class="filter-button" data-filter="favorite">Favoritos</button>
           <button type="button" class="filter-button" data-filter="all">Tudo</button>
         </div>
-        <span id="mock-badge" class="mock-badge" hidden>Mock de layout</span>
+        <span id="mock-badge" class="mock-badge" hidden>Simulação de layout</span>
         <button id="summary-button" type="button" class="summary-button" aria-expanded="false" aria-controls="summary-popup">Resumo</button>
       </div>
     </section>
@@ -63,8 +69,8 @@
     <section class="summary-panel" role="dialog" aria-modal="true" aria-labelledby="summary-title">
       <div class="summary-panel-head">
         <div>
-          <p class="panel-kicker">Resumo rápido</p>
-          <h2 id="summary-title">Painel</h2>
+          <p class="panel-kicker">Resumo técnico</p>
+          <h2 id="summary-title">Resumo operacional</h2>
         </div>
         <div class="summary-panel-actions">
           <button type="button" class="summary-action" id="summary-copy-overlay" data-summary-copy-overlay>Copiar overlay</button>
@@ -74,8 +80,8 @@
         </div>
       </div>
       <div class="session-row session-row--inline summary-session-row">
-        <div id="connection-status" class="connection-status">🔴</div>
-        <input id="session-input" type="text" spellcheck="false" autocomplete="off" readonly placeholder="Overlay API Session ID">
+        <div id="connection-status" class="connection-status">offline</div>
+        <input id="session-input" type="text" spellcheck="false" autocomplete="off" readonly placeholder="Overlay API session ID">
         <button id="generate-overlay-button" type="button" title="Gera um novo ID só para a API do overlay">Gerar ID</button>
         <button id="connect-button" type="button" title="Gera um novo ID da extensão e conecta de zero">Conectar</button>
       </div>

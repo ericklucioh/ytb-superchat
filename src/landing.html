@@ -4,7 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Portal do Streamer - Eloh</title>
-  <link rel="icon" type="image/svg+xml" href="icons/logoWhite.png">
+  <link rel="icon" type="image/svg+xml" href="logoWhite.svg">
+  <link rel="alternate icon" type="image/png" href="icons/logoWhite.png">
   <meta
     name="description"
     content="Centralize chats ao vivo de YouTube, Twitch e Kick em uma única interface com suporte a overlays para OBS."
@@ -12,18 +13,18 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #07111f;
-      --bg-2: #0d1b31;
-      --panel: rgba(10, 18, 31, 0.82);
-      --panel-2: rgba(255, 255, 255, 0.04);
-      --border: rgba(146, 184, 232, 0.18);
-      --text: #eff6ff;
-      --muted: #a9bfdc;
-      --accent: #7fd1ff;
-      --accent-2: #dff5ff;
-      --success: #7fffd4;
-      --shadow: 0 30px 80px rgba(0, 0, 0, 0.36);
-      --radius: 28px;
+      --bg: #020a16;
+      --bg-2: #071326;
+      --panel: rgba(7, 16, 31, 0.84);
+      --panel-2: rgba(255, 255, 255, 0.03);
+      --border: rgba(117, 164, 196, 0.18);
+      --text: #f3f8ff;
+      --muted: #92a8c2;
+      --accent: #4fc3ff;
+      --accent-2: #b7e6ff;
+      --success: #0091c3;
+      --shadow: 0 26px 90px rgba(0, 0, 0, 0.42);
+      --radius: 0;
       --max: 1180px;
     }
 
@@ -38,13 +39,27 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font: 400 16px/1.6 Inter, Segoe UI, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font: 400 16px/1.6 "Fira Code", "SFMono-Regular", "Cascadia Mono", "Consolas", monospace;
       color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(127, 209, 255, 0.18), transparent 28%),
-        radial-gradient(circle at 85% 15%, rgba(70, 105, 173, 0.24), transparent 24%),
-        radial-gradient(circle at bottom right, rgba(43, 79, 140, 0.24), transparent 28%),
+        radial-gradient(circle at top left, rgba(79, 195, 255, 0.18), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(0, 145, 195, 0.18), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(14, 68, 97, 0.24), transparent 28%),
         linear-gradient(160deg, var(--bg), var(--bg-2));
+      letter-spacing: -0.01em;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: radial-gradient(circle at center, black 36%, transparent 100%);
+      opacity: 0.28;
     }
 
     a {
@@ -60,9 +75,9 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      backdrop-filter: blur(16px);
-      background: rgba(7, 17, 31, 0.55);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      backdrop-filter: blur(18px);
+      background: rgba(7, 16, 31, 0.72);
+      border-bottom: 1px solid rgba(117, 164, 196, 0.12);
     }
 
     .nav-inner {
@@ -87,11 +102,11 @@
       height: 40px;
       display: grid;
       place-items: center;
-      border-radius: 14px;
+      border-radius: 0;
       background: linear-gradient(135deg, var(--accent-2), var(--accent));
       color: #07111f;
       font-weight: 900;
-      box-shadow: 0 12px 30px rgba(127, 209, 255, 0.25);
+      box-shadow: 0 12px 30px rgba(79, 195, 255, 0.22);
     }
 
     .nav-links {
@@ -113,7 +128,7 @@
       justify-content: center;
       min-height: 50px;
       padding: 0 20px;
-      border-radius: 999px;
+      border-radius: 0;
       text-decoration: none;
       font-weight: 800;
       transition: transform 140ms ease, opacity 140ms ease, border-color 140ms ease, background 140ms ease;
@@ -127,11 +142,11 @@
     .cta {
       color: #07111f;
       background: linear-gradient(135deg, var(--accent-2), var(--accent));
-      box-shadow: 0 16px 34px rgba(127, 209, 255, 0.22);
+      box-shadow: 0 16px 34px rgba(79, 195, 255, 0.2);
     }
 
     .ghost {
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(117, 164, 196, 0.18);
       background: rgba(255, 255, 255, 0.04);
       color: var(--text);
     }
@@ -153,9 +168,9 @@
       gap: 10px;
       margin: 0 0 18px;
       padding: 8px 14px;
-      border-radius: 999px;
-      background: rgba(127, 209, 255, 0.08);
-      border: 1px solid rgba(127, 209, 255, 0.16);
+      border-radius: 0;
+      background: rgba(79, 195, 255, 0.08);
+      border: 1px solid rgba(79, 195, 255, 0.16);
       color: var(--accent);
       text-transform: uppercase;
       letter-spacing: 0.18em;
@@ -187,7 +202,7 @@
 
     .hero-note {
       margin-top: 16px;
-      color: rgba(239, 246, 255, 0.7);
+      color: rgba(243, 248, 255, 0.72);
       font-size: 0.95rem;
     }
 
@@ -196,8 +211,8 @@
       border: 1px solid var(--border);
       background: var(--panel);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
-      border-radius: var(--radius);
+      backdrop-filter: blur(18px);
+      border-radius: 0;
     }
 
     .hero-card {
@@ -210,15 +225,15 @@
       inset: auto -20% -25% auto;
       width: 240px;
       height: 240px;
-      border-radius: 999px;
-      background: radial-gradient(circle, rgba(127, 209, 255, 0.22), transparent 62%);
+      border-radius: 0;
+      background: radial-gradient(circle, rgba(79, 195, 255, 0.22), transparent 62%);
       pointer-events: none;
     }
 
     .screen {
-      border-radius: 22px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: linear-gradient(180deg, rgba(18, 31, 52, 0.95), rgba(7, 15, 27, 0.98));
+      border-radius: 0;
+      border: 1px solid rgba(117, 164, 196, 0.12);
+      background: linear-gradient(180deg, rgba(13, 24, 44, 0.95), rgba(7, 16, 31, 0.98));
       overflow: hidden;
     }
 
@@ -228,7 +243,7 @@
       justify-content: space-between;
       gap: 12px;
       padding: 14px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid rgba(117, 164, 196, 0.12);
       color: var(--muted);
       font-size: 0.9rem;
     }
@@ -261,10 +276,10 @@
     .chat-bubble,
     .overlay-box,
     .mini-card {
-      border-radius: 18px;
+      border-radius: 0;
       padding: 14px 14px;
       background: var(--panel-2);
-      border: 1px solid rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(117, 164, 196, 0.12);
     }
 
     .chat-bubble strong,
@@ -284,9 +299,9 @@
 
     .tag {
       padding: 10px 12px;
-      border-radius: 999px;
+      border-radius: 0;
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(117, 164, 196, 0.14);
       color: var(--muted);
       font-size: 0.92rem;
     }
@@ -335,7 +350,7 @@
 
     .card {
       padding: 22px;
-      border-radius: 24px;
+      border-radius: 0;
       border: 1px solid var(--border);
       background: var(--panel);
       box-shadow: var(--shadow);
@@ -358,9 +373,9 @@
       display: grid;
       place-items: center;
       margin-bottom: 14px;
-      border-radius: 16px;
+      border-radius: 0;
       font-size: 1.1rem;
-      background: linear-gradient(135deg, rgba(223, 245, 255, 0.95), rgba(127, 209, 255, 0.78));
+      background: linear-gradient(135deg, rgba(223, 245, 255, 0.95), rgba(79, 195, 255, 0.78));
       color: #07111f;
       font-weight: 800;
     }
@@ -376,8 +391,8 @@
       width: 34px;
       height: 34px;
       margin-bottom: 12px;
-      border-radius: 999px;
-      background: rgba(127, 209, 255, 0.12);
+      border-radius: 0;
+      background: rgba(79, 195, 255, 0.12);
       color: var(--accent);
       font-weight: 800;
     }
@@ -391,11 +406,11 @@
 
     .callout {
       padding: 28px;
-      border-radius: 28px;
+      border-radius: 0;
       border: 1px solid var(--border);
       background:
-        radial-gradient(circle at top right, rgba(127, 209, 255, 0.18), transparent 26%),
-        rgba(10, 18, 31, 0.88);
+        radial-gradient(circle at top right, rgba(79, 195, 255, 0.18), transparent 26%),
+        rgba(7, 16, 31, 0.88);
       box-shadow: var(--shadow);
     }
 
@@ -411,7 +426,7 @@
 
     .footer {
       padding: 34px 0 54px;
-      color: rgba(239, 246, 255, 0.72);
+      color: rgba(243, 248, 255, 0.72);
     }
 
     .footer-grid {
@@ -423,14 +438,20 @@
     .footer small {
       display: block;
       margin-top: 14px;
-      color: rgba(239, 246, 255, 0.52);
+      color: rgba(243, 248, 255, 0.52);
     }
 
     code {
       padding: 2px 7px;
-      border-radius: 8px;
+      border-radius: 0;
       background: rgba(255, 255, 255, 0.06);
       font-size: 0.92em;
+    }
+
+    .hero-card,
+    .card,
+    .callout {
+      overflow: hidden;
     }
 
     @media (max-width: 1080px) {
