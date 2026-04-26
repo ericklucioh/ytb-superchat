@@ -137,12 +137,12 @@ function boot() {
   elements.generateButton.addEventListener("click", () => {
     const generatedSession = buildSessionId();
     elements.sessionInput.value = generatedSession;
-    connect(generatedSession);
     try {
       navigator.clipboard?.writeText?.(generatedSession);
     } catch {
       //
     }
+    setStatus("ID gerado. Clique Conectar para usar este ID.");
   });
 
   elements.sessionInput.addEventListener("keydown", (event) => {
@@ -289,6 +289,8 @@ function boot() {
       return;
     }
 
+    const previousRoom = store.state.roomId;
+
     console.log(PORTAL_LOG_PREFIX, "connect", {
       roomId: nextRoom
     });
@@ -300,7 +302,12 @@ function boot() {
     view.syncFilterButtons(store.state.filter);
     setStatus("🟡");
     if (!mockMode) {
-      chatBridge.setSession(nextRoom);
+      const sameRoom = nextRoom === previousRoom;
+      if (sameRoom && chatBridge.ready && typeof chatBridge.refreshSession === "function") {
+        chatBridge.refreshSession(nextRoom);
+      } else {
+        chatBridge.setSession(nextRoom);
+      }
     }
     scheduleRender();
   }

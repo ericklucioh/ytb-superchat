@@ -1,6 +1,7 @@
 const PAGE_EVENT = "overlay-local-chat:event";
 const PAGE_SESSION_EVENT = "overlay-local-chat:set-session";
 const PAGE_READY_EVENT = "overlay-local-chat:page-ready";
+const PAGE_REFRESH_SESSION_EVENT = "overlay-local-chat:refresh-session";
 const RELAY_READY_EVENT = "overlay-local-chat:relay-ready";
 const READY_KEY = "overlay_local_chat_ready";
 
@@ -107,6 +108,23 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
     return currentSession;
   }
 
+  function refreshSession(nextSession = currentSession) {
+    const normalized = cleanSession(nextSession);
+    if (!normalized) {
+      return currentSession;
+    }
+
+    currentSession = normalized;
+    window.postMessage(
+      {
+        type: PAGE_REFRESH_SESSION_EVENT,
+        session: normalized
+      },
+      window.location.origin
+    );
+    return currentSession;
+  }
+
   function publish() {
     return false;
   }
@@ -133,6 +151,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
     publish,
     subscribe,
     setSession,
+    refreshSession,
     get ready() {
       return readyNotified;
     },

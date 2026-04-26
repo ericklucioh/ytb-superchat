@@ -11,6 +11,7 @@
   const PAGE_EVENT = "overlay-local-chat:event";
   const PAGE_SESSION_EVENT = "overlay-local-chat:set-session";
   const PAGE_READY_EVENT = "overlay-local-chat:page-ready";
+  const PAGE_REFRESH_SESSION_EVENT = "overlay-local-chat:refresh-session";
   const PAGE_DIAGNOSTIC_EVENT = "overlay-local-chat:diagnostic";
   const RELAY_READY_EVENT = "overlay-local-chat:relay-ready";
   const SYNC_SESSION_KEY = "streamID";
@@ -190,6 +191,30 @@
         return;
       }
 
+      if (event.data.type === PAGE_REFRESH_SESSION_EVENT) {
+        const nextSession = cleanSession(event.data.session || currentSession);
+        if (!nextSession) {
+          return;
+        }
+
+        ensureChannel(nextSession);
+        persistSyncedSession(currentSession);
+        try {
+          localStorage.setItem(SESSION_KEY, currentSession);
+        } catch {
+          //
+        }
+        postToPage({
+          type: PAGE_SESSION_EVENT,
+          session: currentSession
+        });
+        postToPage({
+          type: RELAY_READY_EVENT,
+          session: currentSession
+        });
+        return;
+      }
+
       if (event.data.type !== PAGE_SESSION_EVENT) {
         if (event.data.type === PAGE_READY_EVENT) {
           pageReady = true;
@@ -317,6 +342,20 @@
         postToPage({
           type: RELAY_READY_EVENT,
           session: currentSession
+        });
+      },
+      refreshSession(session = currentSession) {
+        const normalized = cleanSession(session);
+        if (!normalized) {
+          return;
+        }
+
+        handleWindowMessage({
+          source: window,
+          data: {
+            type: PAGE_REFRESH_SESSION_EVENT,
+            session: normalized
+          }
         });
       },
       close() {
