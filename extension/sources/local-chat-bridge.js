@@ -14,16 +14,48 @@
   }
 
   function createChannel({ role, session, onMessage } = {}) {
+    const MAX_PENDING_PACKETS = 250;
+    const HEARTBEAT_INTERVAL_MS = 15000;
+    const ACK_TIMEOUT_MS = 45000;
+    const PENDING_STORAGE_PREFIX = "chatbridge:pending:";
+
     let currentSession = cleanSession(session);
     let port = null;
     let portToken = 0;
     let closed = false;
     let suspended = false;
     let reconnectTimer = null;
+    let heartbeatTimer = null;
+    let persistTimer = null;
     let reconnectDelay = 150;
     let pendingPackets = [];
+    let pendingIndex = new Map();
     let portListeners = null;
-    const MAX_PENDING_PACKETS = 250;
+    let pendingHydrated = false;
+    let pendingHydrating = null;
+    let lastAckAt = Date.now();
+
+    function pendingStorageKey(nextSession = currentSession) {
+      return `${PENDING_STORAGE_PREFIX}${role}:${cleanSession(nextSession) || "pending"}`;
+    }
+
+    function packetKey(packet) {
+      const payload = packet?.payload || {};
+      const id = payload.id != null ? String(payload.id) : "";
+      if (id) {
+        return id;
+      }
+
+      return [
+        packet?.session || "",
+        packet?.type || "",
+        payload.type || "",
+        payload.platform || "",
+        payload.chatname || payload.user || "",
+        payload.chatmessage || payload.message || "",
+        payload.timestamp || ""
+      ].join("|");
+    }
 
     function clearReconnectTimer() {
       if (!reconnectTimer) {
@@ -34,19 +66,26 @@
       reconnectTimer = null;
     }
 
-    function resetReconnectDelay() {
-      reconnectDelay = 150;
-    }
-
-    function enqueuePending(packet) {
-      if (!packet) {
+    function clearHeartbeatTimer() {
+      if (!heartbeatTimer) {
         return;
       }
 
-      pendingPackets.push(packet);
-      if (pendingPackets.length > MAX_PENDING_PACKETS) {
-        pendingPackets.splice(0, pendingPackets.length - MAX_PENDING_PACKETS);
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+
+    function clearPersistTimer() {
+      if (!persistTimer) {
+        return;
       }
+
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
+
+    function resetReconnectDelay() {
+      reconnectDelay = 150;
     }
 
     function detachPortListeners(nextPort, listeners) {
@@ -83,21 +122,142 @@
       reconnectDelay = Math.min(reconnectDelay * 2, 2000);
     }
 
-    function sendPacket(payload) {
+    function sendRawPacket(packet) {
       if (!port) {
         return false;
       }
 
       try {
-        port.postMessage({
-          type: "publish",
-          session: currentSession,
-          payload
-        });
+        port.postMessage(packet);
         return true;
       } catch {
         return false;
       }
+    }
+
+    function normalizePendingPackets(items) {
+      if (!Array.isArray(items)) {
+        return [];
+      }
+
+      return items
+        .filter((packet) => packet && typeof packet === "object" && packet.type === "publish")
+        .slice(-MAX_PENDING_PACKETS);
+    }
+
+    function queuePersistPending() {
+      if (role !== "source") {
+        return;
+      }
+
+      if (persistTimer) {
+        return;
+      }
+
+      persistTimer = setTimeout(() => {
+        persistTimer = null;
+        void persistPending().catch(() => {});
+      }, 0);
+    }
+
+    async function persistPending() {
+      if (role !== "source" || !chrome?.storage?.local || !currentSession) {
+        return;
+      }
+
+      const key = pendingStorageKey();
+      const snapshot = pendingPackets.slice(-MAX_PENDING_PACKETS);
+      try {
+        if (!snapshot.length) {
+          await chrome.storage.local.remove(key);
+          return;
+        }
+
+        await chrome.storage.local.set({ [key]: snapshot });
+      } catch {
+        //
+      }
+    }
+
+    async function hydratePendingPackets() {
+      if (role !== "source" || pendingHydrated) {
+        return pendingHydrating || Promise.resolve(pendingPackets);
+      }
+
+      if (pendingHydrating) {
+        return pendingHydrating;
+      }
+
+      pendingHydrating = (async () => {
+        const sessionKey = currentSession;
+        try {
+          if (chrome?.storage?.local && sessionKey) {
+            const result = await chrome.storage.local.get(pendingStorageKey(sessionKey));
+            const loadedPackets = normalizePendingPackets(result?.[pendingStorageKey(sessionKey)]);
+            if (sessionKey === currentSession && loadedPackets.length) {
+              for (const packet of loadedPackets) {
+                const key = packetKey(packet);
+                if (key && pendingIndex.has(key)) {
+                  continue;
+                }
+
+                pendingPackets.push(packet);
+                if (key) {
+                  pendingIndex.set(key, packet);
+                }
+              }
+            }
+          }
+        } catch {
+          //
+        }
+
+        pendingHydrated = true;
+        pendingHydrating = null;
+        return pendingPackets;
+      })();
+
+      return pendingHydrating;
+    }
+
+    function dropPendingByKey(key) {
+      if (!key || !pendingIndex.has(key)) {
+        return false;
+      }
+
+      pendingIndex.delete(key);
+      pendingPackets = pendingPackets.filter((packet) => packetKey(packet) !== key);
+      queuePersistPending();
+      return true;
+    }
+
+    function registerPendingPacket(packet) {
+      if (role !== "source" || !packet || typeof packet !== "object") {
+        return packet;
+      }
+
+      const key = packetKey(packet);
+      if (key && pendingIndex.has(key)) {
+        return pendingIndex.get(key);
+      }
+
+      pendingPackets.push(packet);
+      if (key) {
+        pendingIndex.set(key, packet);
+      }
+
+      if (pendingPackets.length > MAX_PENDING_PACKETS) {
+        const trimmed = pendingPackets.splice(0, pendingPackets.length - MAX_PENDING_PACKETS);
+        for (const item of trimmed) {
+          const itemKey = packetKey(item);
+          if (itemKey) {
+            pendingIndex.delete(itemKey);
+          }
+        }
+      }
+
+      queuePersistPending();
+      return packet;
     }
 
     function flushPending() {
@@ -105,11 +265,9 @@
         return;
       }
 
-      const queue = pendingPackets.splice(0);
+      const queue = pendingPackets.slice();
       for (let index = 0; index < queue.length; index += 1) {
-        const payload = queue[index];
-        if (!sendPacket(payload)) {
-          pendingPackets = queue.slice(index);
+        if (!sendRawPacket(queue[index])) {
           disconnectPort();
           scheduleReconnect();
           break;
@@ -138,14 +296,85 @@
       }
     }
 
+    function handleAck(message) {
+      if (!message || typeof message !== "object") {
+        return false;
+      }
+
+      if (cleanSession(message.session || "") && cleanSession(message.session || "") !== currentSession) {
+        return false;
+      }
+
+      lastAckAt = Date.now();
+
+      if (message.packetType === "heartbeat") {
+        return true;
+      }
+
+      const key = String(message.key || message.id || "");
+      if (!key) {
+        return true;
+      }
+
+      return dropPendingByKey(key);
+    }
+
+    function sendHeartbeat() {
+      if (closed || suspended || role !== "source" || !port) {
+        return false;
+      }
+
+      return sendRawPacket({
+        type: "heartbeat",
+        session: currentSession,
+        timestamp: Date.now()
+      });
+    }
+
+    function startHeartbeatTimer() {
+      if (role !== "source" || heartbeatTimer || closed) {
+        return;
+      }
+
+      heartbeatTimer = setInterval(() => {
+        if (closed || suspended) {
+          return;
+        }
+
+        if (!port) {
+          if (pendingPackets.length) {
+            scheduleReconnect();
+          }
+          return;
+        }
+
+        if (Date.now() - lastAckAt > ACK_TIMEOUT_MS) {
+          disconnectPort();
+          scheduleReconnect();
+          return;
+        }
+
+        if (!sendHeartbeat()) {
+          disconnectPort();
+          scheduleReconnect();
+        }
+      }, HEARTBEAT_INTERVAL_MS);
+    }
+
     function connect() {
       if (closed || typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.connect) {
         return null;
       }
 
       if (port) {
-        flushPending();
+        if (role !== "source" || pendingHydrated) {
+          flushPending();
+        }
         return port;
+      }
+
+      if (!currentSession) {
+        return null;
       }
 
       try {
@@ -157,6 +386,11 @@
         const listeners = {
           onMessage(message) {
             if (closed || token !== portToken || port !== nextPort) {
+              return;
+            }
+
+            if (message && typeof message === "object" && message.type === "ack") {
+              handleAck(message);
               return;
             }
 
@@ -183,7 +417,16 @@
         nextPort.onDisconnect.addListener(listeners.onDisconnect);
         resetReconnectDelay();
         clearReconnectTimer();
-        flushPending();
+        lastAckAt = Date.now();
+        void hydratePendingPackets().then(() => {
+          if (!closed && port === nextPort) {
+            flushPending();
+          }
+        });
+        if (role !== "source" || pendingHydrated) {
+          flushPending();
+        }
+        startHeartbeatTimer();
         return nextPort;
       } catch {
         port = null;
@@ -198,13 +441,21 @@
         return false;
       }
 
-      if (!port && !connect()) {
-        enqueuePending(payload);
+      const packet = {
+        type: "publish",
+        session: currentSession,
+        payload
+      };
+
+      registerPendingPacket(packet);
+
+      const hadPort = !!port;
+      const shouldSendImmediately = role !== "source" || pendingHydrated;
+      if (!hadPort && !connect()) {
         return false;
       }
 
-      if (!sendPacket(payload)) {
-        enqueuePending(payload);
+      if (shouldSendImmediately && hadPort && !sendRawPacket(packet)) {
         disconnectPort();
         scheduleReconnect();
         return false;
@@ -220,6 +471,14 @@
     function subscribe(handler) {
       onMessage = handler;
       return channel;
+    }
+
+    function resetPendingState() {
+      pendingPackets = [];
+      pendingIndex.clear();
+      pendingHydrated = false;
+      pendingHydrating = null;
+      clearPersistTimer();
     }
 
     function setSession(nextSession) {
@@ -238,7 +497,7 @@
         return currentSession;
       }
 
-      pendingPackets = [];
+      resetPendingState();
       if (port) {
         disconnectPort();
       }
@@ -266,7 +525,8 @@
 
     function close() {
       closed = true;
-      pendingPackets = [];
+      clearHeartbeatTimer();
+      clearPersistTimer();
       clearReconnectTimer();
       disconnectPort();
       window.removeEventListener("pagehide", handlePageHide);
@@ -300,6 +560,7 @@
       }
     };
 
+    void hydratePendingPackets();
     return channel;
   }
 

@@ -7,6 +7,8 @@ var localBridge = null;
 function twitchLog() {}
 var unwatchStreamId = null;
 var twitchSweepTimer = null;
+var twitchSweepInterval = 0;
+var twitchVisibilityListenerBound = false;
 
 function syncSession(nextSession) {
 	var session = String(nextSession || "").replace(/\s+/g, "").trim();
@@ -464,8 +466,8 @@ runtime.loadSettings(properties, function(item){
   runtime.applyOverlaySettings(item, document.documentElement, { color: "#000" });
   showOnlyFirstName = !!item.showOnlyFirstName;
   highlightWords = runtime.normalizeHighlightWords(item.highlightWords);
-  startTwitchSweep();
   startTwitchConnections();
+  startTwitchSweep();
 });
 
 
@@ -600,13 +602,44 @@ function sweepTwitchMessages() {
 }
 
 function startTwitchSweep() {
-	if (twitchSweepTimer) {
+	if (!twitchVisibilityListenerBound) {
+		twitchVisibilityListenerBound = true;
+		document.addEventListener("visibilitychange", updateTwitchSweepPolicy);
+	}
+
+	updateTwitchSweepPolicy();
+	if (!document.hidden) {
+		sweepTwitchMessages();
+	}
+}
+
+function stopTwitchSweep() {
+	if (!twitchSweepTimer) {
 		return;
 	}
 
+	clearInterval(twitchSweepTimer);
+	twitchSweepTimer = null;
+	twitchSweepInterval = 0;
+}
+
+function updateTwitchSweepPolicy() {
+	var nextInterval = document.hidden ? 15000 : 0;
+	if (twitchSweepInterval === nextInterval && !nextInterval) {
+		return;
+	}
+
+	stopTwitchSweep();
+
+	if (!nextInterval) {
+		sweepTwitchMessages();
+		return;
+	}
+
+	twitchSweepInterval = nextInterval;
 	twitchSweepTimer = setInterval(function () {
 		sweepTwitchMessages();
-	}, 2500);
+	}, nextInterval);
 }
 
 function scanTwitchNode(node, reason) {

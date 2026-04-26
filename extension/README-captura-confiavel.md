@@ -36,6 +36,15 @@ O ponto fraco é que o conteúdo pode ser marcado como enviado antes da confirma
 
 Garantir que `superchat` e `assinaturas` não sejam perdidos quando houver falha temporária no bridge, no service worker ou na página.
 
+## Status
+
+A solução principal foi implementada no fluxo da extensão:
+
+- fila persistente para eventos pendentes
+- `ack` explícito do `service_worker`
+- heartbeat leve para detectar sessão travada
+- watchdog de reconexão no bridge da fonte
+
 ## Opções
 
 ### 1. Fila persistente com `chrome.storage.local` + `ack` de confirmação
@@ -143,4 +152,3 @@ A solução só deve ser considerada pronta quando:
 - uma assinatura continuar pendente se a bridge cair antes do `ack`
 - o portal não duplicar eventos já confirmados
 - a fila pendente poder ser limpa ou inspecionada com segurança
-

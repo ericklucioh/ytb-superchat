@@ -95,6 +95,31 @@ function packetKey(packet) {
   ].join("|");
 }
 
+function sendPortMessage(port, message) {
+  if (!port || !message) {
+    return false;
+  }
+
+  try {
+    port.postMessage(message);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function sendAck(port, packet, status) {
+  const payload = packet?.payload || {};
+  return sendPortMessage(port, {
+    type: "ack",
+    session: packet?.session || "",
+    key: packetKey(packet),
+    id: payload.id != null ? payload.id : null,
+    packetType: packet?.type || "",
+    status: status || "ok"
+  });
+}
+
 async function readBacklog(session) {
   const key = backlogKey(session);
   if (!chrome?.storage?.session) {
@@ -140,20 +165,20 @@ function flushPending(state) {
   }
 
   const pending = state.pending.splice(0);
-  for (const packet of pending) {
-    handlePacket(state, packet);
+  for (const entry of pending) {
+    processSourcePacket(state, entry.port, entry.message);
   }
 }
 
 function handlePacket(state, packet) {
   const normalized = normalizePacket(packet, state?.session);
   if (!state || !normalized || normalized.type !== "publish") {
-    return;
+    return { status: "ignored" };
   }
 
   const key = packetKey(normalized);
   if (key && state.seen.has(key)) {
-    return;
+    return { status: "duplicate", key };
   }
 
   if (key) {
@@ -177,6 +202,36 @@ function handlePacket(state, packet) {
     } catch {
       //
     }
+  }
+
+  return { status: "stored", key };
+}
+
+function processSourcePacket(state, port, message) {
+  if (!state || !message || typeof message !== "object") {
+    return;
+  }
+
+  if (message.type === "heartbeat") {
+    state.lastHeartbeatAt = Date.now();
+    sendAck(port, {
+      type: "heartbeat",
+      session: state.session,
+      payload: {
+        timestamp: message.timestamp || Date.now()
+      }
+    }, "heartbeat");
+    return;
+  }
+
+  const result = handlePacket(state, message);
+  if (result.status === "ignored") {
+    return;
+  }
+
+  const normalized = normalizePacket(message, state.session);
+  if (normalized) {
+    sendAck(port, normalized, result.status);
   }
 }
 
@@ -271,13 +326,18 @@ function registerPort(port) {
     }
 
     if (info.role === "source") {
+      if (message.type === "heartbeat") {
+        processSourcePacket(state, port, message);
+        return;
+      }
+
       if (!state.hydrated) {
-        state.pending.push(message);
+        state.pending.push({ port, message });
         void hydrateSession(state);
         return;
       }
 
-      handlePacket(state, message);
+      processSourcePacket(state, port, message);
       return;
     }
 
