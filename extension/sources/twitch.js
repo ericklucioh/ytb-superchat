@@ -11,9 +11,41 @@ function twitchLog(message, extra) {
 	}
 }
 var unwatchStreamId = null;
+var twitchObserverRetryTimer = null;
+var twitchObserverStarted = false;
 var twitchSweepTimer = null;
 var twitchSweepInterval = 0;
 var twitchVisibilityListenerBound = false;
+
+function getTwitchContainerSelectors() {
+	return [
+		".chat-scrollable-area__message-container",
+		"[data-test-selector='chat-scrollable-area__message-container']",
+		"[data-a-target='chat-scroller']",
+		"[data-a-target='chat-list']",
+		".chat-scrollable-area"
+	];
+}
+
+function scheduleTwitchObserverRetry() {
+	if (twitchObserverRetryTimer || twitchObserverStarted) {
+		return;
+	}
+
+	twitchObserverRetryTimer = setTimeout(function () {
+		twitchObserverRetryTimer = null;
+		startTwitchObserver();
+	}, 500);
+}
+
+function clearTwitchObserverRetry() {
+	if (!twitchObserverRetryTimer) {
+		return;
+	}
+
+	clearTimeout(twitchObserverRetryTimer);
+	twitchObserverRetryTimer = null;
+}
 
 function syncSession(nextSession) {
 	var session = String(nextSession || "").replace(/\s+/g, "").trim();
@@ -487,12 +519,18 @@ function onElementInsertedTwitch(containerSelector, className, callback) {
 	};
 	var target = document.querySelectorAll(containerSelector)[0];
 	if (!target) {
-		return;
+		scheduleTwitchObserverRetry();
+		return false;
 	}
 	var config = { childList: true, subtree: true };
 	var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+	if (!MutationObserver) {
+		scheduleTwitchObserverRetry();
+		return false;
+	}
 	var observer = new MutationObserver(onMutationsObserved);
 	observer.observe(target, config);
+	return true;
 
 }
 
@@ -611,6 +649,7 @@ function updateTwitchSweepPolicy() {
 	stopTwitchSweep();
 
 	if (!nextInterval) {
+		startTwitchObserver();
 		sweepTwitchMessages();
 		return;
 	}
@@ -660,44 +699,41 @@ function queueTwitchRescan(node) {
 }
 
 function startTwitchObserver() {
-	var containerSelectors = [
-		".chat-scrollable-area__message-container",
-		"[data-test-selector='chat-scrollable-area__message-container']",
-		"[data-a-target='chat-scroller']",
-		"[data-a-target='chat-list']",
-		".chat-scrollable-area"
-	];
+	if (twitchObserverStarted) {
+		return;
+	}
 
-	var started = false;
-	for (var i = 0; i < containerSelectors.length; i += 1) {
-		var selector = containerSelectors[i];
-		var target = document.querySelector(selector);
-		if (target) {
-			onElementInsertedTwitch(selector, "chat-line__message", function(element){
-				var processed = scanTwitchNode(element, "mutation");
-				if (!processed) {
-					var hasContent = String(element.textContent || "").trim().length > 0;
-					if (String(element.className || "").indexOf("Layout-sc-") === 0 && hasContent) {
-						twitchLog("wrapper without message nodes", {
-							className: element.className,
-							preview: String(element.innerText || "").slice(0, 80)
-						});
-					}
-					if (hasContent) {
-						queueTwitchRescan(element);
-					}
-					return;
+	var selectors = getTwitchContainerSelectors();
+	for (var i = 0; i < selectors.length; i += 1) {
+		var selector = selectors[i];
+		if (onElementInsertedTwitch(selector, "chat-line__message", function(element){
+			var processed = scanTwitchNode(element, "mutation");
+			if (!processed) {
+				var hasContent = String(element.textContent || "").trim().length > 0;
+				if (String(element.className || "").indexOf("Layout-sc-") === 0 && hasContent) {
+					twitchLog("wrapper without message nodes", {
+						className: element.className,
+						preview: String(element.innerText || "").slice(0, 80)
+					});
 				}
+				if (hasContent) {
+					queueTwitchRescan(element);
+				}
+			}
+		})) {
+			twitchObserverStarted = true;
+			clearTwitchObserverRetry();
+			twitchLog("observer started", {
+				selector: selector
 			});
-			started = true;
-			break;
+			return;
 		}
 	}
 
-	if (started) {
-		return;
-	}
-	setTimeout(startTwitchObserver, 500);
+	twitchLog("observer retry scheduled", {
+		reason: "missing_target_or_observer"
+	});
+	scheduleTwitchObserverRetry();
 }
 
 startTwitchObserver();
