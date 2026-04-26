@@ -48,5 +48,8 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 - `YTB_APP_ENV` distingue desenvolvimento e produção nos scripts do portal
 - `YTB_GO_PORT` controla a porta do backend Go
 - `YTB_OVERLAY_DIR` aponta para os assets do overlay
+- `YTB_API_TOKEN` habilita o gate de autenticação para API e WebSocket
+- `YTB_SHARED_SECRET` é um alias compatível para o mesmo token
+- `YTB_ALLOWED_ORIGINS` define a allowlist de origens CORS confiáveis
 - `GO_PORT` continua aceito como fallback por compatibilidade
 - `OVERLAY_DIR` continua aceito como fallback por compatibilidade

@@ -29,6 +29,7 @@ type eventRequest struct {
 
 func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeMux {
 	mux := http.NewServeMux()
+	policy := newSecurityPolicy()
 
 	if sm == nil {
 		sm = session.NewManager()
@@ -39,27 +40,44 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 
 	mux.HandleFunc("GET /health", HealthHandler)
 	mux.HandleFunc("GET /api/session", func(w http.ResponseWriter, r *http.Request) {
-		handleSessionGet(sm, w, r)
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		handleSessionGet(policy, sm, w, r)
 	})
 	mux.HandleFunc("POST /api/session", func(w http.ResponseWriter, r *http.Request) {
-		handleSessionPost(sm, w, r)
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		handleSessionPost(policy, sm, w, r)
 	})
 	mux.HandleFunc("OPTIONS /api/session", func(w http.ResponseWriter, r *http.Request) {
-		writeCORSOptions(w)
+		policy.authorizePreflight(w, r)
 	})
 	mux.HandleFunc("GET /api/rooms", func(w http.ResponseWriter, r *http.Request) {
-		handleRoomsGet(sm, hub, w, r)
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		handleRoomsGet(policy, sm, hub, w, r)
 	})
 	mux.HandleFunc("OPTIONS /api/rooms", func(w http.ResponseWriter, r *http.Request) {
-		writeCORSOptions(w)
+		policy.authorizePreflight(w, r)
 	})
 	mux.HandleFunc("POST /api/event", func(w http.ResponseWriter, r *http.Request) {
-		handleEventPost(sm, hub, w, r)
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		handleEventPost(policy, sm, hub, w, r)
 	})
 	mux.HandleFunc("OPTIONS /api/event", func(w http.ResponseWriter, r *http.Request) {
-		writeCORSOptions(w)
+		policy.authorizePreflight(w, r)
 	})
-	mux.HandleFunc("GET /ws", hub.HandleWebSocket)
+	mux.HandleFunc("GET /ws", func(w http.ResponseWriter, r *http.Request) {
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		hub.HandleWebSocket(w, r)
+	})
 	mux.HandleFunc("GET /overlay", func(w http.ResponseWriter, r *http.Request) {
 		serveOverlayIndex(overlayDir, w, r)
 	})
@@ -71,12 +89,12 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 	return mux
 }
 
-func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Request) {
+func handleSessionGet(policy securityPolicy, sm *session.Manager, w http.ResponseWriter, r *http.Request) {
 	sessionID := cleanSession(r.URL.Query().Get("session"))
 	log.Printf("[go:http] GET /api/session session=%q", sessionID)
 	if sessionID == "" {
 		log.Printf("[go:http] GET /api/session -> rooms=%d", len(sm.List()))
-		writeJSON(w, http.StatusOK, map[string]any{
+		policy.writeJSON(w, r, http.StatusOK, map[string]any{
 			"rooms": len(sm.List()),
 		})
 		return
@@ -85,7 +103,7 @@ func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Reques
 	s, ok := sm.Get(sessionID)
 	if !ok {
 		log.Printf("[go:http] GET /api/session session=%q -> not found", sessionID)
-		writeJSON(w, http.StatusNotFound, map[string]any{
+		policy.writeJSON(w, r, http.StatusNotFound, map[string]any{
 			"error": "session not found",
 		})
 		return
@@ -93,7 +111,7 @@ func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Reques
 
 	hasOverlay, updatedAt := s.OverlayInfo()
 	log.Printf("[go:http] GET /api/session session=%q events=%d overlay=%t", s.ID, len(s.GetEvents()), hasOverlay)
-	writeJSON(w, http.StatusOK, map[string]any{
+	policy.writeJSON(w, r, http.StatusOK, map[string]any{
 		"session":       s.ID,
 		"events":        s.GetEvents(),
 		"hasOverlay":    hasOverlay,
@@ -102,12 +120,12 @@ func handleSessionGet(sm *session.Manager, w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func handleSessionPost(sm *session.Manager, w http.ResponseWriter, r *http.Request) {
+func handleSessionPost(policy securityPolicy, sm *session.Manager, w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var req sessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil && err != io.EOF {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
+		policy.writeJSON(w, r, http.StatusBadRequest, map[string]any{
 			"error": "invalid json",
 		})
 		return
@@ -119,7 +137,7 @@ func handleSessionPost(sm *session.Manager, w http.ResponseWriter, r *http.Reque
 	}
 	log.Printf("[go:http] POST /api/session session=%q", sessionID)
 	if sessionID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
+		policy.writeJSON(w, r, http.StatusBadRequest, map[string]any{
 			"error": "missing session",
 		})
 		return
@@ -128,14 +146,14 @@ func handleSessionPost(sm *session.Manager, w http.ResponseWriter, r *http.Reque
 	s := sm.GetOrCreate(sessionID)
 	hasOverlay, updatedAt := s.OverlayInfo()
 	log.Printf("[go:http] POST /api/session session=%q overlay=%t", s.ID, hasOverlay)
-	writeJSON(w, http.StatusCreated, map[string]any{
+	policy.writeJSON(w, r, http.StatusCreated, map[string]any{
 		"session":       s.ID,
 		"hasOverlay":    hasOverlay,
 		"lastOverlayAt": updatedAt,
 	})
 }
 
-func handleRoomsGet(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
+func handleRoomsGet(policy securityPolicy, sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
 	sessions := sm.List()
 	log.Printf("[go:http] GET /api/rooms rooms=%d", len(sessions))
 	payload := make([]map[string]any, 0, len(sessions))
@@ -150,17 +168,17 @@ func handleRoomsGet(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *
 			"snapshot":      hub.Snapshot(s.ID),
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
+	policy.writeJSON(w, r, http.StatusOK, map[string]any{
 		"rooms": payload,
 	})
 }
 
-func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
+func handleEventPost(policy securityPolicy, sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
+		policy.writeJSON(w, r, http.StatusBadRequest, map[string]any{
 			"error": "unable to read request body",
 		})
 		return
@@ -168,7 +186,7 @@ func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r 
 
 	var req eventRequest
 	if err := json.Unmarshal(body, &req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
+		policy.writeJSON(w, r, http.StatusBadRequest, map[string]any{
 			"error": "invalid json",
 		})
 		return
@@ -180,7 +198,7 @@ func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r 
 	}
 	log.Printf("[go:http] POST /api/event session=%q bodyBytes=%d", sessionID, len(body))
 	if sessionID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]any{
+		policy.writeJSON(w, r, http.StatusBadRequest, map[string]any{
 			"error": "missing session",
 		})
 		return
@@ -193,7 +211,7 @@ func handleEventPost(sm *session.Manager, hub *ws.Hub, w http.ResponseWriter, r 
 
 	hub.Publish(sessionID, body, isClearContents(req.Contents))
 	log.Printf("[go:http] POST /api/event session=%q published clear=%t", sessionID, isClearContents(req.Contents))
-	writeJSON(w, http.StatusAccepted, map[string]any{
+	policy.writeJSON(w, r, http.StatusAccepted, map[string]any{
 		"session":  sessionID,
 		"accepted": true,
 	})
@@ -229,24 +247,6 @@ func overlayHandler(overlayDir string) http.Handler {
 		}
 		fileServer.ServeHTTP(w, r)
 	})
-}
-
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	addCORSHeaders(w)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
-}
-
-func addCORSHeaders(w http.ResponseWriter) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-}
-
-func writeCORSOptions(w http.ResponseWriter) {
-	addCORSHeaders(w)
-	w.WriteHeader(http.StatusNoContent)
 }
 
 func cleanSession(value string) string {

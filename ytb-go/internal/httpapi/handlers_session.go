@@ -1,5 +1,5 @@
 package httpapi
 
 func SessionHandler() {
-    // TODO: criar/atualizar sessão
+	// TODO: criar/atualizar sessão
 }

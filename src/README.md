@@ -69,6 +69,7 @@ The browser runtime gets its API URLs from `runtime-env.js`, which is generated 
 - `YTB_PORTAL_MOCK` - enables seeded mock cards for layout work
 - `YTB_OVERLAY_API_BASE_URL` - explicit API base override
 - `YTB_OVERLAY_WS_URL` - explicit WebSocket override
+- `YTB_API_TOKEN` - optional token forwarded to the portal/overlay runtime env and sent to the Go backend when configured
 
 Use `.env.development.local` for local work and `.env.production.local` for production builds or CI.
 

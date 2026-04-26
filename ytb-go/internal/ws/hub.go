@@ -15,6 +15,7 @@ type RoomSnapshot struct {
 	Clients        int       `json:"clients"`
 	HasLastOverlay bool      `json:"has_last_overlay"`
 	LastOverlayAt  time.Time `json:"last_overlay_at,omitempty"`
+	DroppedPackets int64     `json:"dropped_packets,omitempty"`
 }
 
 type roomState struct {
@@ -95,6 +96,9 @@ func (h *Hub) Snapshot(room string) RoomSnapshot {
 	if state != nil {
 		state.mu.Lock()
 		snapshot.Clients = len(state.clients)
+		for client := range state.clients {
+			snapshot.DroppedPackets += client.droppedPackets()
+		}
 		state.mu.Unlock()
 	}
 

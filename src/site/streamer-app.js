@@ -12,6 +12,7 @@ const ROOM_KEY = ENV.overlayRoomKey || "overlay_room_id";
 const DEFAULT_OVERLAY_API_BASE_URL = ENV.overlayApiBaseUrl || "http://localhost:8080";
 const MAX_LIVE_MESSAGES = typeof ENV.overlayMaxLiveMessages === "number" ? ENV.overlayMaxLiveMessages : 500;
 const PORTAL_LOG_PREFIX = ENV.portalLogPrefix || "[portal]";
+const API_TOKEN = cleanText(ENV.apiToken || window.__YTB_API_TOKEN__ || "");
 
 function isTruthyFlag(value) {
   const normalized = String(value || "").trim().toLowerCase();
@@ -412,7 +413,8 @@ function boot() {
     fetch(`${baseUrl.replace(/\/$/, "")}/api/event`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
       },
       body: JSON.stringify({
         session: roomId,
@@ -458,7 +460,13 @@ function boot() {
   }
 
   function buildOverlayUrl(roomId) {
-    return `http://chat.ericklucioh.com/overlay?session=${encodeURIComponent(roomId)}`;
+    const baseUrl = resolveOverlayApiBaseUrl();
+    if (!baseUrl) {
+      return "";
+    }
+
+    const tokenQuery = API_TOKEN ? `&token=${encodeURIComponent(API_TOKEN)}` : "";
+    return `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(roomId)}${tokenQuery}`;
   }
 
   function isCopyShortcut(event) {

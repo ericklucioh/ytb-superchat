@@ -8,6 +8,8 @@ import (
 	"ytb-go/internal/model"
 )
 
+const maxSessionEvents = 200
+
 type Session struct {
 	ID            string          `json:"id"`
 	Events        []model.Event   `json:"events,omitempty"`
@@ -29,7 +31,7 @@ func NewSession(id string) *Session {
 func (s *Session) AddEvent(event model.Event) {
 	s.mu.Lock()
 	s.Events = append(s.Events, event)
-	if len(s.Events) > 50 {
+	if len(s.Events) > maxSessionEvents {
 		s.Events = s.Events[1:]
 	}
 	s.touchLocked()

@@ -7,7 +7,10 @@ import (
 	"log"
 	"net"
 	"sync"
+	"sync/atomic"
 )
+
+const clientSendBufferSize = 64
 
 type wsPacket struct {
 	Join     string          `json:"join,omitempty"`
@@ -22,8 +25,9 @@ type Client struct {
 	reader *bufio.Reader
 	writer *bufio.Writer
 
-	send chan []byte
-	done chan struct{}
+	send    chan []byte
+	done    chan struct{}
+	dropped int64
 
 	mu   sync.RWMutex
 	room string
@@ -36,7 +40,7 @@ func newClient(hub *Hub, conn net.Conn, reader *bufio.Reader, writer *bufio.Writ
 		conn:   conn,
 		reader: reader,
 		writer: writer,
-		send:   make(chan []byte, 16),
+		send:   make(chan []byte, clientSendBufferSize),
 		done:   make(chan struct{}),
 	}
 }
@@ -130,6 +134,8 @@ func (c *Client) enqueue(payload []byte) {
 	select {
 	case c.send <- copyPayload:
 	default:
+		dropped := atomic.AddInt64(&c.dropped, 1)
+		log.Printf("[go:ws] enqueue dropped room=%q bytes=%d dropped=%d", c.currentRoom(), len(payload), dropped)
 	}
 }
 
@@ -155,6 +161,10 @@ func (c *Client) currentRoom() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.room
+}
+
+func (c *Client) droppedPackets() int64 {
+	return atomic.LoadInt64(&c.dropped)
 }
 
 func isClearContents(contents json.RawMessage) bool {
