@@ -1,5 +1,8 @@
 # Task 20 - blindar a deteccao de iframe no overlay
 
+## Status
+Concluído
+
 ## Prioridade
 Alta
 
@@ -13,12 +16,12 @@ Alta
 Detectar iframe de forma segura sem depender de acesso direto ao parent.
 
 ## Checklist
-- [ ] remover leitura direta de `window.parent.location`
-- [ ] envolver a deteccao em `try/catch` ou abordagem equivalente segura
-- [ ] manter o resize e a conexao do overlay funcionando
-- [ ] testar overlay em janela normal e em iframe cross-origin
+- [x] remover leitura direta de `window.parent.location`
+- [x] envolver a deteccao em `try/catch` ou abordagem equivalente segura
+- [x] manter o resize e a conexao do overlay funcionando
+- [x] testar overlay em janela normal e em iframe cross-origin
 
 ## Criterios de aceite
-- [ ] o overlay carrega mesmo em origem diferente
-- [ ] o bootstrap nao e interrompido por erro de access denied
-- [ ] o comportamento em iframe continua previsivel
+- [x] o overlay carrega mesmo em origem diferente
+- [x] o bootstrap nao e interrompido por erro de access denied
+- [x] o comportamento em iframe continua previsivel

@@ -1,5 +1,8 @@
 # ytb-go debug and build ops
 
+## Status
+Concluído
+
 ## Prioridade
 Media
 
@@ -14,12 +17,12 @@ O fluxo de teste/build ainda pode sofrer com setup de cache e os logs sao mais o
 Reduzir friccao de build e tornar a operacao mais facil de diagnosticar.
 
 ## Checklist
-- [ ] fazer o fluxo de teste/build funcionar no ambiente alvo
-- [ ] adicionar logs ou metricas minimas para sessao, drops e reconnects
-- [ ] documentar setup esperado de cache e build dirs
-- [ ] validar o comportamento local e em CI
+- [x] fazer o fluxo de teste/build funcionar no ambiente alvo
+- [x] adicionar logs ou metricas minimas para sessao, drops e reconnects
+- [x] documentar setup esperado de cache e build dirs
+- [x] validar o comportamento local e em CI
 
 ## Criterios de aceite
-- [ ] a validacao local ou CI nao sofre com surpresa de cache
-- [ ] operadores conseguem diagnosticar backend pelos logs
-- [ ] o setup necessario para build fica claro
+- [x] a validacao local ou CI nao sofre com surpresa de cache
+- [x] operadores conseguem diagnosticar backend pelos logs
+- [x] o setup necessario para build fica claro

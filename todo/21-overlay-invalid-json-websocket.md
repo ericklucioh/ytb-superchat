@@ -1,5 +1,8 @@
 # Task 21 - proteger o overlay contra payload invalido no websocket
 
+## Status
+Concluído
+
 ## Prioridade
 Media alta
 
@@ -13,12 +16,12 @@ Media alta
 Fazer o overlay ignorar mensagens invalidas sem perder a conexao inteira.
 
 ## Checklist
-- [ ] envolver o parse do payload em tratamento de erro
-- [ ] ignorar mensagens nao JSON sem quebrar o fluxo
-- [ ] manter logs suficientes para diagnostico
-- [ ] validar o comportamento com payload valido e invalido
+- [x] envolver o parse do payload em tratamento de erro
+- [x] ignorar mensagens nao JSON sem quebrar o fluxo
+- [x] manter logs suficientes para diagnostico
+- [x] validar o comportamento com payload valido e invalido
 
 ## Criterios de aceite
-- [ ] uma mensagem invalida nao derruba o overlay
-- [ ] o socket continua operando apos payload ruim
-- [ ] o erro fica observavel para suporte
+- [x] uma mensagem invalida nao derruba o overlay
+- [x] o socket continua operando apos payload ruim
+- [x] o erro fica observavel para suporte

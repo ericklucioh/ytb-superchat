@@ -1,5 +1,8 @@
 # ytb-go WebSocket backpressure
 
+## Status
+Concluído
+
 ## Prioridade
 Alta
 
@@ -13,13 +16,13 @@ A fila do cliente WebSocket e pequena e descarta pacotes quando enche sem visibi
 Evitar perda silenciosa quando o cliente de overlay ou browser source fica lento.
 
 ## Checklist
-- [ ] revisar o tamanho do buffer `send`
-- [ ] revisar o comportamento de `enqueue`
-- [ ] definir estrategia clara para consumidores lentos
-- [ ] adicionar log ou telemetria para pacotes descartados
-- [ ] validar burst de mensagens com cliente lento
+- [x] revisar o tamanho do buffer `send`
+- [x] revisar o comportamento de `enqueue`
+- [x] definir estrategia clara para consumidores lentos
+- [x] adicionar log ou telemetria para pacotes descartados
+- [x] validar burst de mensagens com cliente lento
 
 ## Criterios de aceite
-- [ ] trafego em burst nao some silenciosamente
-- [ ] qualquer politica de descarte fica explicita
-- [ ] perda visivel vira evento observavel para suporte
+- [x] trafego em burst nao some silenciosamente
+- [x] qualquer politica de descarte fica explicita
+- [x] perda visivel vira evento observavel para suporte
