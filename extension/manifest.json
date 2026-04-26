@@ -132,9 +132,7 @@
       "resources": [
         "facebook.png",
         "glimesh.png",
-        "sources/dashboard-page-shim.js",
         "polleverywhere.png",
-        "sample_post_api.html",
         "trovo.png",
         "twitch.png",
         "unknown.png",
@@ -142,7 +140,39 @@
         "zoom.png"
       ],
       "matches": [
-        "<all_urls>"
+        "https://*.sli.do/*",
+        "https://youtube.com/*",
+        "https://www.youtube.com/*",
+        "https://studio.youtube.com/*",
+        "https://www.twitch.tv/*",
+        "https://glimesh.tv/*",
+        "https://chat.restream.io/*",
+        "https://www.instagram.com/*",
+        "https://instagram.com/*",
+        "https://trovo.live/*",
+        "https://kick.com/*",
+        "https://www.twitter.com/*",
+        "https://twitter.com/*",
+        "https://facebook.com/*",
+        "https://www.facebook.com/*",
+        "https://*.zoom.us/*",
+        "https://www.mobcrush.com/*",
+        "https://www.crowdcast.io/*",
+        "https://www.polleverywhere.com/*",
+        "https://viz.polleverywhere.com/*",
+        "http://localhost/*",
+        "https://localhost/*",
+        "https://ytb.ericklucioh.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "sources/dashboard-page-shim.js"
+      ],
+      "matches": [
+        "http://localhost/*",
+        "https://localhost/*",
+        "https://ytb.ericklucioh.com/*"
       ]
     }
   ],
