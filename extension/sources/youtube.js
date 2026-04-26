@@ -7,6 +7,7 @@ var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var localBridge = null;
 var youtubeLog = runtime.createLogger ? runtime.createLogger("youtube") : null;
 var unwatchStreamId = null;
+var tickerObserver = null;
 
 	function syncSession(nextSession) {
 		var session = String(nextSession || "").replace(/\s+/g, "").trim();
@@ -64,10 +65,15 @@ var unwatchStreamId = null;
 		return [
 			"YT-LIVE-CHAT-TEXT-MESSAGE-RENDERER",
 			"YT-LIVE-CHAT-PAID-MESSAGE-RENDERER",
+			"YT-LIVE-CHAT-TICKER-PAID-MESSAGE-ITEM-RENDERER",
 			"YT-LIVE-CHAT-MEMBERSHIP-ITEM-RENDERER",
 			"YT-LIVE-CHAT-PAID-STICKER-RENDERER",
 			"YTD-SPONSORSHIPS-LIVE-CHAT-GIFT-PURCHASE-ANNOUNCEMENT-RENDERER"
 		].includes(element.tagName.toUpperCase());
+	}
+
+	function isYoutubeTickerSuperchatNode(element) {
+		return !!element && !!element.tagName && element.tagName.toUpperCase() === "YT-LIVE-CHAT-TICKER-PAID-MESSAGE-ITEM-RENDERER";
 	}
 
 	function extractYoutubeAvatar(element) {
@@ -91,6 +97,48 @@ var unwatchStreamId = null;
 		return "";
 	}
 
+	function extractYoutubeChatName(element) {
+		var chatname = $(element).find("#author-name").text().trim();
+		if (!chatname) {
+			chatname = String($(element).attr("aria-label") || "").trim();
+		}
+		if (!chatname) {
+			chatname = $(element).find("#primary-text").text().trim() || $(element).find("#header-subtext").text().trim();
+		}
+		if (!chatname && isYoutubeTickerSuperchatNode(element)) {
+			chatname = $(element).find("#text span").first().text().trim();
+		}
+		return chatname || "YouTube";
+	}
+
+	function extractYoutubeDonationText(element) {
+		var selectors = [
+			"#purchase-amount",
+			"#purchase-amount-chip",
+			"[id*='purchase-amount']",
+			"yt-formatted-string#purchase-amount",
+			"yt-formatted-string#purchase-amount-chip"
+		];
+
+		for (var i = 0; i < selectors.length; i += 1) {
+			var node = $(element).find(selectors[i]).first();
+			var donationText = node.html() || node.text() || "";
+			if (donationText.trim()) {
+				return donationText.trim();
+			}
+		}
+
+		return "";
+	}
+
+	function hasYoutubeTickerSuperchatData(element, chatdonation) {
+		if (!isYoutubeTickerSuperchatNode(element)) {
+			return true;
+		}
+
+		return !!String(chatdonation || "").trim();
+	}
+
 	function sendYoutubeFeed(element) {
 		if (!isYoutubeFeedNode(element) || element.dataset.feedSent) {
 			return;
@@ -99,26 +147,21 @@ var unwatchStreamId = null;
 			return;
 		}
 
-		element.dataset.feedSent = "1";
-
-		var chatname = $(element).find("#author-name").text();
+		var chatname = extractYoutubeChatName(element);
 		if (showOnlyFirstName) {
 			chatname = chatname.replace(/ .*/, '');
 		}
-		if (!chatname) {
-			chatname = $(element).find("#primary-text").text() || $(element).find("#header-subtext").text() || "YouTube";
-		}
 
-		var chatmessage = $(element).find("#message").html();
-		var chatimg = extractYoutubeAvatar(element);
-		var chatdonation = $(element).find("#purchase-amount").html();
-		var chatmembership = $(element).find(".yt-live-chat-membership-item-renderer #header-subtext").html();
-		var chatsticker = $(element).find(".yt-live-chat-paid-sticker-renderer #img").attr("src");
-		if (chatsticker) {
-			chatdonation = $(element).find("#purchase-amount-chip").html();
-		}
-		var giftedmemembership = $(element).find("#primary-text.ytd-sponsorships-live-chat-header-renderer").html();
-		var chatbadges = "";
+			var chatmessage = $(element).find("#message").html();
+			var chatimg = extractYoutubeAvatar(element);
+			var chatdonation = extractYoutubeDonationText(element);
+			var chatmembership = $(element).find(".yt-live-chat-membership-item-renderer #header-subtext").html();
+			var chatsticker = $(element).find(".yt-live-chat-paid-sticker-renderer #img").attr("src");
+			if (chatsticker) {
+				chatdonation = extractYoutubeDonationText(element);
+			}
+			var giftedmemembership = $(element).find("#primary-text.ytd-sponsorships-live-chat-header-renderer").html();
+			var chatbadges = "";
 		if ($(element).find("#chat-badges .yt-live-chat-author-badge-renderer img").length > 0) {
 			chatbadges = $(element).find("#chat-badges .yt-live-chat-author-badge-renderer img").parent().html();
 		}
@@ -128,11 +171,17 @@ var unwatchStreamId = null;
 			hasDonation = '<div class="donation">' + chatdonation + '</div>';
 		}
 
-		if (chatsticker) {
-			chatmessage = '<img src="' + chatsticker + '">';
-		}
+			if (chatsticker) {
+				chatmessage = '<img src="' + chatsticker + '">';
+			}
 
-		var hasMembership = '';
+			if (!hasYoutubeTickerSuperchatData(element, chatdonation)) {
+				return;
+			}
+
+			element.dataset.feedSent = "1";
+
+			var hasMembership = '';
 		if (chatmembership) {
 			if (chatmessage) {
 				hasMembership = '<div class="donation membership">MEMBER CHAT</div>';
@@ -269,6 +318,42 @@ var unwatchStreamId = null;
 
 	}
 
+	function watchYoutubeTickerRenderer(callback) {
+		if (tickerObserver) {
+			return;
+		}
+
+		var target = document.querySelector("yt-live-chat-ticker-renderer");
+		if (!target) {
+			setTimeout(function () {
+				watchYoutubeTickerRenderer(callback);
+			}, 500);
+			return;
+		}
+
+		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+		if (!MutationObserver) {
+			setTimeout(function () {
+				watchYoutubeTickerRenderer(callback);
+			}, 500);
+			return;
+		}
+
+		tickerObserver = new MutationObserver(function (mutations) {
+			mutations.forEach(function () {
+				var items = target.querySelectorAll("yt-live-chat-ticker-paid-message-item-renderer");
+				for (var i = 0; i < items.length; i += 1) {
+					callback(items[i]);
+				}
+			});
+		});
+		tickerObserver.observe(target, {
+			childList: true,
+			characterData: true,
+			subtree: true
+		});
+	}
+
 	onElementInserted("yt-live-chat-app", function(element){ // Check for highlight words
 	  sendYoutubeFeed(element);
 	  var chatWords = element.innerText.split(" ");
@@ -280,6 +365,10 @@ var unwatchStreamId = null;
 	  if(highlights.length > 0) {
 		 element.classList.add("highlighted-comment");
 	  }
+	});
+
+	watchYoutubeTickerRenderer(function (element) {
+		sendYoutubeFeed(element);
 	});
 
 })();
