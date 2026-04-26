@@ -41,31 +41,6 @@
     });
   }
 
-  function persistSyncedSession(session) {
-    const normalized = cleanSession(session);
-    if (!normalized || !chrome?.storage?.sync?.set) {
-      return;
-    }
-
-    try {
-      chrome.storage.sync.set(
-        {
-          streamID: normalized
-        },
-        () => {
-          if (chrome?.runtime?.lastError) {
-            return;
-          }
-        }
-      );
-    } catch (error) {
-      if (String(error && error.message ? error.message : error).includes("Extension context invalidated")) {
-        return;
-      }
-      throw error;
-    }
-  }
-
   function readReadyMarker() {
     try {
       return Boolean(sessionStorage.getItem(READY_KEY));
@@ -198,7 +173,6 @@
         }
 
         ensureChannel(nextSession);
-        persistSyncedSession(currentSession);
         try {
           localStorage.setItem(SESSION_KEY, currentSession);
         } catch {
@@ -229,7 +203,6 @@
       }
 
       ensureChannel(nextSession);
-      persistSyncedSession(currentSession);
       try {
         localStorage.setItem(SESSION_KEY, currentSession);
       } catch {
@@ -292,7 +265,6 @@
     const initialSession = readInitialSession();
     if (initialSession) {
       ensureChannel(initialSession);
-      persistSyncedSession(currentSession);
       postToPage({
         type: PAGE_SESSION_EVENT,
         session: currentSession
@@ -309,7 +281,6 @@
       }
 
       ensureChannel(syncedSession);
-      persistSyncedSession(currentSession);
       postToPage({
         type: PAGE_SESSION_EVENT,
         session: currentSession
@@ -329,7 +300,6 @@
     return {
       setSession(session) {
         ensureChannel(session);
-        persistSyncedSession(currentSession);
         try {
           localStorage.setItem(SESSION_KEY, currentSession);
         } catch {

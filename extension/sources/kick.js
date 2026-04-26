@@ -2,7 +2,7 @@
 	var runtime = window.OverlayRuntime;
 	var avatarHelpers = window.OverlayAvatarHelpers || {};
 	var soca = null;
-	var channel = runtime.generateStreamID();
+	var channel = "";
 	var outputCounter = 0;
 	var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 	var showOnlyFirstName = false;
@@ -18,6 +18,9 @@
 	injectKickStyles();
 
 	function actionwtf() {
+		if (!channel) {
+			return;
+		}
 		if (!soca) {
 			soca = runtime.createSocketBridge({
 				getRoomId: function () {
@@ -26,7 +29,6 @@
 			});
 		}
 		soca.connect();
-		runtime.persistStreamId(channel);
 		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	}
 
@@ -572,9 +574,6 @@
 	runtime.loadSettings(properties, function (item) {
 		if (item.streamID) {
 			channel = item.streamID;
-		} else {
-			runtime.persistStreamId(channel);
-			runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 		}
 
 		showOnlyFirstName = !!item.showOnlyFirstName;

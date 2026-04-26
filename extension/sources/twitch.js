@@ -1,6 +1,6 @@
 var runtime = window.OverlayRuntime;
 var avatarHelpers = window.OverlayAvatarHelpers || {};
-var channel = runtime.generateStreamID();
+var channel = "";
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var localBridge = null;
@@ -17,13 +17,13 @@ function syncSession(nextSession) {
 	}
 
 	channel = session;
+	ensureLocalBridge();
 	if (localBridge) {
 		localBridge.setSession(channel);
 	}
 }
 
 function actionwtf(){ // legacy overlay connection
-	runtime.persistStreamId(channel);
 	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 }
 
@@ -53,6 +53,9 @@ function pushFeedMessage(data){
 }
 
 function ensureLocalBridge() {
+	if (!channel) {
+		return null;
+	}
 	if (localBridge) {
 		return localBridge;
 	}
@@ -429,12 +432,11 @@ runtime.loadSettings(properties, function(item){
   });
 	if (item.streamID){
     channel = item.streamID;
-  } else {
-	runtime.persistStreamId(channel);
-	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
   }
 
-  ensureLocalBridge();
+  if (channel) {
+    ensureLocalBridge();
+  }
   if (!unwatchStreamId && runtime.watchStreamId) {
     unwatchStreamId = runtime.watchStreamId(syncSession);
   }

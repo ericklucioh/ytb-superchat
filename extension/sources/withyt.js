@@ -8,12 +8,13 @@ function generateStreamID(){
 	}
 	return text;
 };
-var channel = generateStreamID();
+var channel = "";
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 
 var sendProperties = ["color","scale","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
 var connecting = false;
 function actionwtf(){ // legacy overlay connection
+	if (!channel){return;}
 	if (soca){return;}
 	
 	soca = new WebSocket(OverlayRuntime.DEFAULT_OVERLAY_WS_URL);
@@ -40,9 +41,6 @@ function actionwtf(){ // legacy overlay connection
 		connecting = setTimeout(function(){soca=false;actionwtf(); },2000);
 	};
 	
-	chrome.storage.sync.set({
-		streamID: channel
-	});
 }
 
 function pushMessage(data){
@@ -174,9 +172,6 @@ chrome.storage.sync.get(properties, function(item){
   if (item.streamID){
     channel = item.streamID;
   } else {
-	chrome.storage.sync.set({
-		streamID: channel
-	});
   }
 });
 
