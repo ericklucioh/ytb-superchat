@@ -77,6 +77,8 @@ Carregue `extension/` como unpacked no Chrome enquanto desenvolve:
 - A extensão usa esse `sessionId` para mandar chat ao portal
 - O overlay da API/OBS usa um `sessionId` separado, gerado e persistido no portal
 - O backend Go armazena o overlay por sessão separada e serve o browser source do OBS
+- O campo visível no portal mostra o `sessionId` do overlay/API, não o do bridge
+- O botão `Conectar` gera uma sessão nova do bridge/extensão sem mexer no overlay
 
 ## Papel De Cada Parte
 - Portal:

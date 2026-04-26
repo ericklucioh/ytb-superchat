@@ -24,14 +24,13 @@ function isFalsyFlag(value) {
 function boot() {
   const elements = {
     sessionInput: document.getElementById("session-input"),
-    generateButton: document.getElementById("generate-button"),
+    generateOverlayButton: document.getElementById("generate-overlay-button"),
     connectButton: document.getElementById("connect-button"),
     summaryButton: document.getElementById("summary-button"),
     connectionStatus: document.getElementById("connection-status"),
     mockBadge: document.getElementById("mock-badge"),
     summaryPopup: document.getElementById("summary-popup"),
     summaryCopyOverlayButton: document.getElementById("summary-copy-overlay"),
-    generateOverlayButton: document.getElementById("generate-overlay-button"),
     summaryClearHistoryButton: document.getElementById("summary-clear-history"),
     detailPopup: document.getElementById("detail-popup"),
     filterGroup: document.getElementById("filter-group"),
@@ -52,7 +51,7 @@ function boot() {
     eventTemplate: document.getElementById("event-template")
   };
 
-  if (!elements.sessionInput || !elements.generateButton || !elements.connectButton || !elements.filterGroup) {
+  if (!elements.sessionInput || !elements.generateOverlayButton || !elements.connectButton || !elements.filterGroup) {
     return;
   }
 
@@ -108,7 +107,7 @@ function boot() {
     elements.mockBadge.hidden = !mockMode || !explicitMockBadge;
   }
 
-  elements.sessionInput.value = initialRoom;
+  elements.sessionInput.value = initializeOverlaySessionId();
   view.syncFilterButtons(store.state.filter);
   view.setSummaryOpen(summaryOpen);
   view.setDetailOpen(false);
@@ -121,7 +120,6 @@ function boot() {
     chrome.storage.sync.get(["streamID"], (result) => {
       const storedChromeRoom = cleanText(result?.streamID || "");
       if (storedChromeRoom) {
-        elements.sessionInput.value = storedChromeRoom;
         connect(storedChromeRoom);
         return;
       }
@@ -132,25 +130,8 @@ function boot() {
   }
 
   elements.connectButton.addEventListener("click", () => {
-    connect(elements.sessionInput.value.trim());
-  });
-
-  elements.generateButton.addEventListener("click", () => {
-    const generatedSession = buildSessionId();
-    elements.sessionInput.value = generatedSession;
-    try {
-      navigator.clipboard?.writeText?.(generatedSession);
-    } catch {
-      //
-    }
-    setStatus("ID gerado. Clique Conectar para usar este ID.");
-  });
-
-  elements.sessionInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      connect(elements.sessionInput.value.trim());
-    }
+    const generatedBridgeSession = buildSessionId();
+    connect(generatedBridgeSession);
   });
 
   if (elements.summaryButton && elements.summaryPopup) {
@@ -175,6 +156,7 @@ function boot() {
     elements.generateOverlayButton.addEventListener("click", () => {
       const generatedOverlaySession = buildSessionId();
       setOverlaySessionId(generatedOverlaySession);
+      elements.sessionInput.value = generatedOverlaySession;
       void copyTextToClipboard(generatedOverlaySession);
       setStatus("ID da API gerado.");
     });
@@ -309,7 +291,6 @@ function boot() {
     store.connectRoom(nextRoom);
     localStorage.setItem(ROOM_KEY, nextRoom);
     persistSharedRoom(nextRoom);
-    elements.sessionInput.value = nextRoom;
     ensureOverlaySessionIsSeparate(nextRoom);
     view.syncFilterButtons(store.state.filter);
     setStatus("🟡");
@@ -404,7 +385,6 @@ function boot() {
     store.connectRoom(session);
     localStorage.setItem(ROOM_KEY, session);
     persistSharedRoom(session);
-    elements.sessionInput.value = session;
     view.syncFilterButtons(store.state.filter);
     setStatus("🟡");
     scheduleRender();

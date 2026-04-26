@@ -151,6 +151,8 @@ The dashboard accepts a session in a few ways:
 - Overlay API session:
   - generated in the portal
   - persisted separately from the bridge session
+  - shown in the visible session field
+- The `Conectar` button creates a fresh bridge session without touching the overlay session
 
 ## Notes
 
