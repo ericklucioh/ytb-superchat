@@ -4,7 +4,7 @@
 Este binário é o backend local responsável por sessão, overlay e broadcast.
 
 ## Objetivo
-Ser a fonte de verdade do estado compartilhado entre portal, extensão e OBS.
+Ser a fonte de verdade do estado compartilhado entre portal e OBS.
 
 Servidor local em Go para manter sessão, overlay e broadcast em tempo real.
 

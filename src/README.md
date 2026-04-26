@@ -21,12 +21,13 @@ This folder contains the streamer dashboard and the shared site code used by the
 
 The dashboard is the control panel for the project:
 
-- manages the current session ID
+- manages the current bridge session ID
+- manages a separate overlay API session ID
 - shows Twitch subs, YouTube members, superchats, and live chat
 - lets you filter messages by status
 - lets you promote a message to the overlay by clicking it
 - stores UI state in `localStorage`
-- sends overlay events to the Go backend
+- sends overlay events to the Go backend using the overlay API session
 
 ## O Que Existe Hoje
 - Dashboard com filtros, cards e resumo
@@ -37,8 +38,9 @@ The dashboard is the control panel for the project:
 ## O Que Precisa Ser Verdade
 - O portal é estático
 - O estado compartilhado não mora no front
-- O `sessionId` conecta portal, extensão e backend
-- O OBS recebe apenas a URL do overlay
+- O `sessionId` do bridge conecta portal e extensão
+- O overlay da API usa um `sessionId` separado, gerado no portal
+- O OBS recebe apenas a URL desse overlay separado
 
 ## Main code files
 
@@ -141,10 +143,14 @@ Only the allowlisted portal assets are copied, and the legacy `/src/index.html` 
 
 The dashboard accepts a session in a few ways:
 
-- URL parameter `?session=...`
-- URL parameter `?s=...`
-- `localStorage`
-- Chrome extension storage when the extension is installed
+- Bridge session:
+  - URL parameter `?session=...`
+  - URL parameter `?s=...`
+  - `localStorage`
+  - Chrome extension storage when the extension is installed
+- Overlay API session:
+  - generated in the portal
+  - persisted separately from the bridge session
 
 ## Notes
 

@@ -10,6 +10,7 @@ import { loadMockDeck, getMockRoomId } from "./streamer-mock.js";
 const ENV = window.__YTB_ENV__ || {};
 const STORAGE_KEY = ENV.overlayStorageKey || "overlay_state";
 const ROOM_KEY = ENV.overlayRoomKey || "overlay_room_id";
+const OVERLAY_SESSION_KEY = "overlay_api_session_id";
 const DEFAULT_OVERLAY_API_BASE_URL = ENV.overlayApiBaseUrl || "http://localhost:8080";
 const MAX_LIVE_MESSAGES = typeof ENV.overlayMaxLiveMessages === "number" ? ENV.overlayMaxLiveMessages : 500;
 const API_TOKEN = cleanText(ENV.apiToken || window.__YTB_API_TOKEN__ || "");
@@ -30,6 +31,7 @@ function boot() {
     mockBadge: document.getElementById("mock-badge"),
     summaryPopup: document.getElementById("summary-popup"),
     summaryCopyOverlayButton: document.getElementById("summary-copy-overlay"),
+    generateOverlayButton: document.getElementById("generate-overlay-button"),
     summaryClearHistoryButton: document.getElementById("summary-clear-history"),
     detailPopup: document.getElementById("detail-popup"),
     filterGroup: document.getElementById("filter-group"),
@@ -65,6 +67,7 @@ function boot() {
   const envRoom = cleanText(runtimeEnv.sessionId || "");
   const storedRoom = cleanText(localStorage.getItem(ROOM_KEY) || "");
   const initialRoom = mockMode ? mockRoomId : (urlRoom || envRoom || storedRoom || "");
+  const initialOverlaySession = cleanText(localStorage.getItem(OVERLAY_SESSION_KEY) || "");
 
   const store = createStreamerStore({
     storageKey: STORAGE_KEY,
@@ -80,6 +83,7 @@ function boot() {
   let lastRenderKey = "";
   let summaryOpen = false;
   let detailId = "";
+  let overlaySessionId = initialOverlaySession;
   const currencyService = createCurrencyRateService({ scheduleRender });
   const chatBridge = mockMode ? createMockBridge() : createChatBridge({
     session: initialRoom,
@@ -164,6 +168,15 @@ function boot() {
   if (elements.summaryCopyOverlayButton) {
     elements.summaryCopyOverlayButton.addEventListener("click", () => {
       void copyOverlayLink();
+    });
+  }
+
+  if (elements.generateOverlayButton) {
+    elements.generateOverlayButton.addEventListener("click", () => {
+      const generatedOverlaySession = buildSessionId();
+      setOverlaySessionId(generatedOverlaySession);
+      void copyTextToClipboard(generatedOverlaySession);
+      setStatus("ID da API gerado.");
     });
   }
 
@@ -278,6 +291,7 @@ function boot() {
   window.addEventListener("beforeunload", cleanup);
 
   scheduleRender();
+  initializeOverlaySessionId();
 
   function connect(roomId) {
     const nextRoom = cleanText(roomId);
@@ -296,6 +310,7 @@ function boot() {
     localStorage.setItem(ROOM_KEY, nextRoom);
     persistSharedRoom(nextRoom);
     elements.sessionInput.value = nextRoom;
+    ensureOverlaySessionIsSeparate(nextRoom);
     view.syncFilterButtons(store.state.filter);
     setStatus("🟡");
     if (!mockMode) {
@@ -325,6 +340,50 @@ function boot() {
       result += alphabet.charAt(bytes[index] % alphabet.length);
     }
     return result;
+  }
+
+  function initializeOverlaySessionId() {
+    if (overlaySessionId) {
+      return overlaySessionId;
+    }
+
+    return setOverlaySessionId(buildSessionId());
+  }
+
+  function ensureOverlaySessionIsSeparate(roomId) {
+    if (!overlaySessionId || overlaySessionId !== roomId) {
+      return;
+    }
+
+    setOverlaySessionId(buildSessionId());
+  }
+
+  function getOverlaySessionId() {
+    return cleanText(overlaySessionId || "");
+  }
+
+  function setOverlaySessionId(nextSession) {
+    const normalized = cleanText(nextSession);
+    if (!normalized) {
+      return "";
+    }
+
+    overlaySessionId = normalized;
+    try {
+      localStorage.setItem(OVERLAY_SESSION_KEY, normalized);
+    } catch {
+      //
+    }
+
+    return overlaySessionId;
+  }
+
+  async function copyTextToClipboard(text) {
+    try {
+      await navigator.clipboard?.writeText?.(text);
+    } catch {
+      fallbackCopyText(text);
+    }
   }
 
   function handleBridgeSession(nextSession) {
@@ -370,8 +429,8 @@ function boot() {
 
   function toggleOverlaySelection(id) {
     const event = store.findEventById(id);
-    const roomId = store.state.roomId;
-    if (!event || !roomId) {
+    const overlaySession = getOverlaySessionId();
+    if (!event || !overlaySession) {
       return;
     }
 
@@ -386,29 +445,29 @@ function boot() {
     }
 
     if (store.setOverlayId(id)) {
-      sendOverlayOnce(roomId, overlayPayload);
+      sendOverlayOnce(overlaySession, overlayPayload);
     }
 
     openDetail(id);
     scheduleRender();
   }
 
-  function sendOverlayOnce(roomId, overlayPayload) {
-    sendOverlayPacket(roomId, {
+  function sendOverlayOnce(sessionId, overlayPayload) {
+    sendOverlayPacket(sessionId, {
       msg: true,
       id: `overlay-${overlayPayload.eventType || "message"}-${Date.now()}`,
       contents: overlayPayload
     });
   }
 
-  function sendOverlayPacket(roomId, packet) {
+  function sendOverlayPacket(sessionId, packet) {
     const baseUrl = resolveOverlayApiBaseUrl();
     if (!baseUrl) {
       return;
     }
 
     portalLogger.debug("send-overlay", {
-      roomId,
+      roomId: sessionId,
       endpoint: `${baseUrl.replace(/\/$/, "")}/api/event`,
       msg: packet?.msg,
       clear: packet?.contents === false,
@@ -422,7 +481,7 @@ function boot() {
         ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
       },
       body: JSON.stringify({
-        session: roomId,
+        session: sessionId,
         ...packet
       })
     }).catch((error) => {
@@ -446,13 +505,13 @@ function boot() {
   }
 
   async function copyOverlayLink() {
-    const roomId = cleanText(elements.sessionInput.value || store.state.roomId || localStorage.getItem(ROOM_KEY) || "");
-    if (!roomId) {
-      setStatus("Digite um session ID para copiar o overlay");
+    const overlaySession = getOverlaySessionId();
+    if (!overlaySession) {
+      setStatus("Gere um ID da API do overlay para copiar o link");
       return;
     }
 
-    const overlayUrl = buildOverlayUrl(roomId);
+    const overlayUrl = buildOverlayUrl(overlaySession);
 
     try {
       await navigator.clipboard.writeText(overlayUrl);
@@ -464,14 +523,14 @@ function boot() {
     }
   }
 
-  function buildOverlayUrl(roomId) {
+  function buildOverlayUrl(sessionId) {
     const baseUrl = resolveOverlayApiBaseUrl();
     if (!baseUrl) {
       return "";
     }
 
     const tokenQuery = API_TOKEN ? `&token=${encodeURIComponent(API_TOKEN)}` : "";
-    return `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(roomId)}${tokenQuery}`;
+    return `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(sessionId)}${tokenQuery}`;
   }
 
   function isCopyShortcut(event) {
@@ -649,7 +708,7 @@ function boot() {
       }
 
       if (clearOverlay && store.state.overlayId === detailId && store.clearOverlayId()) {
-        sendOverlayClear(store.state.roomId);
+        sendOverlayClear(getOverlaySessionId());
       }
     }
 
@@ -666,7 +725,7 @@ function boot() {
   }
 
   async function clearCurrentHistory() {
-    const activeRoom = cleanText(store.state.roomId || elements.sessionInput.value || localStorage.getItem(ROOM_KEY) || "");
+    const overlaySession = getOverlaySessionId();
     const hasEvents = store.state.events.length > 0 || store.liveEvents.length > 0;
     const hasOverlay = Boolean(store.state.overlayId);
 
@@ -680,8 +739,8 @@ function boot() {
       return;
     }
 
-    if (hasOverlay && activeRoom) {
-      sendOverlayClear(activeRoom);
+    if (hasOverlay && overlaySession) {
+      sendOverlayClear(overlaySession);
     }
 
     store.clearHistory();

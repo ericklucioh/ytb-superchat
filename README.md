@@ -72,10 +72,11 @@ Carregue `extension/` como unpacked no Chrome enquanto desenvolve:
 
 ## Session flow
 
-- O dashboard guarda o `sessionId` atual em `localStorage`
-- O dashboard também lê `?session=...` da URL
-- A extensão usa o mesmo `sessionId` para mandar chat ao portal
-- O backend Go armazena o overlay por sessão e serve o browser source do OBS
+- O dashboard guarda o `sessionId` atual do bridge em `localStorage`
+- O dashboard também lê `?session=...` da URL para o bridge
+- A extensão usa esse `sessionId` para mandar chat ao portal
+- O overlay da API/OBS usa um `sessionId` separado, gerado e persistido no portal
+- O backend Go armazena o overlay por sessão separada e serve o browser source do OBS
 
 ## Papel De Cada Parte
 - Portal:
