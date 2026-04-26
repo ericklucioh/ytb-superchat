@@ -1,17 +1,25 @@
 # ytb-go WebSocket backpressure
 
-## Goal
-Prevent silent message loss when the overlay client or browser source slows down.
+## Prioridade
+Alta
 
-## Problem
-The WebSocket client queue is small and drops packets when it fills up without strong visibility.
+## Depende de
+- nenhuma
 
-## Work
-- Review the `send` buffer size and enqueue behavior.
-- Add a clear strategy for slow consumers: retry, coalesce, or bounded persistence.
-- Log or surface dropped packets so production issues are visible.
+## Problema
+A fila do cliente WebSocket e pequena e descarta pacotes quando enche sem visibilidade forte.
 
-## Done When
-- Burst traffic does not silently disappear.
-- Any remaining drop policy is explicit and observable.
+## Objetivo
+Evitar perda silenciosa quando o cliente de overlay ou browser source fica lento.
 
+## Checklist
+- [ ] revisar o tamanho do buffer `send`
+- [ ] revisar o comportamento de `enqueue`
+- [ ] definir estrategia clara para consumidores lentos
+- [ ] adicionar log ou telemetria para pacotes descartados
+- [ ] validar burst de mensagens com cliente lento
+
+## Criterios de aceite
+- [ ] trafego em burst nao some silenciosamente
+- [ ] qualquer politica de descarte fica explicita
+- [ ] perda visivel vira evento observavel para suporte

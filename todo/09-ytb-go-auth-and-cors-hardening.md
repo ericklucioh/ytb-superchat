@@ -1,17 +1,25 @@
 # ytb-go auth and CORS hardening
 
-## Goal
-Protect the Go backend so it can be exposed for a real client without accepting arbitrary event injection.
+## Prioridade
+Alta
 
-## Problem
-The HTTP API and WebSocket endpoints are open and CORS currently allows any origin.
+## Depende de
+- nenhuma
 
-## Work
-- Add authentication or a trusted-session gate for `/api/event`, `/api/session`, `/api/rooms`, `/ws` and `/overlay`.
-- Replace permissive CORS with an allowlist or local-only policy.
-- Keep the local developer flow working without extra friction.
+## Problema
+As rotas HTTP e WebSocket do backend estao abertas e o CORS aceita qualquer origem, o que nao e aceitavel para cliente real.
 
-## Done When
-- Untrusted origins cannot inject or read session state.
-- Local development still works with explicit trusted origins.
+## Objetivo
+Proteger o backend Go para que somente origens e sessoes confiaveis possam ler ou injetar estado.
 
+## Checklist
+- [ ] adicionar autenticacao ou gate de trusted session
+- [ ] proteger `/api/event`, `/api/session`, `/api/rooms`, `/ws` e `/overlay`
+- [ ] trocar `*` por allowlist ou politica local-only
+- [ ] manter o fluxo local sem friccao desnecessaria
+- [ ] validar que origin nao confiavel nao acessa estado
+
+## Criterios de aceite
+- [ ] origem nao confiavel nao injeta nem le estado de sessao
+- [ ] o fluxo local continua funcionando com origin confiavel explicitamente definido
+- [ ] o comportamento de CORS fica previsivel e documentado

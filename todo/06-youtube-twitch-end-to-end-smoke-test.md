@@ -1,15 +1,31 @@
 # YouTube and Twitch smoke test
 
-## Goal
-Run a manual end-to-end smoke test for the two main platforms before release.
+## Prioridade
+Alta
 
-## Work
-- Open YouTube live chat in popout and confirm messages flow into the portal.
-- Open Twitch popout and confirm messages flow into the portal.
-- Repeat both with the chat tab in background.
-- Repeat with reloads and temporary bridge disconnects.
+## Depende de
+- `todo/01-youtube-observer-guard.md`
+- `todo/02-twitch-remove-avatar-network-from-critical-path.md`
+- `todo/03-twitch-background-sweep-hardening.md`
+- `todo/04-bridge-delivery-ack-validation.md`
+- `todo/05-service-worker-backlog-recovery.md`
 
-## Done When
-- Both platforms work in visible and background states.
-- Reconnect behavior does not lose or duplicate messages.
+## Problema
+As duas plataformas principais precisam de validacao manual em ambiente real antes de liberar para cliente.
 
+## Objetivo
+Executar um smoke test ponta a ponta em YouTube e Twitch com tab visivel, em background, com reload e com desconexao temporaria.
+
+## Checklist
+- [ ] abrir YouTube live chat em popout e confirmar fluxo no portal
+- [ ] abrir Twitch popout e confirmar fluxo no portal
+- [ ] repetir com a aba do chat em segundo plano
+- [ ] repetir com reload da aba durante fluxo ativo
+- [ ] repetir com desconexao temporaria do bridge ou worker
+- [ ] registrar qualquer perda, atraso ou duplicacao observada
+
+## Criterios de aceite
+- [ ] ambas as plataformas funcionam em estado visivel e em background
+- [ ] reconnect nao perde mensagens
+- [ ] reconnect nao duplica mensagens
+- [ ] o comportamento observado bate com o backlog e com a revisao estatica

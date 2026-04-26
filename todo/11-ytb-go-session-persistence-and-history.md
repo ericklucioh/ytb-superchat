@@ -1,17 +1,25 @@
 # ytb-go session persistence and history
 
-## Goal
-Make session state more durable and useful for support.
+## Prioridade
+Media alta
 
-## Problem
-Sessions, overlay state and event history live only in memory and the event history is capped at 50 items.
+## Depende de
+- nenhuma
 
-## Work
-- Decide whether to persist session state across restarts or keep the current in-memory model as an explicit limitation.
-- Increase or redesign the event history limit for operational support.
-- Make the restart behavior clear to users and operators.
+## Problema
+Sessao, overlay e historico vivem em memoria e o historico e curto demais para suporte operacional.
 
-## Done When
-- The restart story is explicit and acceptable for production.
-- Event history is sufficient for debugging real usage.
+## Objetivo
+Tornar o estado mais util para producao, ou deixar a limitacao assumida e documentada.
 
+## Checklist
+- [ ] decidir se sessao deve sobreviver a restart
+- [ ] decidir se o historico precisa ser persistido
+- [ ] reavaliar o limite atual de 50 eventos
+- [ ] documentar claramente o que acontece em restart
+- [ ] validar se o historico atende suporte real
+
+## Criterios de aceite
+- [ ] o comportamento em restart fica claro
+- [ ] o historico e suficiente para diagnostico real
+- [ ] a limitacao de persistencia, se mantida, fica explicitamente assumida

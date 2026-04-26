@@ -1,17 +1,26 @@
 # Twitch avatar fetch off critical path
 
-## Goal
-Remove third-party avatar lookup from the message delivery path in Twitch.
+## Prioridade
+Alta
 
-## Problem
-The current Twitch flow waits for an external avatar request before sending the chat event when the local avatar is missing.
+## Depende de
+- nenhuma
 
-## Work
-- Send the chat event immediately after capture.
-- Resolve avatar enrichment asynchronously, or fall back to the local default avatar.
-- Do not let a failed or slow avatar request delay `pushFeedMessage`.
+## Problema
+O fluxo atual do Twitch espera uma requisicao externa de avatar antes de finalizar a entrega quando o avatar local nao existe.
 
-## Done When
-- Twitch messages reach the bridge even if the avatar endpoint is slow or down.
-- No network dependency remains between capture and delivery.
+## Objetivo
+Tornar a entrega do chat imediata e deixar avatar como enriquecimento opcional.
 
+## Checklist
+- [ ] enviar o evento de chat assim que a captura terminar
+- [ ] mover o enriquecimento de avatar para caminho assicrono
+- [ ] cair para avatar local padrao quando nao houver imagem confiavel
+- [ ] remover qualquer dependencia de rede do caminho critico de `pushFeedMessage`
+- [ ] revisar o ponto em que o DOM marca a mensagem como entregue
+
+## Criterios de aceite
+- [ ] mensagens do Twitch chegam ao bridge mesmo se o endpoint de avatar estiver lento ou fora
+- [ ] nao existe mais dependencia de rede entre captura e entrega
+- [ ] a ausencia de avatar nao bloqueia o resto do fluxo
+- [ ] o status de entrega so muda depois do handoff real

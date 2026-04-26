@@ -1,17 +1,26 @@
 # Twitch background sweep hardening
 
-## Goal
-Reduce CPU cost in Twitch while the popup is in background without regressing capture reliability.
+## Prioridade
+Media alta
 
-## Problem
-The Twitch source still uses periodic sweep logic on the whole document as a fallback.
+## Depende de
+- nenhuma
 
-## Work
-- Keep MutationObserver as the primary capture mechanism.
-- Limit background sweep frequency and scope.
-- Revisit whether delayed rescans can be narrowed further or removed.
+## Problema
+O Twitch ainda usa sweep periodico sobre o documento inteiro como fallback, o que consome CPU desnecessaria quando a aba fica em segundo plano.
 
-## Done When
-- The Twitch popup stays lighter in background.
-- The fallback still recovers missed nodes when the DOM shape changes.
+## Objetivo
+Reduzir custo em background sem perder capacidade de recuperar mensagens perdidas.
 
+## Checklist
+- [ ] manter `MutationObserver` como caminho principal
+- [ ] limitar frequencia e escopo do sweep de background
+- [ ] reduzir trabalho quando a aba estiver oculta
+- [ ] medir se rescans atrasados ainda sao realmente necessarios
+- [ ] validar recovery de DOM mutado com o minimo trabalho possivel
+
+## Criterios de aceite
+- [ ] o popup do Twitch fica mais leve em background
+- [ ] o fallback ainda recupera nodos perdidos quando o DOM muda
+- [ ] nao existe varredura full-document sem justificativa
+- [ ] a confiabilidade de captura nao regrede

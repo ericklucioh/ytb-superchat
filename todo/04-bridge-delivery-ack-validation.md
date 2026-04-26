@@ -1,17 +1,26 @@
 # Bridge delivery ack validation
 
-## Goal
-Validate the new source-to-worker delivery contract before production.
+## Prioridade
+Alta
 
-## Problem
-The bridge now relies on pending queues, persistent storage and explicit acks. That needs real validation.
+## Depende de
+- `todo/05-service-worker-backlog-recovery.md`
 
-## Work
-- Verify that `publish` packets are acked exactly once.
-- Verify that duplicates do not grow the pending queue.
-- Verify that reconnects and session switches do not leave stale pending state.
+## Problema
+A ponte agora depende de fila pendente, armazenamento persistente e `ack` explicito. Isso precisa ser validado com cenarios reais de reconexao e atraso.
 
-## Done When
-- The ack/pending flow is confirmed to be idempotent.
-- No duplicate chat event appears in the dashboard during reconnect tests.
+## Objetivo
+Confirmar que a entrega fonte -> worker -> dashboard e idempotente e nao perde mensagens.
 
+## Checklist
+- [ ] verificar que pacotes `publish` recebem `ack` uma unica vez
+- [ ] verificar que duplicatas nao aumentam a fila pendente
+- [ ] verificar que troca de sessao nao deixa backlog velho
+- [ ] validar reconexao com mensagens em voo
+- [ ] testar perda temporaria do canal e reprise
+
+## Criterios de aceite
+- [ ] o fluxo `ack` e pendente permanece idempotente
+- [ ] nao aparece evento duplicado no dashboard durante testes de reconexao
+- [ ] mensagens em transito nao somem sem rastreio
+- [ ] o contrato de entrega fica claro o suficiente para manutencao

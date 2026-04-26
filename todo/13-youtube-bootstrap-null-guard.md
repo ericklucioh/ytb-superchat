@@ -1,17 +1,24 @@
 # YouTube bootstrap null guard
 
-## Goal
-Prevent the YouTube capture from crashing when the chat container is not available yet.
+## Prioridade
+Alta
 
-## Problem
-The observer attaches immediately to the root node and can throw if the live chat container has not mounted.
+## Depende de
+- nenhuma
 
-## Work
-- Guard the `observer.observe(...)` call with a null check.
-- Retry attachment until the root node exists.
-- Keep the attachment idempotent so retries do not create duplicate observers.
+## Problema
+O observer do YouTube tenta anexar ao root imediatamente e pode falhar se o container do live chat ainda nao montou.
 
-## Done When
-- YouTube capture survives slow or delayed popup initialization.
-- A missing container does not break the whole script.
+## Objetivo
+Blindar o bootstrap contra root nulo e manter retries idempotentes.
 
+## Checklist
+- [ ] adicionar guard para `observer.observe(...)`
+- [ ] re-tentar ate o root existir
+- [ ] garantir que retry nao crie observers duplicados
+- [ ] validar inicializacao lenta e recarregamento
+
+## Criterios de aceite
+- [ ] a captura sobrevive a popup lento
+- [ ] container ausente nao quebra o script
+- [ ] retries nao duplicam observer

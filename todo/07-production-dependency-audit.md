@@ -1,14 +1,26 @@
 # Production dependency audit
 
-## Goal
-Find any external dependency that can still block chat capture in real usage.
+## Prioridade
+Media alta
 
-## Work
-- Inventory external HTTP calls made by the extension sources.
-- Classify which ones are critical, optional or debug-only.
-- Remove or downgrade any call that can delay message delivery.
+## Depende de
+- `todo/02-twitch-remove-avatar-network-from-critical-path.md`
+- `todo/18-src-overlay-url-configurable.md`
 
-## Done When
-- The capture path has no unnecessary third-party dependency.
-- Any remaining network calls are clearly optional.
+## Problema
+A captura e a publicacao ainda podem depender de servicos externos sem necessidade, o que aumenta chance de atraso e falha.
 
+## Objetivo
+Inventariar e classificar chamadas externas, removendo as que estiverem no caminho critico.
+
+## Checklist
+- [ ] listar chamadas HTTP feitas pela extensao
+- [ ] listar chamadas HTTP feitas pelo portal e pela overlay
+- [ ] classificar cada chamada como critica, opcional ou debug
+- [ ] remover ou rebaixar qualquer chamada que possa atrasar entrega de mensagem
+- [ ] documentar o que restou como dependencia externa aceitavel
+
+## Criterios de aceite
+- [ ] o caminho de captura nao depende de terceiros sem necessidade
+- [ ] qualquer rede restante e claramente opcional
+- [ ] o impacto de cada dependencia fica documentado para producao

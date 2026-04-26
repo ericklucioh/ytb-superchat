@@ -1,14 +1,27 @@
 # Telemetry and debug signals
 
-## Goal
-Make future production support easier without adding heavy instrumentation.
+## Prioridade
+Media
 
-## Work
-- Add minimal debug signals for reconnects, ack timeouts and backlog hydration.
-- Keep logs concise and session-scoped.
-- Expose enough state to diagnose message loss or duplicate delivery.
+## Depende de
+- `todo/04-bridge-delivery-ack-validation.md`
+- `todo/05-service-worker-backlog-recovery.md`
 
-## Done When
-- A failed session can be explained from logs alone.
-- Debug output is low noise and useful in production support.
+## Problema
+Sem sinais minimos de telemetria, diagnosticar perda, duplicacao ou reconnect vira chute.
 
+## Objetivo
+Adicionar sinais pequenos, consistentes e session-scoped para suporte em producao.
+
+## Checklist
+- [ ] adicionar sinais para reconnects
+- [ ] adicionar sinais para timeouts de ack
+- [ ] adicionar sinais para hydration do backlog
+- [ ] manter logs curtos e por sessao
+- [ ] expor estado suficiente para diagnosticar perda ou duplicacao
+- [ ] evitar logs barulhentos ou de alto custo
+
+## Criterios de aceite
+- [ ] uma sessao com problema pode ser investigada pelos logs
+- [ ] a saida de debug nao e ruidosa em producao
+- [ ] os sinais ajudam suporte sem exigir instrumentacao pesada

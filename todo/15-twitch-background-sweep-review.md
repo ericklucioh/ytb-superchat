@@ -1,17 +1,24 @@
 # Twitch background sweep review
 
-## Goal
-Reduce background work in Twitch without regressing recovery of missed nodes.
+## Prioridade
+Media alta
 
-## Problem
-The Twitch fallback still runs a periodic sweep over the full document in background mode.
+## Depende de
+- nenhuma
 
-## Work
-- Reassess whether the 15s fallback sweep is still needed.
-- Narrow the sweep scope or remove it if the observer plus delayed rescans are enough.
-- Measure the cost of delayed rescans in long-lived background tabs.
+## Problema
+O fallback de Twitch ainda roda sweep periodico no documento inteiro em background, o que pode ser caro em abas longas.
 
-## Done When
-- Background Twitch uses the minimum work needed to stay reliable.
-- No unnecessary full-document sweep remains unless it is proven necessary.
+## Objetivo
+Reduzir o trabalho em background ao minimo necessario para confiabilidade.
 
+## Checklist
+- [ ] reavaliar se o sweep de 15s ainda e necessario
+- [ ] reduzir o escopo do sweep ou remove-lo se der para confiar no observer
+- [ ] medir custo de rescans atrasados
+- [ ] validar abas long-lived em background
+
+## Criterios de aceite
+- [ ] background usa o minimo de trabalho necessario
+- [ ] nao existe full-document sweep sem justificativa real
+- [ ] a confiabilidade de captura continua aceitavel

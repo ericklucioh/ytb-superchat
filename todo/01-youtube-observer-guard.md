@@ -1,17 +1,26 @@
 # YouTube observer guard
 
-## Goal
-Prevent the YouTube chat capture from breaking when the live chat container is not mounted yet or changes structure.
+## Prioridade
+Alta
 
-## Problem
-The current bootstrap assumes the target node exists immediately and calls `observer.observe(...)` without a null guard.
+## Depende de
+- nenhuma
 
-## Work
-- Add a null check before attaching the observer.
-- Retry attachment until the YouTube live chat root exists.
-- Keep the capture path idempotent so the observer is not duplicated after retries.
+## Problema
+O bootstrap do YouTube assume que o container do chat existe imediatamente e pode falhar quando a UI ainda nao terminou de montar ou quando a estrutura do DOM muda.
 
-## Done When
-- YouTube capture keeps working when the chat popup loads slowly.
-- A DOM timing change does not stop the whole capture script.
+## Objetivo
+Garantir que a captura do YouTube so inicie quando o root do chat estiver realmente disponivel e que retries nao criem duplicidade.
 
+## Checklist
+- [ ] localizar o ponto de bootstrap do observer
+- [ ] adicionar guarda para `target` nulo antes de `observer.observe(...)`
+- [ ] re-tentar a conexao ate o container aparecer
+- [ ] garantir que o retry seja idempotente e nao duplique observers
+- [ ] validar o comportamento com popup lento e com a pagina recarregada
+
+## Criterios de aceite
+- [ ] a captura continua funcionando quando o popup do chat demora para montar
+- [ ] uma mudanca de timing no DOM nao derruba o script inteiro
+- [ ] nao existem observers duplicados apos retries
+- [ ] o fluxo continua capturando mensagens sem intervention manual

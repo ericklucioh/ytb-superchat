@@ -1,19 +1,27 @@
 # Task 19 - blindar o overlay contra iframe cross-origin
 
+## Prioridade
+Media alta
+
+## Depende de
+- nenhuma
+
 ## Problema
 `src/overlay/overlay.js` acessa `window.parent.location` diretamente. Em iframe cross-origin isso pode lancar excecao antes do bootstrap terminar.
 
 ## Objetivo
 Evitar que o overlay quebre quando for aberto em iframe, preview ou qualquer contexto com origem diferente.
 
-## Escopo
-- envolver a deteccao de iframe em uma checagem segura
-- evitar acesso direto a `window.parent.location` sem try/catch
-- manter a logica de resize e conexao do socket funcionando
-- testar o overlay em janela normal e em iframe
+## Checklist
+- [ ] envolver a deteccao de iframe em uma checagem segura
+- [ ] remover qualquer acesso direto a `window.parent.location` sem protecao
+- [ ] manter a logica de resize e conexao do socket funcionando
+- [ ] testar o overlay em janela normal e em iframe same-origin
+- [ ] testar o overlay em iframe cross-origin ou simular a condicao
 
-## Critérios de aceite
-- o overlay carrega mesmo quando embedado em origem diferente
-- a conexao do socket nao e bloqueada por erro de acesso ao parent
-- o comportamento atual em iframe continua previsivel
-- nao ha regressao no resize e na renderizacao de mensagens
+## Criterios de aceite
+- [ ] o overlay carrega mesmo quando embedado em origem diferente
+- [ ] a conexao do socket nao e bloqueada por erro de acesso ao parent
+- [ ] o comportamento atual em iframe continua previsivel
+- [ ] nao ha regressao no resize e na renderizacao de mensagens
+- [ ] o bootstrap do overlay nao depende de leitura direta de `window.parent.location`
