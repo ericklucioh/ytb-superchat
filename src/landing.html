@@ -8,7 +8,7 @@
   <link rel="alternate icon" type="image/png" href="icons/logoWhite.png">
   <meta
     name="description"
-    content="Centralize chats ao vivo de YouTube, Twitch e Kick em uma única interface com suporte a overlays para OBS."
+    content="Reúna os chats da sua live em um só painel, destaque mensagens e leve tudo para o OBS com mais clareza."
   />
   <style>
     :root {
@@ -555,26 +555,26 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <p class="eyebrow">Extensão + painel web + overlay</p>
+          <p class="eyebrow">Chat da live em um só lugar</p>
           <h1>Todos os chats da live em um só lugar.</h1>
           <p class="lead">
-            Centralize mensagens de <strong>YouTube</strong>, <strong>Twitch</strong> e <strong>Kick</strong>
-            em tempo real, com uma interface pensada para streamers que usam overlays no OBS e precisam de velocidade,
-            clareza e controle local.
+            Veja as mensagens de <strong>YouTube</strong>, <strong>Twitch</strong> e <strong>Kick</strong> sem abrir
+            várias abas. O painel junta tudo, facilita a escolha do que merece destaque e ajuda você a manter a live
+            organizada enquanto conversa com a audiência.
           </p>
           <div class="hero-actions">
             <a class="cta" href="/portal">Entrar no portal</a>
             <a class="ghost" href="#como-funciona">Ver como funciona</a>
           </div>
           <p class="hero-note">
-            O painel principal continua disponível em <code>/portal</code>. A raiz do site pode ser usada para apresentação,
-            campanha ou documentação do projeto.
+            O painel principal continua disponível em <code>/portal</code>. A página inicial pode servir como vitrine,
+            explicação do projeto ou porta de entrada para quem ainda não conhece a ferramenta.
           </p>
           <div class="tag-row">
             <span class="tag">Tempo real</span>
-            <span class="tag">Processamento local</span>
+            <span class="tag">Funciona no seu navegador</span>
             <span class="tag">Compatível com OBS</span>
-            <span class="tag">Sem API externa</span>
+            <span class="tag">Sem depender de terceiros</span>
           </div>
         </div>
 
@@ -602,14 +602,14 @@
               </div>
               <div class="overlay-row">
                 <div class="overlay-box">
-                  <strong>Overlay selecionado</strong>
-                  Mensagem pronta para destaque em cena.
+                  <strong>Mensagem escolhida</strong>
+                  Pronta para aparecer no overlay da live.
                 </div>
               </div>
               <div class="stat-row">
                 <div class="mini-card">
-                  <strong>Captura local</strong>
-                  Extensão lê o DOM do chat popout e sincroniza no navegador.
+                  <strong>Leitura automática</strong>
+                  A extensão acompanha o chat aberto e leva as mensagens para o painel em tempo real.
                 </div>
               </div>
             </div>
@@ -621,31 +621,32 @@
     <section id="recursos">
       <div class="container">
         <div class="section-head">
-          <h2>Feito para quem transmite e precisa acompanhar tudo.</h2>
+          <h2>Feito para quem transmite e quer acompanhar tudo sem esforço.</h2>
           <p>
-            O Eloh foi pensado para reduzir distração, reunir canais de conversa em um único lugar e facilitar o uso de mensagens em overlays durante a transmissão.
+            O Eloh ajuda a enxergar o que está acontecendo na live com menos troca de telas, menos confusão e mais
+            controle sobre o que aparece para o público.
           </p>
         </div>
         <div class="grid-4">
           <article class="card">
             <div class="icon">💬</div>
             <h3>Chats centralizados</h3>
-            <p>Reúna mensagens de diferentes plataformas em uma interface única e fácil de monitorar.</p>
+            <p>Veja as conversas de várias plataformas em uma tela só, sem perder contexto.</p>
           </article>
           <article class="card">
             <div class="icon">⚡</div>
             <h3>Resposta imediata</h3>
-            <p>As mensagens são capturadas em tempo real pela extensão, sem depender de APIs externas.</p>
+            <p>As mensagens aparecem rapidamente, para você reagir enquanto a live ainda está acontecendo.</p>
           </article>
           <article class="card">
             <div class="icon">🎛️</div>
             <h3>Controle no painel</h3>
-            <p>Selecione mensagens, organize visualização e prepare conteúdo para destaque ao vivo.</p>
+            <p>Escolha o que merece destaque, organize a leitura e mantenha o ritmo da transmissão.</p>
           </article>
           <article class="card">
             <div class="icon">🎥</div>
             <h3>Pronto para OBS</h3>
-            <p>Use as mensagens capturadas em overlays e cenas com fluxo mais simples para a transmissão.</p>
+            <p>Leve as mensagens escolhidas direto para o seu overlay e use no OBS com mais praticidade.</p>
           </article>
         </div>
       </div>
@@ -656,34 +657,35 @@
         <div class="section-head">
           <h2>Como funciona na prática</h2>
           <p>
-            O processo foi desenhado para ser local, leve e direto. Você abre os chats, a extensão captura, e o painel exibe tudo centralizado.
+            O processo foi pensado para ser simples: você abre os chats, o painel reúne as mensagens e você decide
+            o que quer destacar durante a live.
           </p>
         </div>
         <div class="steps">
           <article class="card">
             <span class="step-num">1</span>
             <h4>Abra os chats popout</h4>
-            <p>YouTube, Twitch e Kick são usados como fonte das mensagens em tempo real.</p>
+            <p>Deixe as páginas de chat abertas para que as mensagens possam ser acompanhadas normalmente.</p>
           </article>
           <article class="card">
             <span class="step-num">2</span>
-            <h4>A extensão lê o chat</h4>
-            <p>Os content scripts acompanham o DOM das páginas suportadas e identificam novas mensagens.</p>
+            <h4>A extensão observa o chat</h4>
+            <p>Ela identifica quando chegam mensagens novas e envia essas informações para o painel.</p>
           </article>
           <article class="card">
             <span class="step-num">3</span>
-            <h4>Dados ficam no navegador</h4>
-            <p>As mensagens são processadas e armazenadas localmente usando o storage da extensão.</p>
+            <h4>As informações ficam com você</h4>
+            <p>O conteúdo é mantido no navegador para que a experiência continue leve e direta.</p>
           </article>
           <article class="card">
             <span class="step-num">4</span>
             <h4>O painel unifica tudo</h4>
-            <p>A interface web consulta os dados locais e mostra os chats em uma única visualização.</p>
+            <p>A interface mostra os chats em uma única visualização, mais fácil de acompanhar durante a transmissão.</p>
           </article>
           <article class="card">
             <span class="step-num">5</span>
             <h4>Gere overlays</h4>
-            <p>Escolha mensagens específicas e leve esse conteúdo para o OBS ou ferramentas similares.</p>
+            <p>Selecione uma mensagem e leve esse destaque para o overlay da live ou para o OBS.</p>
           </article>
         </div>
       </div>
@@ -692,21 +694,22 @@
     <section>
       <div class="container highlight">
         <div class="callout">
-          <h3>Sem intermediários. Sem servidor obrigatório.</h3>
+          <h3>Fluxo direto, sem complicação desnecessária.</h3>
           <p>
-            A proposta do projeto é manter o fluxo o mais direto possível: a extensão captura, o navegador processa e o painel consome os dados localmente.
+            A proposta é deixar o caminho entre o chat e o painel o mais curto possível, para que você veja e use as
+            mensagens sem depender de etapas extras.
           </p>
           <p>
-            Isso reduz complexidade, evita dependência de serviços externos e mantém a operação mais leve para o streamer.
+            Com isso, a transmissão fica mais previsível, mais leve e mais fácil de controlar no dia a dia.
           </p>
         </div>
         <div class="card">
-          <h3>Estrutura do projeto</h3>
+          <h3>O que cada parte faz</h3>
           <ul class="list">
-            <li><strong>content_scripts</strong> → captura dos chats nas plataformas</li>
-            <li><strong>service_worker</strong> → controle da extensão</li>
-            <li><strong>storage</strong> → comunicação entre extensão e interface</li>
-            <li><strong>dashboard</strong> → exibição, seleção e controle dos chats</li>
+            <li><strong>Captura</strong> → acompanha as mensagens nas plataformas suportadas</li>
+            <li><strong>Controle</strong> → organiza o funcionamento da extensão em segundo plano</li>
+            <li><strong>Sincronização</strong> → mantém a extensão e o painel conversando entre si</li>
+            <li><strong>Painel</strong> → exibe, filtra e separa as mensagens que importam</li>
           </ul>
         </div>
       </div>
@@ -717,21 +720,21 @@
         <div class="section-head">
           <h2>Privacidade e processamento local</h2>
           <p>
-            O projeto foi desenhado para priorizar simplicidade e controle do usuário sobre os dados acessados durante a transmissão.
+            O projeto foi pensado para dar mais controle a você sobre o que entra no painel e como isso aparece na live.
           </p>
         </div>
         <div class="grid-3">
           <article class="card">
             <h3>Nada é enviado para fora</h3>
-            <p>Nenhum dado precisa ser transmitido para servidores externos para que o painel funcione.</p>
+            <p>O uso cotidiano não exige mandar os chats para serviços externos só para o painel funcionar.</p>
           </article>
           <article class="card">
             <h3>Somente mensagens públicas</h3>
-            <p>A extensão atua em páginas de chat suportadas e lida apenas com o conteúdo público exibido nelas.</p>
+            <p>A leitura acontece nas páginas públicas de chat que você já usa na transmissão.</p>
           </article>
           <article class="card">
             <h3>Sem coleta pessoal</h3>
-            <p>O foco é exibir mensagens ao vivo, sem coletar informações pessoais privadas do usuário.</p>
+            <p>O foco é mostrar mensagens ao vivo, sem transformar o projeto em uma ferramenta de coleta de dados.</p>
           </article>
         </div>
       </div>
@@ -740,14 +743,14 @@
     <section>
       <div class="container">
         <div class="section-head">
-          <h2>Tecnologias utilizadas</h2>
-          <p>Stack simples, direta e focada no navegador.</p>
+          <h2>O que acontece por trás do painel</h2>
+          <p>Uma visão simples das partes que fazem a experiência funcionar.</p>
         </div>
         <div class="grid-4">
-          <article class="card"><h3>Manifest V3</h3><p>Base moderna para a extensão Chrome.</p></article>
-          <article class="card"><h3>JavaScript</h3><p>Lógica de captura, sincronização e interface.</p></article>
-          <article class="card"><h3>Chrome Storage API</h3><p>Armazenamento local temporário e comunicação interna.</p></article>
-          <article class="card"><h3>Dashboard web</h3><p>Painel visual para leitura e controle dos chats.</p></article>
+          <article class="card"><h3>Extensão Chrome</h3><p>Fica junto do navegador e acompanha os chats que você abrir.</p></article>
+          <article class="card"><h3>JavaScript</h3><p>Faz o painel reagir às mensagens e atualizar a tela em tempo real.</p></article>
+          <article class="card"><h3>Memória da sessão</h3><p>Guarda o que precisa ficar disponível enquanto você está ao vivo.</p></article>
+          <article class="card"><h3>Painel web</h3><p>É onde você vê, organiza e escolhe o que vai para o overlay.</p></article>
         </div>
       </div>
     </section>
@@ -756,20 +759,20 @@
       <div class="container">
         <div class="section-head">
           <h2>Pontos importantes antes de usar</h2>
-          <p>Algumas limitações fazem parte da proposta técnica atual do projeto.</p>
+          <p>Alguns detalhes ajudam a entender melhor o que esperar do projeto no dia a dia.</p>
         </div>
         <div class="faq grid-3">
           <article class="card">
             <h3>Quais plataformas são suportadas?</h3>
-            <p>O fluxo descrito hoje considera YouTube, Twitch e Kick por meio dos chats popout.</p>
+            <p>No uso principal, o projeto foi preparado para YouTube, Twitch e Kick.</p>
           </article>
           <article class="card">
             <h3>Pode quebrar com mudanças de layout?</h3>
-            <p>Sim. Como a captura depende da estrutura do DOM das plataformas, alterações visuais podem exigir ajustes.</p>
+            <p>Sim. Se a plataforma mudar muito a forma como mostra o chat, pode ser preciso ajustar a captura.</p>
           </article>
           <article class="card">
             <h3>Usa API oficial?</h3>
-            <p>Não. A proposta é operar localmente, sem depender das APIs oficiais das plataformas para leitura do chat.</p>
+            <p>Não. A ideia é ler o chat de forma local e prática, sem depender de integrações oficiais para funcionar.</p>
           </article>
         </div>
       </div>
@@ -781,18 +784,18 @@
       <div class="card">
         <h3>Pronto para centralizar sua live?</h3>
         <p>
-          Use a raiz do site como apresentação do projeto e mantenha o dashboard em <code>/portal</code>.
-          Para suporte ou feedback, entre em contato por <strong>ericklucioh@gmail.com</strong>.
+          Use a página inicial para apresentar o projeto e deixe o painel principal em <code>/portal</code>.
+          Se quiser falar sobre o projeto ou enviar feedback, escreva para <strong>ericklucioh@gmail.com</strong>.
         </p>
         <div class="hero-actions">
           <a class="cta" href="/portal">Abrir portal</a>
-          <a class="ghost" href="/src/index.html">Abrir alias antigo</a>
+          <a class="ghost" href="/src/index.html">Abrir página antiga</a>
         </div>
       </div>
       <div class="card">
         <h3>Licença</h3>
         <p>
-          Este projeto é distribuído para uso pessoal e educacional. Para uso comercial ou redistribuição, entre em contato com o autor.
+          Este projeto é distribuído para uso pessoal e educacional. Se quiser usar de outra forma, fale com o autor antes.
         </p>
         <small>Portal do Streamer - Eloh</small>
       </div>
