@@ -28,7 +28,18 @@ function ensureSessionState(session) {
       hydrated: false,
       hydrating: null,
       pending: [],
-      replayedDashboards: new WeakSet()
+      replayedDashboards: new WeakSet(),
+      stats: {
+        published: 0,
+        duplicates: 0,
+        ignored: 0,
+        heartbeats: 0,
+        replays: 0,
+        hydratedCount: 0,
+        lastPacketAt: 0,
+        lastAckAt: 0,
+        lastReplayAt: 0
+      }
     };
     sessions.set(normalized, state);
   }
@@ -120,6 +131,41 @@ function sendAck(port, packet, status) {
   });
 }
 
+function snapshotState(state) {
+  if (!state) {
+    return null;
+  }
+
+  return {
+    session: state.session,
+    hydrated: !!state.hydrated,
+    backlogSize: state.backlog.length,
+    sourceCount: state.sources.size,
+    dashboardCount: state.dashboards.size,
+    stats: {
+      published: state.stats.published,
+      duplicates: state.stats.duplicates,
+      ignored: state.stats.ignored,
+      heartbeats: state.stats.heartbeats,
+      replays: state.stats.replays,
+      hydratedCount: state.stats.hydratedCount,
+      lastPacketAt: state.stats.lastPacketAt,
+      lastAckAt: state.stats.lastAckAt,
+      lastReplayAt: state.stats.lastReplayAt
+    }
+  };
+}
+
+function sendDiagnostic(port, state, reason, extra = {}) {
+  return sendPortMessage(port, {
+    type: "diagnostic",
+    session: state?.session || "",
+    reason: reason || "info",
+    snapshot: snapshotState(state),
+    extra
+  });
+}
+
 async function readBacklog(session) {
   const key = backlogKey(session);
   if (!chrome?.storage?.session) {
@@ -146,6 +192,8 @@ function replayBacklogToPort(state, port) {
   }
 
   state.replayedDashboards.add(port);
+  state.stats.replays += 1;
+  state.stats.lastReplayAt = Date.now();
   for (const packet of state.backlog) {
     try {
       port.postMessage({
@@ -173,11 +221,15 @@ function flushPending(state) {
 function handlePacket(state, packet) {
   const normalized = normalizePacket(packet, state?.session);
   if (!state || !normalized || normalized.type !== "publish") {
+    if (state) {
+      state.stats.ignored += 1;
+    }
     return { status: "ignored" };
   }
 
   const key = packetKey(normalized);
   if (key && state.seen.has(key)) {
+    state.stats.duplicates += 1;
     return { status: "duplicate", key };
   }
 
@@ -185,6 +237,8 @@ function handlePacket(state, packet) {
     state.seen.add(key);
   }
 
+  state.stats.published += 1;
+  state.stats.lastPacketAt = Date.now();
   state.backlog.push(normalized);
   if (state.backlog.length > MAX_BACKLOG) {
     state.backlog.splice(0, state.backlog.length - MAX_BACKLOG);
@@ -214,6 +268,7 @@ function processSourcePacket(state, port, message) {
 
   if (message.type === "heartbeat") {
     state.lastHeartbeatAt = Date.now();
+    state.stats.heartbeats += 1;
     sendAck(port, {
       type: "heartbeat",
       session: state.session,
@@ -221,17 +276,28 @@ function processSourcePacket(state, port, message) {
         timestamp: message.timestamp || Date.now()
       }
     }, "heartbeat");
+    state.stats.lastAckAt = Date.now();
     return;
   }
 
   const result = handlePacket(state, message);
   if (result.status === "ignored") {
+    sendDiagnostic(port, state, "ignored", {
+      packetType: String(message.type || "")
+    });
     return;
+  }
+
+  if (result.status === "duplicate") {
+    sendDiagnostic(port, state, "duplicate", {
+      key: result.key || ""
+    });
   }
 
   const normalized = normalizePacket(message, state.session);
   if (normalized) {
     sendAck(port, normalized, result.status);
+    state.stats.lastAckAt = Date.now();
   }
 }
 
@@ -265,6 +331,7 @@ async function hydrateSession(state) {
     }
 
     state.hydrated = true;
+    state.stats.hydratedCount += 1;
     state.hydrating = null;
 
     for (const port of state.dashboards) {
@@ -277,6 +344,9 @@ async function hydrateSession(state) {
       } catch {
         //
       }
+      sendDiagnostic(port, state, "hydrated", {
+        backlogSize: state.backlog.length
+      });
     }
 
     flushPending(state);
@@ -372,6 +442,7 @@ function registerPort(port) {
     } catch {
       //
     }
+    sendDiagnostic(port, state, "dashboard-ready");
     return;
   }
 

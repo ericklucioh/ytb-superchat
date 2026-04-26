@@ -34,6 +34,21 @@
     let pendingHydrated = false;
     let pendingHydrating = null;
     let lastAckAt = Date.now();
+    const diagnostics = {
+      role,
+      session: currentSession,
+      sent: 0,
+      acks: 0,
+      heartbeatAcks: 0,
+      reconnects: 0,
+      reconnectFailures: 0,
+      sendFailures: 0,
+      hydrationCount: 0,
+      pendingSize: 0,
+      lastAckAt,
+      lastReconnectAt: 0,
+      lastError: ""
+    };
 
     function pendingStorageKey(nextSession = currentSession) {
       return `${PENDING_STORAGE_PREFIX}${role}:${cleanSession(nextSession) || "pending"}`;
@@ -88,6 +103,35 @@
       reconnectDelay = 150;
     }
 
+    function snapshotDiagnostics(reason = "") {
+      diagnostics.role = role;
+      diagnostics.session = currentSession;
+      diagnostics.pendingSize = pendingPackets.length;
+      diagnostics.lastAckAt = lastAckAt;
+      return {
+        ...diagnostics,
+        reason
+      };
+    }
+
+    function emitDiagnostic(reason, extra = {}) {
+      if (typeof onMessage !== "function") {
+        return;
+      }
+
+      try {
+        onMessage({
+          type: "diagnostic",
+          session: currentSession,
+          reason,
+          snapshot: snapshotDiagnostics(reason),
+          extra
+        });
+      } catch {
+        //
+      }
+    }
+
     function detachPortListeners(nextPort, listeners) {
       if (!nextPort || !listeners) {
         return;
@@ -111,6 +155,8 @@
         return;
       }
 
+      diagnostics.reconnects += 1;
+      diagnostics.lastReconnectAt = Date.now();
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
         if (closed || suspended || port) {
@@ -124,13 +170,18 @@
 
     function sendRawPacket(packet) {
       if (!port) {
+        diagnostics.sendFailures += 1;
+        diagnostics.lastError = "no_port";
         return false;
       }
 
       try {
         port.postMessage(packet);
+        diagnostics.sent += 1;
         return true;
       } catch {
+        diagnostics.sendFailures += 1;
+        diagnostics.lastError = "postMessage_failed";
         return false;
       }
     }
@@ -213,7 +264,11 @@
         }
 
         pendingHydrated = true;
+        diagnostics.hydrationCount += 1;
         pendingHydrating = null;
+        emitDiagnostic("hydrated", {
+          pendingCount: pendingPackets.length
+        });
         return pendingPackets;
       })();
 
@@ -227,6 +282,7 @@
 
       pendingIndex.delete(key);
       pendingPackets = pendingPackets.filter((packet) => packetKey(packet) !== key);
+      diagnostics.acks += 1;
       queuePersistPending();
       return true;
     }
@@ -306,8 +362,10 @@
       }
 
       lastAckAt = Date.now();
+      diagnostics.lastAckAt = lastAckAt;
 
       if (message.packetType === "heartbeat") {
+        diagnostics.heartbeatAcks += 1;
         return true;
       }
 
@@ -394,6 +452,14 @@
               return;
             }
 
+            if (message && typeof message === "object" && message.type === "diagnostic") {
+              diagnostics.lastError = String(message.reason || diagnostics.lastError || "");
+              if (typeof onMessage === "function") {
+                onMessage(message);
+              }
+              return;
+            }
+
             if (typeof onMessage === "function") {
               onMessage(message);
             }
@@ -406,6 +472,7 @@
             detachPortListeners(nextPort, listeners);
             port = null;
             portListeners = null;
+            diagnostics.reconnectFailures += 1;
 
             if (!suspended) {
               scheduleReconnect();
@@ -555,6 +622,9 @@
       send,
       subscribe,
       setSession,
+      getDiagnostics() {
+        return snapshotDiagnostics("snapshot");
+      },
       get session() {
         return currentSession;
       }

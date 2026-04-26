@@ -44,6 +44,7 @@ A solução principal foi implementada no fluxo da extensão:
 - `ack` explícito do `service_worker`
 - heartbeat leve para detectar sessão travada
 - watchdog de reconexão no bridge da fonte
+- snapshots de diagnóstico para reconnect, hydration e duplicação
 
 ## Opções
 

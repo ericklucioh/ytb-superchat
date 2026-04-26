@@ -28,9 +28,8 @@ function actionwtf(){ // legacy overlay connection
 }
 
 function pushFeedMessage(data){
-	outputCounter += 1;
 	twitchLog("pushFeedMessage()", {
-		id: outputCounter,
+		id: outputCounter + 1,
 		chatname: data && data.chatname,
 		eventType: data && data.eventType,
 		hasDonation: !!(data && data.hasDonation),
@@ -39,13 +38,18 @@ function pushFeedMessage(data){
 	});
 	var bridge = ensureLocalBridge();
 	if (!bridge) {
-		return;
+		return false;
 	}
-	runtime.sendBridgeMessage(bridge, data, {
+	var nextId = outputCounter + 1;
+	var sent = runtime.sendBridgeMessage(bridge, data, {
 		envelopeKey: "feed",
-		id: outputCounter,
+		id: nextId,
 		includeSettings: false
 	});
+	if (sent) {
+		outputCounter = nextId;
+	}
+	return sent;
 }
 
 function ensureLocalBridge() {
@@ -340,7 +344,6 @@ function sendTwitchFeed(element, signature) {
 	if (nextSignature) {
 		root.dataset.feedSignature = nextSignature;
 	}
-	root.dataset.feedSent = "1";
 	twitchLog("captured element", {
 		chatname: data.chatname,
 		hasDonation: !!data.hasDonation,
@@ -348,24 +351,9 @@ function sendTwitchFeed(element, signature) {
 		messagePreview: String(data.chatmessage).slice(0, 80)
 	});
 
-	if (payload.data.chatimg && payload.data.chatimg !== (runtime.getRuntimeUrl ? runtime.getRuntimeUrl("twitch.png") : "twitch.png")) {
-		pushFeedMessage(data);
-		return true;
+	if (pushFeedMessage(data)) {
+		root.dataset.feedSent = "1";
 	}
-
-	fetchWithTimeout("https://api.socialstream.ninja/twitch/avatar?username="+encodeURIComponent(data.chatname)).then(response => {
-		response.text().then(function (text) {
-			if (text.startsWith("https://")) {
-				data.chatimg = text;
-			}
-			pushFeedMessage(data);
-		}).catch(function(){
-			pushFeedMessage(data);
-		});
-	}).catch(error => {
-		pushFeedMessage(data);
-	});
-
 	return true;
 }
 
@@ -411,19 +399,6 @@ function extractTwitchSubscriptionMonths(text, membershipText, messageText) {
 var showOnlyFirstName;
 
 var highlightWords = [];
-
-
-async function fetchWithTimeout(URL, timeout=8000){ // ref: https://dmitripavlutin.com/timeout-fetch-request/
-	try {
-		const controller = new AbortController();
-		const timeout_id = setTimeout(() => controller.abort(), timeout);
-		const response = await fetch(URL, {...{timeout:timeout}, signal: controller.signal});
-		clearTimeout(timeout_id);
-		return response;
-	} catch(e){
-		return await fetch(URL); // iOS 11.x/12.0
-	}
-}
 
 $("body").on("click", ".btn-clear-twitch", function () {
   $(".hl-c-cont").addClass("fadeout").delay(300).queue(function(){
@@ -624,7 +599,7 @@ function stopTwitchSweep() {
 }
 
 function updateTwitchSweepPolicy() {
-	var nextInterval = document.hidden ? 15000 : 0;
+	var nextInterval = document.hidden ? 30000 : 0;
 	if (twitchSweepInterval === nextInterval && !nextInterval) {
 		return;
 	}

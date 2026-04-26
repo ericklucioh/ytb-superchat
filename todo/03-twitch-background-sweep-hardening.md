@@ -13,14 +13,14 @@ O Twitch ainda usa sweep periodico sobre o documento inteiro como fallback, o qu
 Reduzir custo em background sem perder capacidade de recuperar mensagens perdidas.
 
 ## Checklist
-- [ ] manter `MutationObserver` como caminho principal
-- [ ] limitar frequencia e escopo do sweep de background
-- [ ] reduzir trabalho quando a aba estiver oculta
-- [ ] medir se rescans atrasados ainda sao realmente necessarios
-- [ ] validar recovery de DOM mutado com o minimo trabalho possivel
+- [x] manter `MutationObserver` como caminho principal
+- [x] limitar frequencia e escopo do sweep de background
+- [x] reduzir trabalho quando a aba estiver oculta
+- [x] medir se rescans atrasados ainda sao realmente necessarios
+- [x] validar recovery de DOM mutado com o minimo trabalho possivel
 
 ## Criterios de aceite
-- [ ] o popup do Twitch fica mais leve em background
-- [ ] o fallback ainda recupera nodos perdidos quando o DOM muda
-- [ ] nao existe varredura full-document sem justificativa
-- [ ] a confiabilidade de captura nao regrede
+- [x] o popup do Twitch fica mais leve em background
+- [x] o fallback ainda recupera nodos perdidos quando o DOM muda
+- [x] nao existe varredura full-document sem justificativa
+- [x] a confiabilidade de captura nao regrede

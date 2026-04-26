@@ -11,6 +11,7 @@
   const PAGE_EVENT = "overlay-local-chat:event";
   const PAGE_SESSION_EVENT = "overlay-local-chat:set-session";
   const PAGE_READY_EVENT = "overlay-local-chat:page-ready";
+  const PAGE_DIAGNOSTIC_EVENT = "overlay-local-chat:diagnostic";
   const RELAY_READY_EVENT = "overlay-local-chat:relay-ready";
   const SYNC_SESSION_KEY = "streamID";
 
@@ -163,6 +164,24 @@
           type: RELAY_READY_EVENT,
           session: currentSession
         });
+        return;
+      }
+
+      if (message.type === "diagnostic") {
+        postToPage({
+          type: PAGE_DIAGNOSTIC_EVENT,
+          session: currentSession,
+          reason: message.reason || "info",
+          snapshot: message.snapshot || null,
+          extra: message.extra || null
+        });
+        if (typeof console !== "undefined" && console.debug) {
+          console.debug("[overlay-relay]", {
+            session: currentSession,
+            reason: message.reason || "info",
+            snapshot: message.snapshot || null
+          });
+        }
       }
     }
 

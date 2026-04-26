@@ -1,24 +1,24 @@
 # Ordem de prioridade do backlog
 
 ## Pendentes
-1. `todo/01-youtube-observer-guard.md`
-2. `todo/02-twitch-remove-avatar-network-from-critical-path.md`
-3. `todo/03-twitch-background-sweep-hardening.md`
-4. `todo/04-bridge-delivery-ack-validation.md`
-5. `todo/05-service-worker-backlog-recovery.md`
-6. `todo/06-youtube-twitch-end-to-end-smoke-test.md`
-7. `todo/07-production-dependency-audit.md`
-8. `todo/08-telemetry-and-debug-signals.md`
-9. `todo/13-youtube-bootstrap-null-guard.md`
-10. `todo/14-twitch-avatar-out-of-critical-path.md`
-11. `todo/15-twitch-background-sweep-review.md`
-12. `todo/23-ytb-go-final-smoke-checklist.md`
+1. `todo/04-bridge-delivery-ack-validation.md`
+2. `todo/05-service-worker-backlog-recovery.md`
+3. `todo/06-youtube-twitch-end-to-end-smoke-test.md`
+4. `todo/07-production-dependency-audit.md`
+5. `todo/23-ytb-go-final-smoke-checklist.md`
 
 ## Concluidos
-13. `todo/09-ytb-go-auth-and-cors-hardening.md`
-14. `todo/10-ytb-go-ws-backpressure-and-drop-visibility.md`
-15. `todo/11-ytb-go-session-persistence-and-history.md`
-16. `todo/12-ytb-go-debug-ops-and-build-env.md`
+6. `todo/01-youtube-observer-guard.md`
+7. `todo/02-twitch-remove-avatar-network-from-critical-path.md`
+8. `todo/03-twitch-background-sweep-hardening.md`
+9. `todo/08-telemetry-and-debug-signals.md`
+10. `todo/09-ytb-go-auth-and-cors-hardening.md`
+11. `todo/10-ytb-go-ws-backpressure-and-drop-visibility.md`
+12. `todo/11-ytb-go-session-persistence-and-history.md`
+13. `todo/12-ytb-go-debug-ops-and-build-env.md`
+14. `todo/13-youtube-bootstrap-null-guard.md`
+15. `todo/14-twitch-avatar-out-of-critical-path.md`
+16. `todo/15-twitch-background-sweep-review.md`
 17. `todo/16-src-build-packaging-scope.md`
 18. `todo/17-src-serve-path-traversal-guard.md`
 19. `todo/18-src-overlay-url-configurable.md`

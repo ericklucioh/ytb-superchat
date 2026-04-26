@@ -326,6 +326,10 @@
   }
 
   function sendBridgeMessage(bridge, data, options = {}) {
+    if (!bridge || typeof bridge.send !== "function") {
+      return false;
+    }
+
     const envelopeKey = options.envelopeKey || "msg";
     const contentsKey = options.contentsKey || "contents";
     const storageKeys = options.storageKeys || DEFAULT_SEND_PROPERTIES;
@@ -343,23 +347,35 @@
     }
 
     if (options.includeSettings === false) {
-      bridge.send(payload);
-      return;
+      try {
+        return !!bridge.send(payload);
+      } catch {
+        return false;
+      }
     }
 
     const cachedSettings = getCachedSettings(storageKeys);
     if (cachedSettings) {
       payload.settings = cachedSettings;
-      bridge.send(payload);
-      return;
+      try {
+        return !!bridge.send(payload);
+      } catch {
+        return false;
+      }
     }
 
     loadSettings(storageKeys, (settings) => {
       if (settings) {
         payload.settings = settings;
       }
-      bridge.send(payload);
+      try {
+        bridge.send(payload);
+      } catch {
+        //
+      }
     });
+
+    return true;
   }
 
   function watchStreamId(callback) {

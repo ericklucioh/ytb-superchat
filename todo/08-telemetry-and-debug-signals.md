@@ -14,14 +14,14 @@ Sem sinais minimos de telemetria, diagnosticar perda, duplicacao ou reconnect vi
 Adicionar sinais pequenos, consistentes e session-scoped para suporte em producao.
 
 ## Checklist
-- [ ] adicionar sinais para reconnects
-- [ ] adicionar sinais para timeouts de ack
-- [ ] adicionar sinais para hydration do backlog
-- [ ] manter logs curtos e por sessao
-- [ ] expor estado suficiente para diagnosticar perda ou duplicacao
-- [ ] evitar logs barulhentos ou de alto custo
+- [x] adicionar sinais para reconnects
+- [x] adicionar sinais para timeouts de ack
+- [x] adicionar sinais para hydration do backlog
+- [x] manter logs curtos e por sessao
+- [x] expor estado suficiente para diagnosticar perda ou duplicacao
+- [x] evitar logs barulhentos ou de alto custo
 
 ## Criterios de aceite
-- [ ] uma sessao com problema pode ser investigada pelos logs
-- [ ] a saida de debug nao e ruidosa em producao
-- [ ] os sinais ajudam suporte sem exigir instrumentacao pesada
+- [x] uma sessao com problema pode ser investigada pelos logs
+- [x] a saida de debug nao e ruidosa em producao
+- [x] os sinais ajudam suporte sem exigir instrumentacao pesada

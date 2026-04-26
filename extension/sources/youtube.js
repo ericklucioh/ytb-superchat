@@ -25,16 +25,20 @@
 	}
 
 	function pushFeedMessage(data){
-		outputCounter += 1;
 		var bridge = ensureLocalBridge();
 		if (!bridge) {
-			return;
+			return false;
 		}
-		runtime.sendBridgeMessage(bridge, data, {
+		var nextId = outputCounter + 1;
+		var sent = runtime.sendBridgeMessage(bridge, data, {
 			envelopeKey: "feed",
-			id: outputCounter,
+			id: nextId,
 			includeSettings: false
 		});
+		if (sent) {
+			outputCounter = nextId;
+		}
+		return sent;
 	}
 
 	function ensureLocalBridge() {
@@ -93,8 +97,6 @@
 		if ($(element)[0].hasAttribute("is-deleted")) {
 			return;
 		}
-
-		element.dataset.feedSent = "1";
 
 		var chatname = $(element).find("#author-name").text();
 		if (showOnlyFirstName) {
@@ -176,9 +178,10 @@
 		data.feed = true;
 		data.timestamp = Date.now();
 
-		outputCounter += 1;
-		data.id = "yt-feed-" + outputCounter;
-		pushFeedMessage(data);
+		data.id = "yt-feed-" + (outputCounter + 1);
+		if (pushFeedMessage(data)) {
+			element.dataset.feedSent = "1";
+		}
 	}
 
 	var showOnlyFirstName;
@@ -217,7 +220,7 @@
 
 	$("#primary-content").append('<span style="font-size: 0.7em">Aspect Ratio: <span id="aspect-ratio"></span></span>');
 
-		function onElementInserted(containerSelector,  callback) {
+	function onElementInserted(containerSelector,  callback) {
 
 		var onMutationsObserved = function(mutations) {
 			mutations.forEach(function(mutation) {
@@ -240,8 +243,20 @@
 		};
 
 		var target = document.querySelectorAll(containerSelector)[0];
+		if (!target) {
+			setTimeout(function () {
+				onElementInserted(containerSelector, callback);
+			}, 500);
+			return;
+		}
 		var config = { childList: true, subtree: true };
 		var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+		if (!MutationObserver) {
+			setTimeout(function () {
+				onElementInserted(containerSelector, callback);
+			}, 500);
+			return;
+		}
 		var observer = new MutationObserver(onMutationsObserved);
 		observer.observe(target, config);
 
