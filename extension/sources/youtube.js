@@ -1,7 +1,7 @@
 (function () {
 	var runtime = window.OverlayRuntime;
 var avatarHelpers = window.OverlayAvatarHelpers || {};
-var channel = "";
+var channel = runtime.generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var localBridge = null;
@@ -15,7 +15,6 @@ var unwatchStreamId = null;
 		}
 
 		channel = session;
-		ensureLocalBridge();
 		if (localBridge) {
 			localBridge.setSession(channel);
 		}
@@ -25,35 +24,25 @@ var unwatchStreamId = null;
 	}
 
 	function actionwtf(){ // legacy overlay connection
+		runtime.persistStreamId(channel);
 		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	}
 
 	function pushFeedMessage(data){
+		outputCounter += 1;
 		var bridge = ensureLocalBridge();
 		if (!bridge) {
 			return false;
 		}
-		var nextId = outputCounter + 1;
-		var sent = runtime.sendBridgeMessage(bridge, data, {
+		runtime.sendBridgeMessage(bridge, data, {
 			envelopeKey: "feed",
-			id: nextId,
+			id: outputCounter,
 			includeSettings: false
 		});
-		if (sent) {
-			outputCounter = nextId;
-			youtubeLog?.debug("publish", {
-				id: data && data.id ? data.id : "",
-				eventType: data && data.eventType ? data.eventType : "",
-				session: channel
-			});
-		}
-		return sent;
+		return true;
 	}
 
 	function ensureLocalBridge() {
-		if (!channel) {
-			return null;
-		}
 		if (localBridge) {
 			return localBridge;
 		}
@@ -109,6 +98,8 @@ var unwatchStreamId = null;
 		if ($(element)[0].hasAttribute("is-deleted")) {
 			return;
 		}
+
+		element.dataset.feedSent = "1";
 
 		var chatname = $(element).find("#author-name").text();
 		if (showOnlyFirstName) {
@@ -190,10 +181,9 @@ var unwatchStreamId = null;
 		data.feed = true;
 		data.timestamp = Date.now();
 
-		data.id = "yt-feed-" + (outputCounter + 1);
-		if (pushFeedMessage(data)) {
-			element.dataset.feedSent = "1";
-		}
+		outputCounter += 1;
+		data.id = "yt-feed-" + outputCounter;
+		pushFeedMessage(data);
 	}
 
 	var showOnlyFirstName;
@@ -216,7 +206,9 @@ var unwatchStreamId = null;
 	runtime.loadSettings(properties, function(item){
 	  if (item.streamID){
 		channel = item.streamID;
-		ensureLocalBridge();
+	  } else {
+		runtime.persistStreamId(channel);
+		runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 	  }
 
 	  youtubeLog?.debug("boot", {
@@ -224,6 +216,7 @@ var unwatchStreamId = null;
 		hasSession: !!item.streamID
 	  });
 
+	  ensureLocalBridge();
 	  if (!unwatchStreamId && runtime.watchStreamId) {
 		unwatchStreamId = runtime.watchStreamId(syncSession);
 	  }

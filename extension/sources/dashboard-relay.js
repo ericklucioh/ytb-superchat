@@ -11,11 +11,8 @@
   const PAGE_EVENT = "overlay-local-chat:event";
   const PAGE_SESSION_EVENT = "overlay-local-chat:set-session";
   const PAGE_READY_EVENT = "overlay-local-chat:page-ready";
-  const PAGE_REFRESH_SESSION_EVENT = "overlay-local-chat:refresh-session";
-  const PAGE_DIAGNOSTIC_EVENT = "overlay-local-chat:diagnostic";
   const RELAY_READY_EVENT = "overlay-local-chat:relay-ready";
   const SYNC_SESSION_KEY = "streamID";
-  const relayLogger = runtime.createLogger ? runtime.createLogger("dashboard-relay") : null;
 
   function cleanSession(value) {
     return String(value || "").replace(/\s+/g, "").trim();
@@ -40,6 +37,31 @@
         resolve(cleanSession(result?.streamID || ""));
       });
     });
+  }
+
+  function persistSyncedSession(session) {
+    const normalized = cleanSession(session);
+    if (!normalized || !chrome?.storage?.sync?.set) {
+      return;
+    }
+
+    try {
+      chrome.storage.sync.set(
+        {
+          streamID: normalized
+        },
+        () => {
+          if (chrome?.runtime?.lastError) {
+            return;
+          }
+        }
+      );
+    } catch (error) {
+      if (String(error && error.message ? error.message : error).includes("Extension context invalidated")) {
+        return;
+      }
+      throw error;
+    }
   }
 
   function readReadyMarker() {
@@ -114,9 +136,6 @@
       }
 
       currentSession = session;
-      relayLogger?.debug("connect", {
-        session: currentSession
-      });
       channel = bridgeFactory.createChannel({
         role: "dashboard",
         session: currentSession,
@@ -131,12 +150,6 @@
       }
 
       if (message.type === "publish" && message.payload) {
-        relayLogger?.debug("publish", {
-          session: currentSession,
-          type: message.payload.type || "",
-          platform: message.payload.platform || "",
-          id: message.payload.id || ""
-        });
         postToPage({
           type: PAGE_EVENT,
           session: currentSession,
@@ -146,64 +159,15 @@
       }
 
       if (message.type === "ready") {
-        relayLogger?.debug("ready", {
-          session: currentSession
-        });
         postToPage({
           type: RELAY_READY_EVENT,
           session: currentSession
-        });
-        return;
-      }
-
-      if (message.type === "diagnostic") {
-        relayLogger?.debug("diagnostic", {
-          session: currentSession,
-          reason: message.reason || "info"
-        });
-        postToPage({
-          type: PAGE_DIAGNOSTIC_EVENT,
-          session: currentSession,
-          reason: message.reason || "info",
-          snapshot: message.snapshot || null,
-          extra: message.extra || null
-        });
-        relayLogger?.debug("diagnostic-snapshot", {
-          session: currentSession,
-          reason: message.reason || "info"
         });
       }
     }
 
     function handleWindowMessage(event) {
       if (disposed || event.source !== window || !event.data) {
-        return;
-      }
-
-      if (event.data.type === PAGE_REFRESH_SESSION_EVENT) {
-        const nextSession = cleanSession(event.data.session || currentSession);
-        if (!nextSession) {
-          return;
-        }
-
-        ensureChannel(nextSession);
-        relayLogger?.debug("refresh-session", {
-          from: currentSession,
-          to: nextSession
-        });
-        try {
-          localStorage.setItem(SESSION_KEY, currentSession);
-        } catch {
-          //
-        }
-        postToPage({
-          type: PAGE_SESSION_EVENT,
-          session: currentSession
-        });
-        postToPage({
-          type: RELAY_READY_EVENT,
-          session: currentSession
-        });
         return;
       }
 
@@ -220,11 +184,8 @@
         return;
       }
 
-      relayLogger?.debug("session-change", {
-        from: currentSession,
-        to: nextSession
-      });
       ensureChannel(nextSession);
+      persistSyncedSession(currentSession);
       try {
         localStorage.setItem(SESSION_KEY, currentSession);
       } catch {
@@ -246,9 +207,6 @@
       }
 
       pageReady = true;
-      relayLogger?.debug("page-ready", {
-        session: currentSession
-      });
       flushPending();
     }
 
@@ -262,10 +220,6 @@
         return;
       }
 
-      relayLogger?.debug("sync-session-change", {
-        from: currentSession,
-        to: nextSession
-      });
       ensureChannel(nextSession);
       try {
         localStorage.setItem(SESSION_KEY, currentSession);
@@ -293,10 +247,8 @@
 
     const initialSession = readInitialSession();
     if (initialSession) {
-      relayLogger?.debug("boot-session", {
-        session: initialSession
-      });
       ensureChannel(initialSession);
+      persistSyncedSession(currentSession);
       postToPage({
         type: PAGE_SESSION_EVENT,
         session: currentSession
@@ -312,11 +264,8 @@
         return;
       }
 
-      relayLogger?.debug("synced-session", {
-        from: currentSession,
-        to: syncedSession
-      });
       ensureChannel(syncedSession);
+      persistSyncedSession(currentSession);
       postToPage({
         type: PAGE_SESSION_EVENT,
         session: currentSession
@@ -336,6 +285,7 @@
     return {
       setSession(session) {
         ensureChannel(session);
+        persistSyncedSession(currentSession);
         try {
           localStorage.setItem(SESSION_KEY, currentSession);
         } catch {
@@ -348,20 +298,6 @@
         postToPage({
           type: RELAY_READY_EVENT,
           session: currentSession
-        });
-      },
-      refreshSession(session = currentSession) {
-        const normalized = cleanSession(session);
-        if (!normalized) {
-          return;
-        }
-
-        handleWindowMessage({
-          source: window,
-          data: {
-            type: PAGE_REFRESH_SESSION_EVENT,
-            session: normalized
-          }
         });
       },
       close() {

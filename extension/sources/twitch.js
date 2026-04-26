@@ -1,6 +1,6 @@
 var runtime = window.OverlayRuntime;
 var avatarHelpers = window.OverlayAvatarHelpers || {};
-var channel = "";
+var channel = runtime.generateStreamID();
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var localBridge = null;
@@ -22,7 +22,6 @@ function syncSession(nextSession) {
 	}
 
 	channel = session;
-	ensureLocalBridge();
 	if (localBridge) {
 		localBridge.setSession(channel);
 	}
@@ -32,12 +31,14 @@ function syncSession(nextSession) {
 }
 
 function actionwtf(){ // legacy overlay connection
+	runtime.persistStreamId(channel);
 	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
 }
 
-function pushFeedMessage(data){
+	function pushFeedMessage(data){
+	outputCounter += 1;
 	twitchLog("pushFeedMessage()", {
-		id: outputCounter + 1,
+		id: outputCounter,
 		chatname: data && data.chatname,
 		eventType: data && data.eventType,
 		hasDonation: !!(data && data.hasDonation),
@@ -46,29 +47,16 @@ function pushFeedMessage(data){
 	});
 	var bridge = ensureLocalBridge();
 	if (!bridge) {
-		return false;
+		return;
 	}
-	var nextId = outputCounter + 1;
-	var sent = runtime.sendBridgeMessage(bridge, data, {
+	runtime.sendBridgeMessage(bridge, data, {
 		envelopeKey: "feed",
-		id: nextId,
+		id: outputCounter,
 		includeSettings: false
 	});
-	if (sent) {
-		outputCounter = nextId;
-		twitchLog("publish", {
-			id: data && data.id ? data.id : "",
-			eventType: data && data.eventType ? data.eventType : "",
-			session: channel
-		});
-	}
-	return sent;
 }
 
 function ensureLocalBridge() {
-	if (!channel) {
-		return null;
-	}
 	if (localBridge) {
 		return localBridge;
 	}
@@ -437,19 +425,20 @@ setTimeout(function(){addButtons();},10000);
 
 var properties = ["color","scale","streamID","sizeOffset","commentBottom","commentHeight","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
 
-runtime.loadSettings(properties, function(item){
-  twitchLog("settings loaded", {
+	runtime.loadSettings(properties, function(item){
+	  twitchLog("settings loaded", {
     hasStreamId: !!item.streamID,
     showOnlyFirstName: !!item.showOnlyFirstName,
     highlightWordsCount: Array.isArray(item.highlightWords) ? item.highlightWords.length : (typeof item.highlightWords === "string" ? item.highlightWords.split(",").length : 0)
   });
 	if (item.streamID){
     channel = item.streamID;
+  } else {
+	runtime.persistStreamId(channel);
+	runtime.ignoreRuntimeError && runtime.ignoreRuntimeError();
   }
 
-  if (channel) {
-    ensureLocalBridge();
-  }
+  ensureLocalBridge();
   if (!unwatchStreamId && runtime.watchStreamId) {
     unwatchStreamId = runtime.watchStreamId(syncSession);
   }
