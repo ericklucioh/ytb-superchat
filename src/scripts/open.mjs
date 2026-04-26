@@ -1,21 +1,18 @@
 import { spawn, spawnSync } from "node:child_process";
 import { loadAppEnv } from "./app-env.mjs";
 
-const target = process.argv[2];
+const parsed = parseArgs(process.argv.slice(2));
+const target = parsed.target;
 const appEnv = loadAppEnv();
-const port = getPort(appEnv);
-const session = getSession(appEnv);
+const port = parsed.port || getPort(appEnv);
+const session = parsed.session || getSession(appEnv);
 
 if (!target || !["site", "overlay"].includes(target)) {
-  console.error("Usage: node src/scripts/open.mjs <site|overlay>");
+  console.error("Usage: node src/scripts/open.mjs <site|overlay> [--port <port>] [--session <id>]");
   process.exit(1);
 }
 
-const pathPart = target === "site"
-  ? "/portal"
-  : `/overlay${session ? `?session=${encodeURIComponent(session)}` : ""}`;
-
-const url = `http://localhost:${port}${pathPart}`;
+const url = buildUrl(target, port, session);
 
 if (process.platform === "win32") {
   spawn("cmd", ["/c", "start", "", url], { detached: true, stdio: "ignore" }).unref();
@@ -23,6 +20,52 @@ if (process.platform === "win32") {
   spawn("open", [url], { detached: true, stdio: "ignore" }).unref();
 } else {
   openUrlOnLinux(url);
+}
+
+function parseArgs(args) {
+  const result = {
+    target: "",
+    port: 0,
+    session: ""
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (!arg.startsWith("--") && !result.target) {
+      result.target = arg;
+      continue;
+    }
+
+    if (arg === "--port" && args[index + 1]) {
+      result.port = Number(args[++index]) || 0;
+      continue;
+    }
+
+    if (arg.startsWith("--port=")) {
+      result.port = Number(arg.split("=", 2)[1]) || 0;
+      continue;
+    }
+
+    if (arg === "--session" && args[index + 1]) {
+      result.session = String(args[++index] || "");
+      continue;
+    }
+
+    if (arg.startsWith("--session=")) {
+      result.session = String(arg.split("=", 2)[1] || "");
+    }
+  }
+
+  return result;
+}
+
+function buildUrl(target, port, session) {
+  const pathPart = target === "site"
+    ? "/portal"
+    : `/overlay${session ? `?session=${encodeURIComponent(session)}` : ""}`;
+
+  return `http://localhost:${port}${pathPart}`;
 }
 
 function getPort(env) {

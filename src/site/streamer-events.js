@@ -177,7 +177,7 @@ export function buildOverlayPayload(event) {
     backgroundColor: event.backgroundColor || "",
     textColor: event.textColor || "",
     chatmessage,
-    chatimg: event.chatimg || (event.platform === "twitch" ? "extension/twitch.png" : "extension/youtube.png"),
+    chatimg: event.chatimg || (event.platform === "twitch" ? "twitch.png" : "youtube.png"),
     hasDonation: event.hasDonation || "",
     hasMembership: event.hasMembership || "",
     type: event.platform,

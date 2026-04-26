@@ -1,5 +1,8 @@
 # Task 22 - revisar wrappers duplicados e encoding de URL
 
+## Status
+Concluído e validado
+
 ## Prioridade
 Baixa media
 
@@ -13,12 +16,12 @@ Os wrappers `.sh` e `.ps1` de abrir portal/overlay contem duplicacao e constroem
 Reduzir ruido operacional e deixar a abertura de site e overlay mais consistente.
 
 ## Checklist
-- [ ] revisar duplicacao entre `open-site`, `open-streamer` e `open-overlay`
-- [ ] decidir se `open-streamer` permanece como alias ou deve ser removido/documentado
-- [ ] aplicar encoding seguro na session quando a URL for montada
-- [ ] manter os wrappers simples para uso local
+- [x] revisar duplicacao entre `open-site`, `open-streamer` e `open-overlay`
+- [x] decidir se `open-streamer` permanece como alias ou deve ser removido/documentado
+- [x] aplicar encoding seguro na session quando a URL for montada
+- [x] manter os wrappers simples para uso local
 
 ## Criterios de aceite
-- [ ] nao existe ambiguidade entre os wrappers
-- [ ] a session vai para a URL com encoding apropriado
-- [ ] o fluxo local continua simples de executar
+- [x] nao existe ambiguidade entre os wrappers
+- [x] a session vai para a URL com encoding apropriado
+- [x] o fluxo local continua simples de executar

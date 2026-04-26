@@ -26,7 +26,12 @@ const mimeTypes = new Map([
 
 const server = http.createServer((req, res) => {
   const requestUrl = new URL(req.url || "/", "http://localhost");
-  const pathname = decodeURIComponent(requestUrl.pathname);
+  const pathname = decodePathname(requestUrl.pathname);
+
+  if (pathname === null) {
+    sendBadRequest(res);
+    return;
+  }
 
   if (pathname === "/src" || pathname === "/src/" || pathname === "/src/index.html") {
     redirect(res, "/portal");
@@ -34,12 +39,12 @@ const server = http.createServer((req, res) => {
   }
 
   if (pathname === "/privacy" || pathname === "/privacy/") {
-    serveFile(path.join(portalRoot, "privacy", "index.html"), res);
+    serveSpecificFile(path.join(portalRoot, "privacy", "index.html"), res);
     return;
   }
 
   if (pathname === "/portal" || pathname === "/portal/") {
-    serveFile(path.join(portalRoot, "index.html"), res);
+    serveSpecificFile(path.join(portalRoot, "index.html"), res);
     return;
   }
 
@@ -50,12 +55,12 @@ const server = http.createServer((req, res) => {
 
   if (pathname.startsWith("/portal/")) {
     const relativePath = pathname.slice("/portal/".length);
-    servePortalFile(relativePath, res);
+    serveFromRoot(portalRoot, relativePath, res);
     return;
   }
 
   if (pathname === "/overlay" || pathname === "/overlay/") {
-    serveFile(path.join(overlayRoot, "index.html"), res);
+    serveSpecificFile(path.join(overlayRoot, "index.html"), res);
     return;
   }
 
@@ -66,12 +71,12 @@ const server = http.createServer((req, res) => {
 
   if (pathname.startsWith("/overlay/")) {
     const relativePath = pathname.slice("/overlay/".length);
-    serveOverlayFile(relativePath, res);
+    serveFromRoot(overlayRoot, relativePath, res);
     return;
   }
 
   if (pathname === "/" || pathname === "/index.html") {
-    serveFile(landingFile, res);
+    serveSpecificFile(landingFile, res);
     return;
   }
 
@@ -80,23 +85,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const filePath = resolvePath(pathname);
-
-  fs.stat(filePath, (err, stats) => {
-    if (!err && stats.isDirectory()) {
-      serveFile(path.join(filePath, "index.html"), res);
-      return;
-    }
-
-    if (!err && stats.isFile()) {
-      serveFile(filePath, res);
-      return;
-    }
-
-    res.statusCode = 404;
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.end("Not found");
-  });
+  res.statusCode = 404;
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.end("Not found");
 });
 
 server.listen(port, () => {
@@ -123,18 +114,47 @@ function getPort() {
   return Number(appEnv.PORT) || 8000;
 }
 
-function resolvePath(pathname) {
-  const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
-  const normalized = path.normalize(relative);
-  return path.join(rootDir, normalized);
+function decodePathname(pathname) {
+  try {
+    return decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
 }
 
-function servePortalFile(relativePath, res) {
-  const normalized = path.normalize(relativePath || "index.html");
-  const filePath = path.join(portalRoot, normalized);
+function serveSpecificFile(filePath, res) {
+  fs.stat(filePath, (err, stats) => {
+    if (!err && stats.isFile()) {
+      serveFile(filePath, res);
+      return;
+    }
+
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.end("Not found");
+  });
+}
+
+function serveFromRoot(root, relativePath, res) {
+  const filePath = resolvePathWithinRoot(root, relativePath);
+  if (!filePath) {
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.end("Not found");
+    return;
+  }
+
   fs.stat(filePath, (err, stats) => {
     if (!err && stats.isDirectory()) {
-      serveFile(path.join(filePath, "index.html"), res);
+      const indexPath = resolvePathWithinRoot(root, path.join(relativePath || "", "index.html"));
+      if (!indexPath) {
+        res.statusCode = 404;
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.end("Not found");
+        return;
+      }
+
+      serveFile(indexPath, res);
       return;
     }
 
@@ -149,24 +169,16 @@ function servePortalFile(relativePath, res) {
   });
 }
 
-function serveOverlayFile(relativePath, res) {
-  const normalized = path.normalize(relativePath || "index.html");
-  const filePath = path.join(overlayRoot, normalized);
-  fs.stat(filePath, (err, stats) => {
-    if (!err && stats.isDirectory()) {
-      serveFile(path.join(filePath, "index.html"), res);
-      return;
-    }
+function resolvePathWithinRoot(root, relativePath = "") {
+  const resolvedRoot = path.resolve(root);
+  const candidate = path.resolve(root, path.normalize(relativePath || "index.html"));
+  const rootPrefix = resolvedRoot.endsWith(path.sep) ? resolvedRoot : `${resolvedRoot}${path.sep}`;
 
-    if (!err && stats.isFile()) {
-      serveFile(filePath, res);
-      return;
-    }
+  if (candidate !== resolvedRoot && !candidate.startsWith(rootPrefix)) {
+    return null;
+  }
 
-    res.statusCode = 404;
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.end("Not found");
-  });
+  return candidate;
 }
 
 function redirect(res, location) {
@@ -195,4 +207,10 @@ function serveRuntimeEnv(res) {
   res.statusCode = 200;
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
   res.end(renderRuntimeEnvScript());
+}
+
+function sendBadRequest(res) {
+  res.statusCode = 400;
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.end("Bad request");
 }

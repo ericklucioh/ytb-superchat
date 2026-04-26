@@ -113,6 +113,7 @@ YTB_PORTAL_MOCK=1 npm run dev
 You can also use `http://localhost:8000/portal?mock=1`.
 
 Linux shell wrappers are also available under `src/scripts/*.sh` if you want to run the helpers directly.
+The Windows `.ps1` wrappers use the same `src/scripts/open.mjs` URL builder, so session encoding stays consistent.
 
 ## Build
 
@@ -121,6 +122,7 @@ npm run build
 ```
 
 This copies the site into `out/`, publishes the overlay under `out/portal/overlay/`, and also packages the extension zip.
+Only the allowlisted portal assets are copied, and the legacy `/src/index.html` redirect entry is regenerated for compatibility.
 
 ## Critério De Pronto
 - Portal abre em `/portal`

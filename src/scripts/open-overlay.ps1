@@ -3,10 +3,4 @@ param(
   [string]$Session = ""
 )
 
-$suffix = ""
-if ($Session) {
-  $suffix = "?session=$Session"
-}
-
-$url = "http://localhost:$Port/overlay$suffix"
-Start-Process $url
+node (Join-Path $PSScriptRoot "open.mjs") overlay --port $Port --session $Session

@@ -1,5 +1,8 @@
 # Task 17 - endurecer o servidor local contra path traversal
 
+## Status
+Concluído e validado
+
 ## Prioridade
 Alta
 
@@ -13,16 +16,16 @@ O servidor em `src/scripts/serve.mjs` aceita caminhos que podem escapar da raiz 
 Garantir que o servidor local so sirva arquivos permitidos e nao exponha o filesystem fora da area esperada.
 
 ## Checklist
-- [ ] encapsular o decode do pathname com tratamento de erro
-- [ ] normalizar o path e rejeitar qualquer tentativa de sair da raiz
-- [ ] bloquear caminhos absolutos, `..` e variantes codificadas
-- [ ] manter as rotas existentes para `/`, `/portal`, `/overlay`, `/privacy` e redirects
-- [ ] confirmar que arquivos validos continuam servidos normalmente
-- [ ] testar uma URL malformada e uma tentativa de traversal
+- [x] encapsular o decode do pathname com tratamento de erro
+- [x] normalizar o path e rejeitar qualquer tentativa de sair da raiz
+- [x] bloquear caminhos absolutos, `..` e variantes codificadas
+- [x] manter as rotas existentes para `/`, `/portal`, `/overlay`, `/privacy` e redirects
+- [x] confirmar que arquivos validos continuam servidos normalmente
+- [x] testar uma URL malformada e uma tentativa de traversal
 
 ## Criterios de aceite
-- [ ] requests com path traversal retornam 404 ou erro controlado
-- [ ] caminhos validos continuam funcionando
-- [ ] o servidor nao quebra com URL encoding invalido
-- [ ] o comportamento de redirecionamento e servico dos arquivos permanece intacto
-- [ ] a raiz do projeto nao pode ser lida por acidente via path manipulado
+- [x] requests com path traversal retornam 404 ou erro controlado
+- [x] caminhos validos continuam funcionando
+- [x] o servidor nao quebra com URL encoding invalido
+- [x] o comportamento de redirecionamento e servico dos arquivos permanece intacto
+- [x] a raiz do projeto nao pode ser lida por acidente via path manipulado

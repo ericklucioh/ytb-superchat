@@ -71,7 +71,6 @@ npm run build
 
 That generates:
 
-- `out/extension/` inside the static build
 - `out/chrome-extension.zip` for packaging
 
 ## Notes

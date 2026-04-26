@@ -2,5 +2,4 @@ param(
   [int]$Port = 8000
 )
 
-$url = "http://localhost:$Port/portal"
-Start-Process $url
+node (Join-Path $PSScriptRoot "open.mjs") site --port $Port
