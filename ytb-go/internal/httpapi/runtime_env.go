@@ -31,7 +31,7 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 	portalPort := 8000
 	goPort := 8080
 
-	if value := firstEnv("YTB_PORTAL_PORT", "PORT"); value != "" {
+	if value := firstEnv("YTB_PORTAL_PORT", "PORTAL_PORT"); value != "" {
 		portalPort = parsePort(value, portalPort)
 	}
 	if value := firstEnv("YTB_GO_PORT", "GO_PORT"); value != "" {

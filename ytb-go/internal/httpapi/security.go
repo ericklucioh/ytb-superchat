@@ -136,7 +136,7 @@ func requestToken(r *http.Request) string {
 
 func defaultAllowedOrigins() []string {
 	portalPort := 8000
-	if value := firstEnv("YTB_PORTAL_PORT", "PORT"); value != "" {
+	if value := firstEnv("YTB_PORTAL_PORT", "PORTAL_PORT"); value != "" {
 		portalPort = parsePort(value, portalPort)
 	}
 

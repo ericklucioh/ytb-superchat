@@ -57,7 +57,8 @@ npm run build
 Isto gera:
 
 - `out/` - static site build
-- `out/portal/overlay/` - overlay assets published by the portal build
+- `out/overlay/` - overlay assets published by the portal build
+- `out/portal/overlay/` - compatibility alias for the same overlay assets
 - `out/chrome-extension.zip` - packaged Chrome extension
 
 ## Chrome extension

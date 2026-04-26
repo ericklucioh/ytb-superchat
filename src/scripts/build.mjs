@@ -14,6 +14,7 @@ const assets = [
   { source: "src/privacy", destination: "privacy" },
   { source: "src/site", destination: "portal/site" },
   { source: "src/overlay", destination: "portal/overlay" },
+  { source: "src/overlay", destination: "overlay" },
   { source: "src/icons", destination: "icons" },
   { source: "src/streamer.css", destination: "portal/streamer.css" },
   { source: "src/logoWhite.svg", destination: "portal/logoWhite.svg" },
@@ -31,6 +32,7 @@ for (const asset of assets) {
 writeRedirectPage(path.join(outDir, "src", "index.html"), "/portal");
 writeRuntimeEnvScript(path.join(outDir, "portal", "runtime-env.js"));
 writeRuntimeEnvScript(path.join(outDir, "portal", "overlay", "runtime-env.js"));
+writeRuntimeEnvScript(path.join(outDir, "overlay", "runtime-env.js"));
 
 createExtensionZip(extensionDir, zipPath);
 

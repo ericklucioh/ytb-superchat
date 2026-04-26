@@ -22,10 +22,12 @@ Publicar apenas o site necessario, mantendo portal, overlay e arquivos estaticos
 - [x] manter os caminhos publicados funcionando: `/`, `/portal`, `/overlay` e `runtime-env.js`
 - [x] confirmar que o zip da extensao continua sendo gerado sem duplicar a arvore inteira do projeto
 - [x] validar o conteudo de `out/` depois do build
+- [x] publicar o overlay em `/overlay` e manter o alias em `/portal/overlay`
 
 ## Criterios de aceite
 - [x] `out/` nao inclui diretorios internos do repo sem necessidade
 - [x] o site continua abrindo normalmente apos o build
 - [x] o overlay continua acessivel no artefato final
+- [x] o overlay continua acessivel em `/overlay` sem depender de rewrite externo
 - [x] o zip da extensao continua sendo gerado no fluxo correto
 - [x] o tamanho final do build fica coerente com um site estatico, nao com a raiz inteira do repo

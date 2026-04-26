@@ -121,7 +121,7 @@ The Windows `.ps1` wrappers use the same `src/scripts/open.mjs` URL builder, so 
 npm run build
 ```
 
-This copies the site into `out/`, publishes the overlay under `out/portal/overlay/`, and also packages the extension zip.
+This copies the site into `out/`, publishes the overlay under `out/overlay/` and `out/portal/overlay/`, and also packages the extension zip.
 Only the allowlisted portal assets are copied, and the legacy `/src/index.html` redirect entry is regenerated for compatibility.
 
 ## Critério De Pronto
