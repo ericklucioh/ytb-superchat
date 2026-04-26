@@ -76,11 +76,8 @@ const server = http.createServer((req, res) => {
   }
 
   if (pathname === "/chrome-extension.zip") {
-    const zipPath = path.join(rootDir, "out", "chrome-extension.zip");
-    if (fs.existsSync(zipPath)) {
-      serveFile(zipPath, res);
-      return;
-    }
+    redirect(res, "https://chromewebstore.google.com/detail/ajnmlnhekekoagppphkfpgngdnpieaka?utm_source=item-share-cb");
+    return;
   }
 
   const filePath = resolvePath(pathname);
