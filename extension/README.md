@@ -46,6 +46,7 @@ The current workflow is:
 - [`sources/youtube.js`](sources/youtube.js) - YouTube chat capture
 - [`sources/twitch.js`](sources/twitch.js) - Twitch chat capture
 - [`settings/options.html`](settings/options.html) - extension settings UI
+- [`settings/options.html`](settings/options.html) also exposes the debug logging toggle for the shared runtime
 
 ## O Que Precisa Mudar
 - O renderer do overlay não mora mais na extensão.
@@ -79,6 +80,7 @@ That generates:
 - If the chat UI changes, the selector logic may need a refresh.
 - The dashboard receives chat events through the extension bridge and publishes overlay updates to the Go backend.
 - Diagnostic snapshots for reconnects, backlog hydration, and delivery anomalies are available through the bridge/page relay.
+- Debug logging can be enabled from the extension options page.
 - The current dependency audit is documented in [`DEPENDENCY-AUDIT.md`](DEPENDENCY-AUDIT.md).
 - See [`README-captura-confiavel.md`](README-captura-confiavel.md) for the reliability problem and the delivery options.
 

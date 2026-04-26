@@ -1,7 +1,14 @@
+if (typeof importScripts === "function") {
+  importScripts("sources/logger.js");
+}
+
 const BACKLOG_KEY_PREFIX = "chatbridge:backlog:";
 const MAX_BACKLOG = 300;
 
 const sessions = new Map();
+const workerLogger = globalThis.OverlayLogger && globalThis.OverlayLogger.createLogger
+  ? globalThis.OverlayLogger.createLogger("service-worker")
+  : null;
 
 function cleanSession(value) {
   return String(value || "").replace(/\s+/g, "").trim();
@@ -239,6 +246,11 @@ function handlePacket(state, packet) {
 
   state.stats.published += 1;
   state.stats.lastPacketAt = Date.now();
+  workerLogger?.debug("publish", {
+    session: state.session,
+    key,
+    backlogSize: state.backlog.length + 1
+  });
   state.backlog.push(normalized);
   if (state.backlog.length > MAX_BACKLOG) {
     state.backlog.splice(0, state.backlog.length - MAX_BACKLOG);
@@ -269,6 +281,10 @@ function processSourcePacket(state, port, message) {
   if (message.type === "heartbeat") {
     state.lastHeartbeatAt = Date.now();
     state.stats.heartbeats += 1;
+    workerLogger?.debug("heartbeat", {
+      session: state.session,
+      sourceCount: state.sources.size
+    });
     sendAck(port, {
       type: "heartbeat",
       session: state.session,
@@ -282,6 +298,10 @@ function processSourcePacket(state, port, message) {
 
   const result = handlePacket(state, message);
   if (result.status === "ignored") {
+    workerLogger?.debug("ignored", {
+      session: state.session,
+      packetType: String(message.type || "")
+    });
     sendDiagnostic(port, state, "ignored", {
       packetType: String(message.type || "")
     });
@@ -289,6 +309,10 @@ function processSourcePacket(state, port, message) {
   }
 
   if (result.status === "duplicate") {
+    workerLogger?.debug("duplicate", {
+      session: state.session,
+      key: result.key || ""
+    });
     sendDiagnostic(port, state, "duplicate", {
       key: result.key || ""
     });
@@ -333,6 +357,12 @@ async function hydrateSession(state) {
     state.hydrated = true;
     state.stats.hydratedCount += 1;
     state.hydrating = null;
+    workerLogger?.debug("hydrated", {
+      session: state.session,
+      backlogSize: state.backlog.length,
+      sourceCount: state.sources.size,
+      dashboardCount: state.dashboards.size
+    });
 
     for (const port of state.dashboards) {
       replayBacklogToPort(state, port);
@@ -390,6 +420,13 @@ function registerPort(port) {
     return;
   }
 
+  workerLogger?.debug("port-connect", {
+    role: info.role,
+    session: state.session,
+    sources: state.sources.size,
+    dashboards: state.dashboards.size
+  });
+
   port.onMessage.addListener((message) => {
     if (!message || typeof message !== "object") {
       return;
@@ -430,6 +467,12 @@ function registerPort(port) {
     } else if (info.role === "dashboard") {
       state.dashboards.delete(port);
     }
+    workerLogger?.debug("port-disconnect", {
+      role: info.role,
+      session: state.session,
+      sources: state.sources.size,
+      dashboards: state.dashboards.size
+    });
   });
 
   if (info.role === "dashboard" && state.hydrated) {

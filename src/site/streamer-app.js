@@ -4,6 +4,7 @@ import { createCurrencyRateService } from "./streamer-rates.js";
 import { createStreamerStore } from "./streamer-store.js";
 import { createStreamerView } from "./streamer-view.js";
 import { createChatBridge } from "./chat-bridge.js";
+import { createLogger } from "./logger.js";
 import { loadMockDeck, getMockRoomId } from "./streamer-mock.js";
 
 const ENV = window.__YTB_ENV__ || {};
@@ -11,13 +12,8 @@ const STORAGE_KEY = ENV.overlayStorageKey || "overlay_state";
 const ROOM_KEY = ENV.overlayRoomKey || "overlay_room_id";
 const DEFAULT_OVERLAY_API_BASE_URL = ENV.overlayApiBaseUrl || "http://localhost:8080";
 const MAX_LIVE_MESSAGES = typeof ENV.overlayMaxLiveMessages === "number" ? ENV.overlayMaxLiveMessages : 500;
-const PORTAL_LOG_PREFIX = ENV.portalLogPrefix || "[portal]";
 const API_TOKEN = cleanText(ENV.apiToken || window.__YTB_API_TOKEN__ || "");
-
-function isTruthyFlag(value) {
-  const normalized = String(value || "").trim().toLowerCase();
-  return ["1", "true", "yes", "on"].includes(normalized);
-}
+const portalLogger = createLogger("portal", ENV.debugLogging);
 
 function isFalsyFlag(value) {
   const normalized = String(value || "").trim().toLowerCase();
@@ -89,10 +85,11 @@ function boot() {
     session: initialRoom,
     onMessage: handleIncomingPayload,
     onReady: () => setStatus("🟢"),
-    onSession: handleBridgeSession
+    onSession: handleBridgeSession,
+    logger: portalLogger.child("bridge")
   });
 
-  console.log(PORTAL_LOG_PREFIX, "boot", {
+  portalLogger.debug("boot", {
     initialRoom,
     mockMode,
     overlayApiBaseUrl: resolveOverlayApiBaseUrl()
@@ -291,7 +288,7 @@ function boot() {
 
     const previousRoom = store.state.roomId;
 
-    console.log(PORTAL_LOG_PREFIX, "connect", {
+    portalLogger.debug("connect", {
       roomId: nextRoom
     });
 
@@ -340,7 +337,7 @@ function boot() {
       return;
     }
 
-    console.log(PORTAL_LOG_PREFIX, "bridge-session", {
+    portalLogger.debug("bridge-session", {
       from: store.state.roomId,
       to: session
     });
@@ -364,6 +361,7 @@ function boot() {
       return;
     }
 
+    portalLogger.debug("incoming-payload", summarizePayload(normalized));
 
     if (store.insertEvent(normalized)) {
       scheduleRender();
@@ -409,7 +407,7 @@ function boot() {
       return;
     }
 
-    console.log(PORTAL_LOG_PREFIX, "send-overlay", {
+    portalLogger.debug("send-overlay", {
       roomId,
       endpoint: `${baseUrl.replace(/\/$/, "")}/api/event`,
       msg: packet?.msg,
@@ -428,7 +426,7 @@ function boot() {
         ...packet
       })
     }).catch((error) => {
-      console.warn("Failed to send overlay packet", error);
+      portalLogger.warn("Failed to send overlay packet", error);
     });
   }
 
@@ -460,7 +458,7 @@ function boot() {
       await navigator.clipboard.writeText(overlayUrl);
       flashSummaryCopyButton("Copiado");
     } catch (error) {
-      console.warn("Failed to copy overlay link", error);
+      portalLogger.warn("Failed to copy overlay link", error);
       fallbackCopyText(overlayUrl);
       flashSummaryCopyButton("Copiado");
     }
@@ -580,6 +578,15 @@ function boot() {
       return;
     }
     lastRenderKey = nextRenderKey;
+
+    portalLogger.debug("render", {
+      roomId: state.roomId,
+      filter: state.filter,
+      totalEvents: counts.totalEvents,
+      priorityEvents: priorityEvents.length,
+      superchatEvents: superchatEvents.length,
+      chatEvents: chatEvents.length
+    });
 
     if (superchatEvents.length) {
       currencyService.warmCurrencyRates(superchatEvents);
@@ -711,7 +718,7 @@ function boot() {
       view.syncFilterButtons(store.state.filter);
       setStatus("🧪 Mock");
 
-      console.log(PORTAL_LOG_PREFIX, "mock-seed", {
+      portalLogger.debug("mock-seed", {
         roomId: mockRoomId,
         packets: mockPackets.length
       });
@@ -731,7 +738,7 @@ function boot() {
 
       scheduleRender();
     } catch (error) {
-      console.warn("Failed to load mock deck", error);
+      portalLogger.warn("Failed to load mock deck", error);
       setStatus("Mock indisponível");
     }
   }

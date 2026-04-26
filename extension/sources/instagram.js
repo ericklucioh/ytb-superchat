@@ -1,4 +1,11 @@
 (function() {
+var console = window.OverlayRuntime && window.OverlayRuntime.createLogger ? window.OverlayRuntime.createLogger("instagram") : {
+	debug() {},
+	info() {},
+	log() {},
+	warn() {},
+	error() {}
+};
 	
 	
 	if (window.location.href.indexOf("/live/") > -1) {

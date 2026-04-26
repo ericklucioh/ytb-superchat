@@ -9,7 +9,7 @@ function cleanSession(value) {
   return String(value || "").replace(/\s+/g, "").trim();
 }
 
-export function createChatBridge({ session = "", onMessage, onReady, onSession } = {}) {
+export function createChatBridge({ session = "", onMessage, onReady, onSession, logger = null } = {}) {
   let currentSession = cleanSession(session);
   let closed = false;
   let readyNotified = false;
@@ -34,31 +34,39 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
       return;
     }
 
-    if (event.data.type === PAGE_SESSION_EVENT) {
-      currentSession = cleanSession(event.data.session || "");
-      if (currentSession && typeof onSession === "function") {
-        onSession(currentSession);
+      if (event.data.type === PAGE_SESSION_EVENT) {
+        currentSession = cleanSession(event.data.session || "");
+        logger?.debug("session", { session: currentSession });
+        if (currentSession && typeof onSession === "function") {
+          onSession(currentSession);
+        }
+        return;
       }
-      return;
-    }
 
-    if (event.data.type === PAGE_EVENT) {
-      const eventSession = cleanSession(event.data.session || "");
-      if (!currentSession || !eventSession || eventSession === currentSession) {
-        emit(event.data.payload);
+      if (event.data.type === PAGE_EVENT) {
+        const eventSession = cleanSession(event.data.session || "");
+        if (!currentSession || !eventSession || eventSession === currentSession) {
+          logger?.debug("event", {
+            session: eventSession || currentSession,
+            type: event.data.payload?.type || "",
+            platform: event.data.payload?.platform || "",
+            id: event.data.payload?.id || ""
+          });
+          emit(event.data.payload);
+        }
+        return;
       }
-      return;
-    }
 
-    if (event.data.type === RELAY_READY_EVENT) {
-      const eventSession = cleanSession(event.data.session || "");
-      if (!currentSession || !eventSession || eventSession === currentSession) {
-        readyNotified = true;
-        if (typeof onReady === "function") {
-          onReady(event.data);
+      if (event.data.type === RELAY_READY_EVENT) {
+        const eventSession = cleanSession(event.data.session || "");
+        if (!currentSession || !eventSession || eventSession === currentSession) {
+          readyNotified = true;
+          logger?.debug("ready", { session: eventSession || currentSession });
+          if (typeof onReady === "function") {
+            onReady(event.data);
+          }
         }
       }
-    }
   }
 
   window.addEventListener("message", handleWindowMessage);
@@ -68,6 +76,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
       return;
     }
 
+    logger?.debug("pageshow", { session: currentSession });
     announcePresence(currentSession);
   }
 
@@ -89,6 +98,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
       );
     }
 
+    logger?.debug("announce", { session: normalized });
     window.postMessage(
       {
         type: PAGE_READY_EVENT,
@@ -104,6 +114,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
   function setSession(nextSession) {
     const normalized = cleanSession(nextSession);
     currentSession = normalized;
+    logger?.debug("set-session", { session: currentSession });
     announcePresence(currentSession);
     return currentSession;
   }
@@ -115,6 +126,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
     }
 
     currentSession = normalized;
+    logger?.debug("refresh-session", { session: currentSession });
     window.postMessage(
       {
         type: PAGE_REFRESH_SESSION_EVENT,
@@ -141,6 +153,7 @@ export function createChatBridge({ session = "", onMessage, onReady, onSession }
 
   function close() {
     closed = true;
+    logger?.debug("close", { session: currentSession });
     window.removeEventListener("message", handleWindowMessage);
     window.removeEventListener("pageshow", handlePageShow);
     listeners.clear();

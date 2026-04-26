@@ -14,7 +14,8 @@ function saveOptions(e) {
     authorColor: document.querySelector("#author-color").value,
     fontFamily: document.querySelector("#font-family").value,
     highlightWords: document.querySelector("#highlight-words").value.toLowerCase().replace(/[^a-z0-9, ]/gi, '').split(",").map(e => e.trim()) || [],
-    showOnlyFirstName: document.querySelector("#firstname").checked
+    showOnlyFirstName: document.querySelector("#firstname").checked,
+    debugLogging: document.querySelector("#debug-logging").checked
   });
   document.querySelector("#savedButton").innerHTML = "Saved";
 }
@@ -30,7 +31,7 @@ function generateStreamID(){
 	return text;
 };
 function restoreOptions() {
-  var properties = ["color","scale","streamID","commentBottom","commentHeight","sizeOffset","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords"];
+  var properties = ["color","scale","streamID","commentBottom","commentHeight","sizeOffset","authorBackgroundColor","authorAvatarBorderColor","authorColor","commentBackgroundColor","commentColor","fontFamily","showOnlyFirstName","highlightWords","debugLogging"];
   chrome.storage.sync.get(properties, function(result){
 	try{
 		document.querySelector("#color").value = result.color || "#000";
@@ -46,6 +47,7 @@ function restoreOptions() {
 		document.querySelector("#comment-color").value = result.commentColor || "#fff";
 		document.querySelector("#font-family").value = result.fontFamily || "Avenir Next, Helvetica, Geneva, Verdana, Arial, sans-serif";
 		document.querySelector("#firstname").checked = result.showOnlyFirstName || false;
+		document.querySelector("#debug-logging").checked = result.debugLogging || false;
 		var highlightWords = result.highlightWords;
 		if (highlightWords){
 			highlightWords = highlightWords.join(", ");

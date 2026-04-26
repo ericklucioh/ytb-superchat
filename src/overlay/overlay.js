@@ -19,6 +19,7 @@ var nextComment = null;
 var runtimeEnv = window.__YTB_ENV__ || {};
 var roomID = runtimeEnv.sessionId || "test";
 var apiToken = String(runtimeEnv.apiToken || window.__YTB_API_TOKEN__ || "").trim();
+var overlayLogger = createOverlayLogger(Boolean(runtimeEnv.debugLogging));
 
 if (urlParams.has("session")){
 	roomID = urlParams.get("session");
@@ -65,13 +66,54 @@ try {
 	isIFrame = true;
 }
 
+overlayLogger.debug("boot", {
+	roomID: roomID,
+	isIFrame: isIFrame,
+	hasApiToken: !!apiToken,
+	timeoutDelay: timeoutDelay || 0
+});
+
+function createOverlayLogger(enabled) {
+	var prefix = "[overlay]";
+	function emit(method, args, force) {
+		var consoleMethod = typeof console !== "undefined" && console[method] ? console[method] : null;
+		if (!consoleMethod || (!force && !enabled)) {
+			return;
+		}
+		consoleMethod.apply(console, [prefix].concat(args || []));
+	}
+	return {
+		debug: function () {
+			emit("debug", Array.prototype.slice.call(arguments), false);
+		},
+		info: function () {
+			emit("info", Array.prototype.slice.call(arguments), false);
+		},
+		log: function () {
+			emit("log", Array.prototype.slice.call(arguments), false);
+		},
+		warn: function () {
+			emit("warn", Array.prototype.slice.call(arguments), true);
+		},
+		error: function () {
+			emit("error", Array.prototype.slice.call(arguments), true);
+		}
+	};
+}
+
 function realign(){
 	if (centering){
-		try{
-			var offsetLeft = (parseInt(window.innerWidth) - parseInt(document.getElementById("message").clientWidth)) / 2;
-			document.documentElement.style.setProperty("--highlight-chat-left", offsetLeft + "px");
-			console.log(offsetLeft);
-		} catch(e){}
+	try{
+		var offsetLeft = (parseInt(window.innerWidth) - parseInt(document.getElementById("message").clientWidth)) / 2;
+		document.documentElement.style.setProperty("--highlight-chat-left", offsetLeft + "px");
+		overlayLogger.debug("realign", {
+			offsetLeft: offsetLeft
+		});
+	} catch(e){
+		overlayLogger.warn("realign-failed", {
+			error: String(e && e.message ? e.message : e)
+		});
+	}
 	}
 	try {
 		var img = document.getElementById("img");
@@ -87,13 +129,17 @@ function realign(){
 			document.getElementById("imgContent").style.right = 0;
 			document.getElementById("imgContent").style.left = "300px";
 		}
-	} catch(e){console.warn(e);}
+	} catch(e){
+		overlayLogger.warn("resize-failed", {
+			error: String(e && e.message ? e.message : e)
+		});
+	}
 }
 
 window.onresize = realign;
 
 function applySettings(item){
-	console.log(item);
+	overlayLogger.debug("apply-settings", item);
 
 	var color = "#000";
 	if(item.color) {
@@ -142,7 +188,11 @@ try{
 	if (parseInt(window.innerHeight) < 500){
 		document.documentElement.style.setProperty("--image-content-max-height", window.innerHeight);
 	}
-}catch(e){console.error(e);}
+}catch(e){
+	overlayLogger.error("image-max-height-failed", {
+		error: String(e && e.message ? e.message : e)
+	});
+}
 
 function getChromeVersion() {
 	var raw = navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./);
@@ -157,6 +207,10 @@ var conCon = 1;
 
 function setupSocket(){
 	socket.onclose = function (){
+		overlayLogger.debug("socket-close", {
+			roomID: roomID,
+			retry: conCon
+		});
 		setTimeout(function(){
 			conCon += 1;
 			socket = new WebSocket(getOverlaySocketUrl());
@@ -165,6 +219,9 @@ function setupSocket(){
 	};
 	socket.onopen = function (){
 		conCon = 1;
+		overlayLogger.debug("socket-open", {
+			roomID: roomID
+		});
 		socket.send(JSON.stringify({"join":roomID}));
 	};
 	socket.addEventListener('message', function (event) {
@@ -173,7 +230,9 @@ function setupSocket(){
 			try{
 				data = JSON.parse(event.data);
 			}catch(e){
-				console.warn("overlay websocket payload invalid", e);
+				overlayLogger.warn("invalid-websocket-payload", {
+					error: String(e && e.message ? e.message : e)
+				});
 				return;
 			}
 			if (data && data.feed){
@@ -182,6 +241,11 @@ function setupSocket(){
 			if (!("contents" in data)){
 				data.contents = data;
 			}
+			overlayLogger.debug("message", {
+				type: data.type || "",
+				hasContents: !!data.contents,
+				feed: !!data.feed
+			});
 			processEvent(data);
 		}
 	});
@@ -223,7 +287,9 @@ function appendTokenToUrl(url) {
 var socket = new WebSocket(getOverlaySocketUrl());
 setupSocket();
 if (roomID.length === 10){
-	console.error("Old versions of this app are no longer supported. Please go to ytb.ericklucioh.com and update your extension to the newest version if having issues");
+	overlayLogger.error("legacy-version", {
+		roomID: roomID
+	});
 }
 
 var iframeTimeout = null;
@@ -324,7 +390,9 @@ function processEvent(data){
 				try{
 					var offsetLeft = (parseInt(window.innerWidth) - parseInt(document.getElementById("message").clientWidth))/2;
 					document.documentElement.style.setProperty("--highlight-chat-left", offsetLeft+"px");
-					console.log(offsetLeft);
+					overlayLogger.debug("realign", {
+						offsetLeft: offsetLeft
+					});
 				} catch(e){}
 			}
 
@@ -379,7 +447,9 @@ function processPoll(data){
 	if (!data.answers){
 		data.answers=[];
 	}
-	console.log(data);
+	overlayLogger.debug("poll", {
+		answerCount: data.answers.length
+	});
 	document.getElementById("output").innerHTML = renderPollMarkup(data);
 
 	document.getElementById("output").classList.remove("fadeout");

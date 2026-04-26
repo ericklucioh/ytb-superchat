@@ -4,7 +4,12 @@ var channel = "";
 var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
 var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
 var localBridge = null;
-function twitchLog() {}
+var twitchLogger = runtime.createLogger ? runtime.createLogger("twitch") : null;
+function twitchLog(message, extra) {
+	if (twitchLogger) {
+		twitchLogger.debug(message, extra || {});
+	}
+}
 var unwatchStreamId = null;
 var twitchSweepTimer = null;
 var twitchSweepInterval = 0;
@@ -21,6 +26,9 @@ function syncSession(nextSession) {
 	if (localBridge) {
 		localBridge.setSession(channel);
 	}
+	twitchLog("session", {
+		session: channel
+	});
 }
 
 function actionwtf(){ // legacy overlay connection
@@ -48,6 +56,11 @@ function pushFeedMessage(data){
 	});
 	if (sent) {
 		outputCounter = nextId;
+		twitchLog("publish", {
+			id: data && data.id ? data.id : "",
+			eventType: data && data.eventType ? data.eventType : "",
+			session: channel
+		});
 	}
 	return sent;
 }

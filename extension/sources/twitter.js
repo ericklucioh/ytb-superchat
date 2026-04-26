@@ -1,5 +1,12 @@
 
 (function() {
+var console = window.OverlayRuntime && window.OverlayRuntime.createLogger ? window.OverlayRuntime.createLogger("twitter") : {
+	debug() {},
+	info() {},
+	log() {},
+	warn() {},
+	error() {}
+};
 var soca=false;
 function generateStreamID(){
 	var text = "";
@@ -289,7 +296,6 @@ chrome.storage.sync.get(properties, function(item){
 
 
 })();
-
 
 
 

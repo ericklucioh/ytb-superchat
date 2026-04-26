@@ -40,6 +40,19 @@
   const streamIdListeners = new Set();
   const DEFAULT_OVERLAY_WS_URL = resolveDefaultOverlayWebSocketUrl();
 
+  function createFallbackLogger() {
+    return {
+      debug() {},
+      info() {},
+      log() {},
+      warn() {},
+      error() {},
+      child() {
+        return createFallbackLogger();
+      }
+    };
+  }
+
   function resolveDefaultOverlayWebSocketUrl() {
     try {
       if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getManifest) {
@@ -389,6 +402,14 @@
     };
   }
 
+  function createLogger(namespace, enabled) {
+    if (global.OverlayLogger && typeof global.OverlayLogger.createLogger === "function") {
+      return global.OverlayLogger.createLogger(namespace, enabled);
+    }
+
+    return createFallbackLogger();
+  }
+
   global.OverlayRuntime = {
     DEFAULT_SEND_PROPERTIES,
     DEFAULT_SETTINGS_PROPERTIES,
@@ -404,6 +425,7 @@
     createSocketBridge,
     sendBridgeMessage,
     watchStreamId,
-    resolveOverlayWebSocketUrl
+    resolveOverlayWebSocketUrl,
+    createLogger
   };
 })(window);

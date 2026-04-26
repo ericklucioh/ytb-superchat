@@ -1,11 +1,12 @@
 (function () {
 	var runtime = window.OverlayRuntime;
-	var avatarHelpers = window.OverlayAvatarHelpers || {};
-	var channel = "";
-	var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
-	var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
-	var localBridge = null;
-	var unwatchStreamId = null;
+var avatarHelpers = window.OverlayAvatarHelpers || {};
+var channel = "";
+var outputCounter = 0; // used to avoid doubling up on old messages if lag or whatever
+var sendProperties = runtime.DEFAULT_SEND_PROPERTIES;
+var localBridge = null;
+var youtubeLog = runtime.createLogger ? runtime.createLogger("youtube") : null;
+var unwatchStreamId = null;
 
 	function syncSession(nextSession) {
 		var session = String(nextSession || "").replace(/\s+/g, "").trim();
@@ -18,6 +19,9 @@
 		if (localBridge) {
 			localBridge.setSession(channel);
 		}
+		youtubeLog?.debug("session", {
+			session: channel
+		});
 	}
 
 	function actionwtf(){ // legacy overlay connection
@@ -37,6 +41,11 @@
 		});
 		if (sent) {
 			outputCounter = nextId;
+			youtubeLog?.debug("publish", {
+				id: data && data.id ? data.id : "",
+				eventType: data && data.eventType ? data.eventType : "",
+				session: channel
+			});
 		}
 		return sent;
 	}
@@ -209,6 +218,11 @@
 		channel = item.streamID;
 		ensureLocalBridge();
 	  }
+
+	  youtubeLog?.debug("boot", {
+		session: channel,
+		hasSession: !!item.streamID
+	  });
 
 	  if (!unwatchStreamId && runtime.watchStreamId) {
 		unwatchStreamId = runtime.watchStreamId(syncSession);

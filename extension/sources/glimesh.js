@@ -1,3 +1,10 @@
+var console = window.OverlayRuntime && window.OverlayRuntime.createLogger ? window.OverlayRuntime.createLogger("glimesh") : {
+	debug() {},
+	info() {},
+	log() {},
+	warn() {},
+	error() {}
+};
 var soca=false;
 function generateStreamID(){
 	var text = "";

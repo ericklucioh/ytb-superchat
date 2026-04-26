@@ -4,6 +4,9 @@
   }
 
   const NativeWebSocket = global.WebSocket;
+  const bridgeLogger = global.OverlayLogger && global.OverlayLogger.createLogger
+    ? global.OverlayLogger.createLogger("local-bridge")
+    : null;
 
   function cleanSession(value) {
     return String(value || "").replace(/\s+/g, "").trim();
@@ -115,6 +118,12 @@
     }
 
     function emitDiagnostic(reason, extra = {}) {
+      bridgeLogger?.debug(reason, {
+        role,
+        session: currentSession,
+        pendingSize: pendingPackets.length,
+        extra
+      });
       if (typeof onMessage !== "function") {
         return;
       }
@@ -157,6 +166,11 @@
 
       diagnostics.reconnects += 1;
       diagnostics.lastReconnectAt = Date.now();
+      bridgeLogger?.debug("schedule-reconnect", {
+        role,
+        session: currentSession,
+        delay: reconnectDelay
+      });
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
         if (closed || suspended || port) {
@@ -178,6 +192,12 @@
       try {
         port.postMessage(packet);
         diagnostics.sent += 1;
+        bridgeLogger?.debug("send", {
+          role,
+          session: currentSession,
+          type: packet?.type || "",
+          pendingSize: pendingPackets.length
+        });
         return true;
       } catch {
         diagnostics.sendFailures += 1;
@@ -344,6 +364,11 @@
       portListeners = null;
       clearReconnectTimer();
       detachPortListeners(nextPort, listeners);
+      bridgeLogger?.debug("disconnect", {
+        role,
+        session: currentSession,
+        pendingSize: pendingPackets.length
+      });
 
       try {
         nextPort.disconnect();
@@ -363,6 +388,12 @@
 
       lastAckAt = Date.now();
       diagnostics.lastAckAt = lastAckAt;
+      bridgeLogger?.debug("ack", {
+        role,
+        session: currentSession,
+        packetType: message.packetType || "",
+        key: String(message.key || message.id || "")
+      });
 
       if (message.packetType === "heartbeat") {
         diagnostics.heartbeatAcks += 1;
@@ -382,6 +413,11 @@
         return false;
       }
 
+      bridgeLogger?.debug("heartbeat", {
+        role,
+        session: currentSession,
+        pendingSize: pendingPackets.length
+      });
       return sendRawPacket({
         type: "heartbeat",
         session: currentSession,
@@ -440,6 +476,11 @@
         port = nextPort;
         portToken += 1;
         suspended = false;
+        bridgeLogger?.debug("connect", {
+          role,
+          session: currentSession,
+          pendingSize: pendingPackets.length
+        });
         const token = portToken;
         const listeners = {
           onMessage(message) {
@@ -473,6 +514,11 @@
             port = null;
             portListeners = null;
             diagnostics.reconnectFailures += 1;
+            bridgeLogger?.debug("port-disconnect", {
+              role,
+              session: currentSession,
+              pendingSize: pendingPackets.length
+            });
 
             if (!suspended) {
               scheduleReconnect();
@@ -515,6 +561,12 @@
       };
 
       registerPendingPacket(packet);
+      bridgeLogger?.debug("publish", {
+        role,
+        session: currentSession,
+        packetId: packet?.payload?.id || "",
+        pendingSize: pendingPackets.length
+      });
 
       const hadPort = !!port;
       const shouldSendImmediately = role !== "source" || pendingHydrated;

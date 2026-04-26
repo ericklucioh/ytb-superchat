@@ -8,6 +8,7 @@ export function resolveRuntimeEnv() {
   const portalPort = readPort(env, ["PORT"], 8000);
   const sessionId = readText(env, ["YTB_SESSION_ID", "SESSION"]);
   const portalMockMode = readBool(env, ["YTB_PORTAL_MOCK", "PORTAL_MOCK"]);
+  const debugLogging = readBool(env, ["YTB_DEBUG_LOGS", "DEBUG_LOGS"]);
   const apiToken = readText(env, ["YTB_API_TOKEN", "YTB_SHARED_SECRET"]);
   const overlayApiBaseUrl = resolveOverlayApiBaseUrl(env, goPort);
   const overlayWsUrl = readText(env, ["YTB_OVERLAY_WS_URL"]) || deriveWebSocketUrl(overlayApiBaseUrl, goPort);
@@ -18,6 +19,7 @@ export function resolveRuntimeEnv() {
     portalPort,
     sessionId,
     portalMockMode,
+    debugLogging,
     apiToken,
     overlayApiBaseUrl,
     overlayWsUrl
