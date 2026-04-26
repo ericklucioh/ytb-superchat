@@ -4,11 +4,8 @@
 Alta
 
 ## Depende de
-- `todo/01-youtube-observer-guard.md`
-- `todo/02-twitch-remove-avatar-network-from-critical-path.md`
-- `todo/03-twitch-background-sweep-hardening.md`
-- `todo/04-bridge-delivery-ack-validation.md`
-- `todo/05-service-worker-backlog-recovery.md`
+- `extension/tests/bridge-contract.test.js`
+- `extension/DEPENDENCY-AUDIT.md`
 
 ## Problema
 As duas plataformas principais precisam de validacao manual em ambiente real antes de liberar para cliente.

@@ -7,10 +7,10 @@ Pendente
 Alta
 
 ## Depende de
-- `todo/09-ytb-go-auth-and-cors-hardening.md`
-- `todo/10-ytb-go-ws-backpressure-and-drop-visibility.md`
-- `todo/11-ytb-go-session-persistence-and-history.md`
-- `todo/12-ytb-go-debug-ops-and-build-env.md`
+- `ytb-go/internal/httpapi/security.go`
+- `ytb-go/internal/httpapi/runtime_env.go`
+- `ytb-go/internal/ws/hub.go`
+- `ytb-go/internal/ws/client.go`
 
 ## Problema
 Os testes unitarios cobrem regra de negocio, mas ainda falta um fechamento manual do backend rodando de ponta a ponta.
