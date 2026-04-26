@@ -38,7 +38,9 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 		hub = ws.NewHub(sm)
 	}
 
-	mux.HandleFunc("GET /health", HealthHandler)
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		HealthHandler(policy, w, r)
+	})
 	mux.HandleFunc("GET /api/session", func(w http.ResponseWriter, r *http.Request) {
 		if !policy.authorizeSensitiveRequest(w, r) {
 			return

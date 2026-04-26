@@ -1,7 +1,7 @@
 # ytb-go debug and build ops
 
 ## Status
-Concluído
+Concluído e validado
 
 ## Prioridade
 Media

@@ -35,6 +35,33 @@ func TestOverlayRouteServesIndex(t *testing.T) {
 	}
 }
 
+func TestHealthRouteUsesCorsPolicy(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("Origin", "http://localhost:8000")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("unexpected status: %d", rec.Code)
+	}
+
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:8000" {
+		t.Fatalf("unexpected CORS origin: %q", got)
+	}
+
+	var payload map[string]any
+	if err := json.NewDecoder(rec.Body).Decode(&payload); err != nil {
+		t.Fatalf("decode health response: %v", err)
+	}
+
+	if payload["ok"] != true {
+		t.Fatalf("unexpected health payload: %#v", payload)
+	}
+}
+
 func TestEventRouteStoresOverlay(t *testing.T) {
 	sm := session.NewManager()
 	hub := ws.NewHub(sm)

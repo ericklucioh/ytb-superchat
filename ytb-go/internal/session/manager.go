@@ -138,6 +138,48 @@ func (m *Manager) List() []*Session {
 	return result
 }
 
+func (m *Manager) Delete(id string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.sessions[id]; !ok {
+		return false
+	}
+
+	delete(m.sessions, id)
+	log.Printf("[go:session] delete session=%q", id)
+	return true
+}
+
+func (m *Manager) RemoveInactive(maxAge time.Duration) int {
+	if maxAge <= 0 {
+		return 0
+	}
+
+	cutoff := time.Now().UTC().Add(-maxAge)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	removed := 0
+	for id, s := range m.sessions {
+		if s == nil {
+			continue
+		}
+
+		s.mu.RLock()
+		lastActivity := s.LastActivity
+		s.mu.RUnlock()
+
+		if lastActivity.IsZero() || lastActivity.Before(cutoff) {
+			delete(m.sessions, id)
+			removed++
+			log.Printf("[go:session] reaper delete session=%q lastActivity=%s cutoff=%s", id, lastActivity.UTC().Format(time.RFC3339), cutoff.UTC().Format(time.RFC3339))
+		}
+	}
+
+	return removed
+}
+
 func truncate(value string, limit int) string {
 	if limit <= 0 || len(value) <= limit {
 		return value

@@ -34,3 +34,25 @@ func TestSessionBoundedHistoryKeepsNewestEvents(t *testing.T) {
 		t.Fatalf("expected newest event to be kept, got %d", events[len(events)-1].Timestamp)
 	}
 }
+
+func TestRemoveInactiveDropsStaleSessions(t *testing.T) {
+	sm := NewManager()
+	fresh := sm.GetOrCreate("fresh")
+	stale := sm.GetOrCreate("stale")
+
+	now := time.Now().UTC()
+	fresh.LastActivity = now
+	stale.LastActivity = now.Add(-2 * time.Hour)
+
+	removed := sm.RemoveInactive(time.Hour)
+	if removed != 1 {
+		t.Fatalf("expected one session removed, got %d", removed)
+	}
+
+	if _, ok := sm.Get("fresh"); !ok {
+		t.Fatalf("expected fresh session to remain")
+	}
+	if _, ok := sm.Get("stale"); ok {
+		t.Fatalf("expected stale session to be removed")
+	}
+}

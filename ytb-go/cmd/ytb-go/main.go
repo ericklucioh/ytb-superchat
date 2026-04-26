@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
+	"ytb-go/internal/cleanup"
 	"ytb-go/internal/httpapi"
 	"ytb-go/internal/session"
 	"ytb-go/internal/ws"
@@ -21,6 +23,7 @@ func main() {
 	hub := ws.NewHub(sm)
 	overlayDir := resolveOverlayDir(*overlayDirFlag)
 	log.Printf("[go:main] overlayDir=%q", overlayDir)
+	cleanup.StartCleaner(sm, resolveReaperInterval(), resolveReaperMaxAge())
 	router := httpapi.NewRouter(sm, hub, overlayDir)
 
 	addr := fmt.Sprintf(":%d", *port)
@@ -82,4 +85,24 @@ func firstEnv(keys ...string) string {
 	}
 
 	return ""
+}
+
+func resolveReaperInterval() time.Duration {
+	return resolveDuration(5*time.Minute, "YTB_SESSION_REAPER_INTERVAL", "SESSION_REAPER_INTERVAL")
+}
+
+func resolveReaperMaxAge() time.Duration {
+	return resolveDuration(24*time.Hour, "YTB_SESSION_REAPER_MAX_AGE", "SESSION_REAPER_MAX_AGE")
+}
+
+func resolveDuration(fallback time.Duration, keys ...string) time.Duration {
+	for _, key := range keys {
+		if value := os.Getenv(key); value != "" {
+			if parsed, err := time.ParseDuration(value); err == nil && parsed > 0 {
+				return parsed
+			}
+		}
+	}
+
+	return fallback
 }

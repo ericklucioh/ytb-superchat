@@ -1,9 +1,6 @@
 package httpapi
 
-import (
-	"encoding/json"
-	"net/http"
-)
+import "net/http"
 
 type HealthResponse struct {
 	OK      bool   `json:"ok"`
@@ -11,10 +8,8 @@ type HealthResponse struct {
 	Version string `json:"version"`
 }
 
-func HealthHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(HealthResponse{
+func HealthHandler(policy securityPolicy, w http.ResponseWriter, r *http.Request) {
+	policy.writeJSON(w, r, http.StatusOK, HealthResponse{
 		OK:      true,
 		Service: "ytb-go",
 		Version: "1.0.0",

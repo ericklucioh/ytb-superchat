@@ -51,5 +51,7 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 - `YTB_API_TOKEN` habilita o gate de autenticação para API e WebSocket
 - `YTB_SHARED_SECRET` é um alias compatível para o mesmo token
 - `YTB_ALLOWED_ORIGINS` define a allowlist de origens CORS confiáveis
+- `YTB_SESSION_REAPER_INTERVAL` define com que frequência o reaper roda, por padrão `5m`
+- `YTB_SESSION_REAPER_MAX_AGE` define após quanto tempo sem atividade a sessão é removida, por padrão `24h`
 - `GO_PORT` continua aceito como fallback por compatibilidade
 - `OVERLAY_DIR` continua aceito como fallback por compatibilidade

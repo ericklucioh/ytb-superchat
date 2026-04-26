@@ -1,7 +1,7 @@
 # ytb-go session persistence and history
 
 ## Status
-Concluído
+Concluído e validado
 
 ## Prioridade
 Media alta

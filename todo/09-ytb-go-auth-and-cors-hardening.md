@@ -1,7 +1,7 @@
 # ytb-go auth and CORS hardening
 
 ## Status
-Concluído
+Concluído e validado
 
 ## Prioridade
 Alta

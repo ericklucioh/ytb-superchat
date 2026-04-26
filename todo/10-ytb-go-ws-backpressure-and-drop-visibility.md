@@ -1,7 +1,7 @@
 # ytb-go WebSocket backpressure
 
 ## Status
-Concluído
+Concluído e validado
 
 ## Prioridade
 Alta
