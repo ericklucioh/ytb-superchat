@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"ytb-go/internal/keepawake"
 	"ytb-go/internal/model"
 	"ytb-go/internal/session"
 	"ytb-go/internal/ws"
@@ -28,6 +29,10 @@ type eventRequest struct {
 }
 
 func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeMux {
+	return newRouterWithKeepAwake(sm, hub, overlayDir, keepawake.NewManager(keepawake.Config{}))
+}
+
+func newRouterWithKeepAwake(sm *session.Manager, hub *ws.Hub, overlayDir string, keepAwakeManager *keepawake.Manager) *http.ServeMux {
 	mux := http.NewServeMux()
 	policy := newSecurityPolicy()
 
@@ -37,9 +42,24 @@ func NewRouter(sm *session.Manager, hub *ws.Hub, overlayDir string) *http.ServeM
 	if hub == nil {
 		hub = ws.NewHub(sm)
 	}
+	if keepAwakeManager == nil {
+		keepAwakeManager = keepawake.NewManager(keepawake.Config{})
+	}
 
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		HealthHandler(policy, w, r)
+	})
+	mux.HandleFunc("POST /keep-awake/start", func(w http.ResponseWriter, r *http.Request) {
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		handleKeepAwakeStart(policy, keepAwakeManager, w, r)
+	})
+	mux.HandleFunc("GET /keep-awake/status", func(w http.ResponseWriter, r *http.Request) {
+		if !policy.authorizeSensitiveRequest(w, r) {
+			return
+		}
+		handleKeepAwakeStatus(policy, keepAwakeManager, w, r)
 	})
 	mux.HandleFunc("GET /api/session", func(w http.ResponseWriter, r *http.Request) {
 		if !policy.authorizeSensitiveRequest(w, r) {

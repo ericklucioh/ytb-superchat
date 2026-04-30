@@ -130,6 +130,7 @@ body::before {
 
 .filter-button,
 .summary-button,
+.keep-awake-button,
 .session-row button,
 .event-actions button,
 .detail-actions button,
@@ -144,6 +145,7 @@ body::before {
 
 .filter-button,
 .summary-button,
+.keep-awake-button,
 .session-row button,
 .summary-action,
 .summary-close {
@@ -163,8 +165,36 @@ body::before {
 }
 
 .summary-button,
+.keep-awake-button,
 .session-row button {
   background: linear-gradient(135deg, rgba(0, 79, 120, 0.9), rgba(14, 68, 97, 0.92));
+}
+
+.keep-awake-button {
+  border-color: rgba(33, 197, 138, 0.38);
+  background: linear-gradient(135deg, rgba(10, 94, 67, 0.96), rgba(18, 121, 87, 0.94));
+  color: #eafff6;
+}
+
+.keep-awake-button:hover:not(:disabled) {
+  border-color: rgba(33, 197, 138, 0.56);
+  box-shadow: 0 0 0 1px rgba(33, 197, 138, 0.12);
+}
+
+.keep-awake-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 22px;
+  padding: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.keep-awake-status[data-state="active"] {
+  color: rgba(170, 255, 224, 0.92);
 }
 
 .summary-button:hover,

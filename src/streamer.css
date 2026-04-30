@@ -123,6 +123,7 @@ body {
 }
 
 .session-row button,
+.keep-awake-button,
 .event-actions button,
 .filter-button {
   border: 0;
@@ -134,7 +135,8 @@ body {
   transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
-.session-row button {
+.session-row button,
+.keep-awake-button {
   min-width: 96px;
   color: white;
   background: linear-gradient(135deg, #7c3aed, #4f46e5);
@@ -142,6 +144,7 @@ body {
 }
 
 .session-row button:hover,
+.keep-awake-button:hover,
 .event-actions button:hover,
 .filter-button:hover {
   transform: translateY(-1px);
@@ -178,6 +181,28 @@ body {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.keep-awake-control {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.keep-awake-status {
+  margin: 0;
+  max-width: 30ch;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+.keep-awake-button:disabled {
+  opacity: 0.72;
+  cursor: progress;
+  transform: none;
 }
 
 .mock-badge {
@@ -284,6 +309,12 @@ body {
   transition: transform 0.15s ease, background 0.15s ease;
   font-size: 0.84rem;
   white-space: nowrap;
+}
+
+.keep-awake-button {
+  flex: 0 1 auto;
+  min-width: 260px;
+  white-space: normal;
 }
 
 .summary-button:hover {
@@ -930,6 +961,16 @@ body {
     width: 100%;
   }
 
+  .keep-awake-control {
+    width: 100%;
+    margin-left: 0;
+    align-items: stretch;
+  }
+
+  .keep-awake-status {
+    text-align: left;
+  }
+
   .stats-board-head {
     align-items: stretch;
   }
@@ -982,5 +1023,10 @@ body {
 
   .filter-group--inline .filter-button {
     flex: 1 1 calc(50% - 8px);
+  }
+
+  .keep-awake-button {
+    width: 100%;
+    min-width: 0;
   }
 }

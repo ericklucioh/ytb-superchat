@@ -17,6 +17,7 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 
 ## O Que Existe Hoje
 - Rotas HTTP para health, sessão, eventos, rooms e overlay
+- Rotas HTTP para keep-awake manual com `/keep-awake/start` e `/keep-awake/status`
 - WebSocket por sessão
 - Armazenamento em memória do último overlay
 - Integração com o portal via `/api/event`
@@ -28,7 +29,7 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 - o OBS reconecta sem perder a sessão
 
 ## Critério De Pronto
-- O backend responde em `/health`, `/api/session`, `/api/event`, `/api/rooms`, `/ws` e `/overlay`
+- O backend responde em `/health`, `/keep-awake/start`, `/keep-awake/status`, `/api/session`, `/api/event`, `/api/rooms`, `/ws` e `/overlay`
 - O overlay da sessão correta volta após reconexão
 - Múltiplas sessões convivem sem conflito
 
@@ -51,6 +52,7 @@ O binário serve o overlay do OBS, recebe eventos do portal e mantém o último 
 - `YTB_API_TOKEN` habilita o gate de autenticação para API e WebSocket
 - `YTB_SHARED_SECRET` é um alias compatível para o mesmo token
 - `YTB_ALLOWED_ORIGINS` define a allowlist de origens CORS confiáveis
+- `PUBLIC_BACKEND_URL` ou `YTB_PUBLIC_BACKEND_URL` definem a URL pública usada pelo keep-awake para pingar `/health`
 - `YTB_PORTAL_PORT` define a porta do portal usada como fallback na allowlist CORS e no runtime env, por padrão `8000`
 - `PORTAL_PORT` continua aceito como fallback de compatibilidade para a porta do portal
 - `YTB_SESSION_REAPER_INTERVAL` define com que frequência o reaper roda, por padrão `5m`

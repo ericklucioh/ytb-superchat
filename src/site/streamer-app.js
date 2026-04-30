@@ -27,6 +27,8 @@ function boot() {
     generateOverlayButton: document.getElementById("generate-overlay-button"),
     connectButton: document.getElementById("connect-button"),
     summaryButton: document.getElementById("summary-button"),
+    keepAwakeButton: document.getElementById("keep-awake-button"),
+    keepAwakeStatus: document.getElementById("keep-awake-status"),
     connectionStatus: document.getElementById("connection-status"),
     mockBadge: document.getElementById("mock-badge"),
     summaryPopup: document.getElementById("summary-popup"),
@@ -150,6 +152,14 @@ function boot() {
     elements.summaryCopyOverlayButton.addEventListener("click", () => {
       void copyOverlayLink();
     });
+  }
+
+  if (elements.keepAwakeButton && elements.keepAwakeStatus) {
+    elements.keepAwakeButton.addEventListener("click", () => {
+      void activateKeepAwake();
+    });
+
+    void refreshKeepAwakeStatus();
   }
 
   if (elements.generateOverlayButton) {
@@ -476,7 +486,13 @@ function boot() {
     }
 
     const runtimeEnv = window.__YTB_ENV__ || {};
-    const runtimeApiBase = cleanText(runtimeEnv.overlayApiBaseUrl || window.__OVERLAY_API_BASE_URL__ || "");
+    const runtimeApiBase = cleanText(
+      runtimeEnv.publicBackendUrl
+      || runtimeEnv.overlayApiBaseUrl
+      || window.__PUBLIC_BACKEND_URL__
+      || window.__OVERLAY_API_BASE_URL__
+      || ""
+    );
     if (runtimeApiBase) {
       return normalizeApiBaseUrl(runtimeApiBase);
     }
@@ -501,6 +517,99 @@ function boot() {
       fallbackCopyText(overlayUrl);
       flashSummaryCopyButton("Copiado");
     }
+  }
+
+  async function activateKeepAwake() {
+    const baseUrl = resolveOverlayApiBaseUrl();
+    if (!baseUrl) {
+      updateKeepAwakeStatus("Não foi possível ativar o keep-awake.", false);
+      return;
+    }
+
+    setKeepAwakeButtonBusy(true);
+    updateKeepAwakeStatus("Ativando keep-awake...", false);
+
+    try {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/start`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`keep-awake start failed with status ${response.status}`);
+      }
+
+      const payload = await response.json();
+      updateKeepAwakeStatusFromPayload(payload);
+    } catch (error) {
+      portalLogger.warn("Failed to activate keep-awake", error);
+      updateKeepAwakeStatus("Não foi possível ativar o keep-awake.", false);
+    } finally {
+      setKeepAwakeButtonBusy(false);
+    }
+  }
+
+  async function refreshKeepAwakeStatus() {
+    const baseUrl = resolveOverlayApiBaseUrl();
+    if (!baseUrl) {
+      updateKeepAwakeStatus("Keep-awake indisponível.", false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/status`, {
+        headers: {
+          ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
+        }
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = await response.json();
+      updateKeepAwakeStatusFromPayload(payload);
+    } catch (error) {
+      portalLogger.warn("Failed to refresh keep-awake status", error);
+    }
+  }
+
+  function updateKeepAwakeStatusFromPayload(payload) {
+    if (!elements.keepAwakeStatus) {
+      return;
+    }
+
+    const active = Boolean(payload && payload.active);
+    const until = payload && payload.until ? new Date(payload.until) : null;
+    if (active && until instanceof Date && !Number.isNaN(until.getTime())) {
+      updateKeepAwakeStatus(`Servidor será mantido acordado por 12 horas. Até ${formatFriendlyDateTime(until)}.`, true);
+      return;
+    }
+
+    updateKeepAwakeStatus("Keep-awake inativo.", false);
+  }
+
+  function updateKeepAwakeStatus(message, isActive) {
+    if (!elements.keepAwakeStatus) {
+      return;
+    }
+
+    elements.keepAwakeStatus.textContent = message;
+    elements.keepAwakeStatus.dataset.state = isActive ? "active" : "idle";
+  }
+
+  function setKeepAwakeButtonBusy(isBusy) {
+    if (!elements.keepAwakeButton) {
+      return;
+    }
+
+    elements.keepAwakeButton.disabled = isBusy;
+    elements.keepAwakeButton.textContent = isBusy
+      ? "Ativando keep-awake..."
+      : "Manter servidor acordado durante a live";
   }
 
   function buildOverlayUrl(sessionId) {
@@ -563,6 +672,13 @@ function boot() {
 
     const protocol = window.location.protocol === "http:" ? "http://" : "https://";
     return `${protocol}${raw}`;
+  }
+
+  function formatFriendlyDateTime(date) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short"
+    }).format(date);
   }
 
   function scheduleRender() {

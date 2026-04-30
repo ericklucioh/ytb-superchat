@@ -24,6 +24,7 @@ type runtimeEnv struct {
 	PortalMockMode      bool
 	ApiToken            string
 	OverlayApiBaseURL   string
+	PublicBackendURL    string
 	OverlayWebSocketURL string
 }
 
@@ -41,7 +42,7 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 	sessionID := firstEnv("YTB_SESSION_ID", "SESSION")
 	portalMockMode := readBool("YTB_PORTAL_MOCK", "PORTAL_MOCK")
 	apiToken := firstEnv("YTB_API_TOKEN", "YTB_SHARED_SECRET")
-	overlayApiBaseURL := firstEnv("YTB_OVERLAY_API_BASE_URL")
+	overlayApiBaseURL := firstEnv("YTB_OVERLAY_API_BASE_URL", "PUBLIC_BACKEND_URL", "YTB_PUBLIC_BACKEND_URL")
 	if overlayApiBaseURL == "" {
 		scheme := requestScheme(r)
 		host := requestHost(r)
@@ -52,6 +53,7 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 		}
 	}
 
+	publicBackendURL := resolvePublicBackendBaseURL(r, overlayApiBaseURL)
 	overlayWebSocketURL := firstEnv("YTB_OVERLAY_WS_URL")
 	if overlayWebSocketURL == "" {
 		overlayWebSocketURL = deriveWebSocketURL(overlayApiBaseURL)
@@ -64,6 +66,7 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 		PortalMockMode:      portalMockMode,
 		ApiToken:            apiToken,
 		OverlayApiBaseURL:   overlayApiBaseURL,
+		PublicBackendURL:    publicBackendURL,
 		OverlayWebSocketURL: overlayWebSocketURL,
 	}
 }
@@ -105,6 +108,7 @@ func renderRuntimeEnvScript(env runtimeEnv) string {
 		PortalMockMode      bool   `json:"portalMockMode"`
 		ApiToken            string `json:"apiToken"`
 		OverlayApiBaseURL   string `json:"overlayApiBaseUrl"`
+		PublicBackendURL    string `json:"publicBackendUrl"`
 		OverlayWebSocketURL string `json:"overlayWsUrl"`
 	}
 
@@ -115,13 +119,62 @@ func renderRuntimeEnvScript(env runtimeEnv) string {
 		PortalMockMode:      env.PortalMockMode,
 		ApiToken:            env.ApiToken,
 		OverlayApiBaseURL:   env.OverlayApiBaseURL,
+		PublicBackendURL:    env.PublicBackendURL,
 		OverlayWebSocketURL: env.OverlayWebSocketURL,
 	})
 
 	return "window.__YTB_ENV__ = " + string(body) + ";\n" +
 		"window.__YTB_API_TOKEN__ = " + jsString(env.ApiToken) + ";\n" +
 		"window.__OVERLAY_API_BASE_URL__ = " + jsString(env.OverlayApiBaseURL) + ";\n" +
+		"window.__PUBLIC_BACKEND_URL__ = " + jsString(env.PublicBackendURL) + ";\n" +
 		"window.__OVERLAY_WS_URL__ = " + jsString(env.OverlayWebSocketURL) + ";\n"
+}
+
+func resolvePublicBackendBaseURL(r *http.Request, overlayFallback string) string {
+	explicit := firstEnv("PUBLIC_BACKEND_URL", "YTB_PUBLIC_BACKEND_URL")
+	if explicit != "" {
+		return normalizeBackendBaseURL(explicit, requestScheme(r))
+	}
+
+	if overlayFallback != "" {
+		return normalizeBackendBaseURL(overlayFallback, requestScheme(r))
+	}
+
+	scheme := requestScheme(r)
+	host := requestHost(r)
+	if host != "" {
+		return scheme + "://" + host
+	}
+
+	return ""
+}
+
+func normalizeBackendBaseURL(value, defaultScheme string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return ""
+	}
+
+	trimmed = strings.TrimRight(trimmed, "/")
+	if strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://") {
+		return trimmed
+	}
+
+	if strings.HasPrefix(trimmed, "//") {
+		if defaultScheme == "" {
+			defaultScheme = "https:"
+		}
+		if strings.HasSuffix(defaultScheme, ":") {
+			return defaultScheme + trimmed
+		}
+		return defaultScheme + "://" + strings.TrimPrefix(trimmed, "//")
+	}
+
+	if defaultScheme == "http" || defaultScheme == "https" {
+		return defaultScheme + "://" + trimmed
+	}
+
+	return "https://" + trimmed
 }
 
 func deriveWebSocketURL(apiBase string) string {

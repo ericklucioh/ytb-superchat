@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"ytb-go/internal/keepawake"
 	"ytb-go/internal/session"
 	"ytb-go/internal/ws"
 )
@@ -59,6 +61,58 @@ func TestHealthRouteUsesCorsPolicy(t *testing.T) {
 
 	if payload["ok"] != true {
 		t.Fatalf("unexpected health payload: %#v", payload)
+	}
+}
+
+func TestKeepAwakeRoutesStartAndReportStatus(t *testing.T) {
+	sm := session.NewManager()
+	hub := ws.NewHub(sm)
+	healthServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/health" {
+			t.Fatalf("unexpected ping path: %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(healthServer.Close)
+	t.Setenv("PUBLIC_BACKEND_URL", healthServer.URL)
+
+	manager := keepawake.NewManager(keepawake.Config{
+		PingInterval: 20 * time.Millisecond,
+		ActiveWindow: 80 * time.Millisecond,
+	})
+	router := newRouterWithKeepAwake(sm, hub, t.TempDir(), manager)
+
+	startReq := httptest.NewRequest(http.MethodPost, "/keep-awake/start", nil)
+	startRec := httptest.NewRecorder()
+	router.ServeHTTP(startRec, startReq)
+	if startRec.Code != http.StatusOK {
+		t.Fatalf("unexpected start status: %d", startRec.Code)
+	}
+
+	var startPayload map[string]any
+	if err := json.NewDecoder(startRec.Body).Decode(&startPayload); err != nil {
+		t.Fatalf("decode start response: %v", err)
+	}
+	if startPayload["ok"] != true {
+		t.Fatalf("expected ok=true, got %#v", startPayload)
+	}
+	if startPayload["active"] != true {
+		t.Fatalf("expected active=true, got %#v", startPayload)
+	}
+
+	statusReq := httptest.NewRequest(http.MethodGet, "/keep-awake/status", nil)
+	statusRec := httptest.NewRecorder()
+	router.ServeHTTP(statusRec, statusReq)
+	if statusRec.Code != http.StatusOK {
+		t.Fatalf("unexpected status code: %d", statusRec.Code)
+	}
+
+	var statusPayload map[string]any
+	if err := json.NewDecoder(statusRec.Body).Decode(&statusPayload); err != nil {
+		t.Fatalf("decode status response: %v", err)
+	}
+	if statusPayload["active"] != true {
+		t.Fatalf("expected active=true, got %#v", statusPayload)
 	}
 }
 

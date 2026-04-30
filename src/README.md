@@ -70,9 +70,17 @@ The browser runtime gets its API URLs from `runtime-env.js`, which is generated 
 - `YTB_SESSION_ID` - default session loaded by the portal and overlay in dev
 - `YTB_PORTAL_MOCK` - enables seeded mock cards for layout work
 - `YTB_OVERLAY_API_BASE_URL` - explicit API base override
+- `PUBLIC_BACKEND_URL` - explicit public backend URL used by keep-awake pings
+- `YTB_PUBLIC_BACKEND_URL` - compatibility alias for the same public backend URL
 - `YTB_OVERLAY_WS_URL` - explicit WebSocket override
 - `YTB_API_TOKEN` - optional token forwarded to the portal/overlay runtime env and sent to the Go backend when configured
 - `YTB_DEBUG_LOGS` - enables low-noise debug logging in the portal runtime
+
+The portal also exposes a manual keep-awake control:
+
+- The button calls `POST /keep-awake/start`.
+- The backend keeps itself awake for 12 hours and pings `GET /health` every 7 minutes.
+- `GET /keep-awake/status` can be used to refresh the visible state on load.
 
 Use `.env.development.local` for local work and `.env.production.local` for production builds or CI.
 

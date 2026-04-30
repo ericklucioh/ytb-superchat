@@ -31,6 +31,7 @@ Permitir que o streamer acompanhe chats de várias plataformas, selecione mensag
 - Overlay consumido por `/overlay?session=...`
 - Captura por extensão em várias plataformas
 - Backend Go servindo sessão e broadcast
+- Controle manual de keep-awake durante lives longas, com ping interno ao `/health`
 
 ## Run locally
 
@@ -47,6 +48,13 @@ Useful URLs:
 - `http://localhost:8000/` - local landing page
 - `http://localhost:8000/portal` - local dashboard
 - `http://localhost:8000/overlay?session=YOUR_SESSION_ID` - local OBS overlay
+
+## Keep-awake
+
+- O portal tem um botão manual para manter o backend acordado durante a live.
+- O clique aciona `POST /keep-awake/start` no backend Go.
+- O backend faz ping em `GET /health` a cada 7 minutos e encerra sozinho após 12 horas sem renovação.
+- Em produção, configure `PUBLIC_BACKEND_URL` ou `YTB_PUBLIC_BACKEND_URL` com a URL pública do backend.
 
 ## Build
 

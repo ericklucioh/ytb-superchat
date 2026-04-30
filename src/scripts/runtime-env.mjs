@@ -11,6 +11,7 @@ export function resolveRuntimeEnv() {
   const debugLogging = readBool(env, ["YTB_DEBUG_LOGS", "DEBUG_LOGS"]);
   const apiToken = readText(env, ["YTB_API_TOKEN", "YTB_SHARED_SECRET"]);
   const overlayApiBaseUrl = resolveOverlayApiBaseUrl(env, goPort);
+  const publicBackendUrl = resolvePublicBackendUrl(env, goPort, overlayApiBaseUrl);
   const overlayWsUrl = readText(env, ["YTB_OVERLAY_WS_URL"]) || deriveWebSocketUrl(overlayApiBaseUrl, goPort);
 
   return {
@@ -22,6 +23,7 @@ export function resolveRuntimeEnv() {
     debugLogging,
     apiToken,
     overlayApiBaseUrl,
+    publicBackendUrl,
     overlayWsUrl
   };
 }
@@ -32,6 +34,7 @@ export function renderRuntimeEnvScript() {
     "window.__YTB_ENV__ = " + JSON.stringify(env) + ";",
     "window.__YTB_API_TOKEN__ = " + JSON.stringify(env.apiToken) + ";",
     "window.__OVERLAY_API_BASE_URL__ = " + JSON.stringify(env.overlayApiBaseUrl) + ";",
+    "window.__PUBLIC_BACKEND_URL__ = " + JSON.stringify(env.publicBackendUrl) + ";",
     "window.__OVERLAY_WS_URL__ = " + JSON.stringify(env.overlayWsUrl) + ";",
     ""
   ].join("\n");
@@ -43,7 +46,7 @@ export function writeRuntimeEnvScript(filePath) {
 }
 
 function resolveOverlayApiBaseUrl(env, goPort) {
-  const explicit = readText(env, ["YTB_OVERLAY_API_BASE_URL"]);
+  const explicit = readText(env, ["YTB_OVERLAY_API_BASE_URL", "PUBLIC_BACKEND_URL", "YTB_PUBLIC_BACKEND_URL"]);
   if (explicit) {
     return normalizeUrl(explicit);
   }
@@ -108,6 +111,23 @@ function deriveWebSocketUrl(overlayApiBaseUrl, goPort) {
   } catch {
     return `ws://localhost:${goPort}/ws`;
   }
+}
+
+function resolvePublicBackendUrl(env, goPort, overlayApiBaseUrl) {
+  const explicit = readText(env, ["PUBLIC_BACKEND_URL", "YTB_PUBLIC_BACKEND_URL"]);
+  if (explicit) {
+    return normalizeUrl(explicit);
+  }
+
+  if (overlayApiBaseUrl) {
+    return normalizeUrl(overlayApiBaseUrl);
+  }
+
+  if ((env.YTB_APP_ENV || "development") === "production") {
+    throw new Error("Missing backend base URL in production mode");
+  }
+
+  return normalizeUrl(`http://localhost:${goPort}`);
 }
 
 function normalizeUrl(value) {
