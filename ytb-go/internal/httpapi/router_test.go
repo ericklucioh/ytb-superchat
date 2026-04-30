@@ -116,6 +116,27 @@ func TestKeepAwakeRoutesStartAndReportStatus(t *testing.T) {
 	}
 }
 
+func TestKeepAwakeStartPreflightReturnsCorsHeaders(t *testing.T) {
+	router, _ := newTestRouter(t)
+
+	req := httptest.NewRequest(http.MethodOptions, "/keep-awake/start", nil)
+	req.Header.Set("Origin", "http://localhost:8000")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("unexpected status: %d", rec.Code)
+	}
+
+	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:8000" {
+		t.Fatalf("unexpected allow-origin header: %q", got)
+	}
+	if got := rec.Header().Get("Access-Control-Allow-Methods"); got != "GET, POST, OPTIONS" {
+		t.Fatalf("unexpected allow-methods header: %q", got)
+	}
+}
+
 func TestEventRouteStoresOverlay(t *testing.T) {
 	sm := session.NewManager()
 	hub := ws.NewHub(sm)

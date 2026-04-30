@@ -28,10 +28,6 @@
         </div>
         <span id="mock-badge" class="mock-badge" hidden>Simulação de layout</span>
         <button id="summary-button" type="button" class="summary-button" aria-expanded="false" aria-controls="summary-popup">Resumo</button>
-        <div class="keep-awake-control">
-          <button id="keep-awake-button" type="button" class="keep-awake-button">Manter servidor acordado durante a live</button>
-          <p id="keep-awake-status" class="keep-awake-status" aria-live="polite">Keep-awake inativo.</p>
-        </div>
       </div>
     </section>
 
@@ -74,7 +70,7 @@
       <div class="summary-panel-head">
         <div>
           <p class="panel-kicker">Resumo técnico</p>
-          <h2 id="summary-title">Resumo operacional</h2>
+          <!-- <h2 id="summary-title">Resumo operacional</h2> -->
         </div>
         <div class="summary-panel-actions">
           <button type="button" class="summary-action" id="summary-copy-overlay" data-summary-copy-overlay>Copiar overlay</button>
@@ -94,6 +90,13 @@
         <span class="dot"></span>
         <span id="current-filter">Ativos</span>
       </div>
+      <section class="summary-section summary-section--keep-awake" aria-labelledby="keep-awake-title">
+        <div class="summary-section-head">
+
+          <p id="keep-awake-status" class="keep-awake-status" aria-live="polite">Inativo</p>
+          <button id="keep-awake-button" type="button" class="keep-awake-button">Ativar por 12h</button>
+        </div>
+      </section>
       <div class="stats-table summary-stats">
         <div class="stat-row stat-twitch">
           <span class="stat-label">Subs Twitch</span>

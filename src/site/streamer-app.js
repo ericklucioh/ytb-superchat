@@ -527,7 +527,7 @@ function boot() {
     }
 
     setKeepAwakeButtonBusy(true);
-    updateKeepAwakeStatus("Ativando keep-awake...", false);
+    updateKeepAwakeStatus("Ativando...", false);
 
     try {
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/start`, {
@@ -585,11 +585,11 @@ function boot() {
     const active = Boolean(payload && payload.active);
     const until = payload && payload.until ? new Date(payload.until) : null;
     if (active && until instanceof Date && !Number.isNaN(until.getTime())) {
-      updateKeepAwakeStatus(`Servidor será mantido acordado por 12 horas. Até ${formatFriendlyDateTime(until)}.`, true);
+      updateKeepAwakeStatus(`Ativo · até ${formatFriendlyDateTime(until)}`, true);
       return;
     }
 
-    updateKeepAwakeStatus("Keep-awake inativo.", false);
+    updateKeepAwakeStatus("Inativo", false);
   }
 
   function updateKeepAwakeStatus(message, isActive) {
@@ -608,8 +608,8 @@ function boot() {
 
     elements.keepAwakeButton.disabled = isBusy;
     elements.keepAwakeButton.textContent = isBusy
-      ? "Ativando keep-awake..."
-      : "Manter servidor acordado durante a live";
+      ? "Ativando..."
+      : "Ativar por 12h";
   }
 
   function buildOverlayUrl(sessionId) {

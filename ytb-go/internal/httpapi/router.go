@@ -55,11 +55,17 @@ func newRouterWithKeepAwake(sm *session.Manager, hub *ws.Hub, overlayDir string,
 		}
 		handleKeepAwakeStart(policy, keepAwakeManager, w, r)
 	})
+	mux.HandleFunc("OPTIONS /keep-awake/start", func(w http.ResponseWriter, r *http.Request) {
+		policy.authorizePreflight(w, r)
+	})
 	mux.HandleFunc("GET /keep-awake/status", func(w http.ResponseWriter, r *http.Request) {
 		if !policy.authorizeSensitiveRequest(w, r) {
 			return
 		}
 		handleKeepAwakeStatus(policy, keepAwakeManager, w, r)
+	})
+	mux.HandleFunc("OPTIONS /keep-awake/status", func(w http.ResponseWriter, r *http.Request) {
+		policy.authorizePreflight(w, r)
 	})
 	mux.HandleFunc("GET /api/session", func(w http.ResponseWriter, r *http.Request) {
 		if !policy.authorizeSensitiveRequest(w, r) {

@@ -36,8 +36,6 @@ body {
 
 body {
   font-family: var(--font);
-  font-variant-numeric: lining-nums tabular-nums;
-  font-feature-settings: "lnum" 1, "tnum" 1;
   font-kerning: normal;
   color: var(--text);
   background:
@@ -183,20 +181,11 @@ body {
   flex-wrap: wrap;
 }
 
-.keep-awake-control {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  margin-left: auto;
-}
-
 .keep-awake-status {
   margin: 0;
-  max-width: 30ch;
   color: var(--muted);
   font-size: 0.76rem;
-  text-align: right;
+  line-height: 1.45;
 }
 
 .keep-awake-button:disabled {
@@ -256,6 +245,20 @@ body {
 .stat-row strong {
   font-size: 1.2rem;
   line-height: 1;
+  color: var(--text);
+  text-shadow: none;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.panel-count,
+.event-time,
+.event-meta,
+.priority-months,
+.connection-status,
+.keep-awake-status {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .stat-twitch::before {
@@ -757,6 +760,9 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
 }
 
 .event-message {
@@ -770,8 +776,14 @@ body {
   white-space: normal;
   overflow-wrap: anywhere;
   width: 100%;
-  font-family: var(--font);
+  font-family: var(--font-content, var(--font));
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+  font-variant-ligatures: none;
   font-variant-emoji: emoji;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
 }
 
 .event-meta {
@@ -903,6 +915,16 @@ body {
   white-space: nowrap;
 }
 
+.event-card,
+.event-head,
+.event-body,
+.event-main,
+.event-meta-row {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+}
+
 .event-card:not(.has-actions) .event-actions {
   display: none;
 }
@@ -961,16 +983,6 @@ body {
     width: 100%;
   }
 
-  .keep-awake-control {
-    width: 100%;
-    margin-left: 0;
-    align-items: stretch;
-  }
-
-  .keep-awake-status {
-    text-align: left;
-  }
-
   .stats-board-head {
     align-items: stretch;
   }
@@ -1023,10 +1035,5 @@ body {
 
   .filter-group--inline .filter-button {
     flex: 1 1 calc(50% - 8px);
-  }
-
-  .keep-awake-button {
-    width: 100%;
-    min-width: 0;
   }
 }

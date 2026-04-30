@@ -23,6 +23,7 @@
   --radius-sm: 12px;
   --font: "Fira Code", "SFMono-Regular", "Cascadia Mono", "Consolas", monospace;
   --font-ui: "Fira Code", "SFMono-Regular", "Cascadia Mono", "Consolas", monospace;
+  --font-content: "Avenir Next", "Avenir", "Helvetica Neue", "Segoe UI", "Trebuchet MS", sans-serif;
 }
 
 html {
@@ -275,6 +276,8 @@ body::before {
   background: rgba(79, 195, 255, 0.12);
   color: var(--highlight-strong);
   border: 1px solid rgba(79, 195, 255, 0.18);
+  text-shadow: none;
+  font-variant-numeric: tabular-nums;
 }
 
 .panel-priority,
@@ -416,6 +419,41 @@ body::before {
   border-bottom: 1px solid var(--border-soft);
 }
 
+.summary-section {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.summary-section--keep-awake {
+  border-color: rgba(33, 197, 138, 0.18);
+  background:
+    linear-gradient(135deg, rgba(10, 94, 67, 0.16), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.025);
+}
+
+.summary-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  text-align: right;
+}
+
+.summary-section-head .panel-kicker {
+  flex: 0 0 auto;
+}
+
+.summary-section-head h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  letter-spacing: -0.03em;
+  flex: 0 0 auto;
+}
+
 .summary-action--danger {
   border-color: rgba(140, 193, 222, 0.32);
   background: rgba(79, 195, 255, 0.1);
@@ -424,6 +462,24 @@ body::before {
 
 .summary-action--danger:hover {
   background: rgba(79, 195, 255, 0.16);
+}
+
+.summary-section--keep-awake .keep-awake-button {
+  min-width: 0;
+  padding: 8px 14px;
+  white-space: nowrap;
+  text-align: center;
+  box-shadow: 0 12px 28px rgba(33, 197, 138, 0.16);
+}
+
+.summary-section--keep-awake .keep-awake-status {
+  margin-left: 0;
+  color: rgba(170, 255, 224, 0.92);
+  white-space: nowrap;
+}
+
+.summary-section--keep-awake .keep-awake-status[data-state="idle"] {
+  color: var(--text-secondary);
 }
 
 .detail-avatar {
@@ -477,6 +533,14 @@ body::before {
     width: auto;
     margin-left: 0;
   }
+
+  .summary-section-head {
+    gap: 10px;
+  }
+
+  .summary-section--keep-awake .keep-awake-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 560px) {
@@ -495,6 +559,20 @@ body::before {
     max-width: none;
   }
 
+  .summary-section {
+    padding: 12px;
+  }
+
+  .summary-section-head {
+    align-items: stretch;
+  }
+
+  .summary-section-head h3,
+  .summary-section-head .panel-kicker,
+  .summary-section--keep-awake .keep-awake-status {
+    white-space: normal;
+  }
+
   .session-row button,
   .summary-action,
   .summary-close,
@@ -502,4 +580,26 @@ body::before {
   .detail-actions button {
     width: auto;
   }
+}
+
+.event-message {
+  font-family: Arial, Helvetica, sans-serif !important;
+  color: #e8edf6 !important;
+  -webkit-text-fill-color: currentColor !important;
+
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  text-shadow: none !important;
+
+  font-weight: 400 !important;
+  font-style: normal !important;
+  font-synthesis: none !important;
+
+  font-variant: normal !important;
+  font-variant-numeric: normal !important;
+  font-variant-ligatures: none !important;
+  font-feature-settings: normal !important;
+
+  letter-spacing: 0 !important;
 }
