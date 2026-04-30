@@ -583,7 +583,7 @@ body::before {
 }
 
 .event-message {
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: var(--font) Arial, Helvetica, sans-serif!important;
   color: #e8edf6 !important;
   -webkit-text-fill-color: currentColor !important;
 
@@ -595,6 +595,7 @@ body::before {
   font-weight: 400 !important;
   font-style: normal !important;
   font-synthesis: none !important;
+  font-kerning: normal !important;
 
   font-variant: normal !important;
   font-variant-numeric: normal !important;
