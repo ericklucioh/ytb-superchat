@@ -27,10 +27,12 @@
 }
 
 html {
+  min-height: 100%;
   background: var(--bg-page);
 }
 
 body {
+  min-height: 100vh;
   color: var(--text-primary);
   background:
     radial-gradient(circle at 18% 16%, rgba(0, 145, 195, 0.18), transparent 24%),
@@ -518,15 +520,29 @@ body::before {
 
 @media (max-width: 860px) {
   .stats-board-head {
-    flex-direction: column;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .stats-board-head::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .stats-board-head::-webkit-scrollbar-thumb {
+    border-radius: 999px;
   }
 
   .site-brand {
-    width: 100%;
+    flex: 0 0 auto;
   }
 
   .filter-group--inline {
-    width: 100%;
+    width: auto;
+    flex: 0 0 auto;
   }
 
   .summary-button {
@@ -557,6 +573,35 @@ body::before {
 
   .site-brand-copy {
     max-width: none;
+  }
+
+  .site-brand h1 {
+    font-size: 1rem;
+  }
+
+  .filter-group {
+    gap: 6px;
+    flex-wrap: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .filter-group--inline .filter-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 7px 9px;
+    font-size: 0.74rem;
+  }
+
+  .mock-badge {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+
+  .summary-button {
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    font-size: 0.8rem;
   }
 
   .summary-section {
