@@ -194,7 +194,7 @@ export function extractGiftCount(source, membershipMarkup, message) {
     return null;
   }
 
-  if (!/(gift|gifted|gifts|memberships?|subs? given|present|presentes)/i.test(haystack)) {
+  if (!/(gift|gifted|gifts|present|presentes)/i.test(haystack)) {
     return null;
   }
 

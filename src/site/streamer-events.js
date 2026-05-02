@@ -218,6 +218,14 @@ export function feedRoomFor(roomId) {
 }
 
 export function createEventNormalizer() {
+  const TWITCH_SUB_BOT_NAMES = new Set([
+    "streamelements",
+    "streamelementsbot",
+    "streamlabs",
+    "streamlabsbot",
+    "nightbot"
+  ]);
+
   function normalizeDedupeText(value) {
     return cleanText(stripHtml(String(value || ""))).toLowerCase();
   }
@@ -243,6 +251,29 @@ export function createEventNormalizer() {
       return event.tier;
     }
     return null;
+  }
+
+  function shouldUseTwitchSubscriptionNameFallback(user) {
+    const normalizedUser = cleanText(user || "").toLowerCase();
+    return TWITCH_SUB_BOT_NAMES.has(normalizedUser);
+  }
+
+  function extractTwitchSubscriptionDisplayName(user, message) {
+    if (!shouldUseTwitchSubscriptionNameFallback(user)) {
+      return cleanText(user || "");
+    }
+
+    const normalizedMessage = cleanText(stripHtml(message || ""));
+    if (!normalizedMessage) {
+      return cleanText(user || "");
+    }
+
+    const match = normalizedMessage.match(/^([^\s]+)\s+(?:subscribed|renewed|resubscribed|re-subscribed|gifted|gifted\s+sub|subscribed\s+for|has\s+subscribed|just\s+subscribed)\b/i);
+    if (match && match[1]) {
+      return cleanText(match[1]);
+    }
+
+    return cleanText(user || "");
   }
 
   function buildDedupeKey(event) {
@@ -359,7 +390,8 @@ export function createEventNormalizer() {
       return null;
     }
 
-    const user = cleanText(source.chatname || source.user || source.author || source.name || "");
+    const rawUser = cleanText(source.chatname || source.user || source.author || source.name || "");
+    const user = rawUser;
     if (!user) {
       return null;
     }
@@ -385,6 +417,12 @@ export function createEventNormalizer() {
     const type = inferEventType(source, platform, hasDonation, hasMembership);
     let amount = null;
     let tier = null;
+    const resolvedUser = platform === "twitch" && type === "sub"
+      ? extractTwitchSubscriptionDisplayName(
+        rawUser,
+        source.chatmessage || source.message || source.text || ""
+      )
+      : user;
 
     if (type === "superchat") {
       amount = parseAmount(hasDonation);
@@ -402,13 +440,13 @@ export function createEventNormalizer() {
     const rawId = source.id ?? payload.id;
     const id = rawId != null && rawId !== ""
       ? `${platform}:${String(rawId)}`
-      : `evt_${hashString([platform, type, user, message, amount ?? "", tier ?? "", timestamp].join("|"))}`;
+      : `evt_${hashString([platform, type, resolvedUser, message, amount ?? "", tier ?? "", timestamp].join("|"))}`;
 
     const event = {
       id,
       platform,
       type,
-      user,
+      user: resolvedUser,
       timestamp,
       status: "active"
     };

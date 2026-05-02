@@ -78,6 +78,10 @@ function createSandbox(now = 0) {
         };
       }
     },
+    Node: {
+      TEXT_NODE: 3,
+      ELEMENT_NODE: 1
+    },
     localStorage: createLocalStorageStub(),
     fetch() {
       throw new Error("fetch should not be called in idempotency tests");
@@ -116,6 +120,20 @@ function createMemberPayload(id, timestamp, months = 3) {
       chatname: "Member One",
       chatmessage: "renewed membership",
       hasMembership: `${months} months`,
+      timestamp
+    }
+  };
+}
+
+function createTwitchSubPayload({ id, timestamp, chatname, chatmessage, hasMembership }) {
+  return {
+    feed: true,
+    contents: {
+      id,
+      platform: "twitch",
+      chatname,
+      chatmessage,
+      hasMembership,
       timestamp
     }
   };
@@ -234,4 +252,44 @@ test("store keeps message dedupe limited to id", () => {
   assert.equal(store.insertEvent(firstMessage), true);
   assert.equal(store.insertEvent(secondMessage), true);
   assert.equal(store.liveEvents.length, 2);
+});
+
+test("twitch sub from bot falls back to the first name in the message", () => {
+  const sandbox = createSandbox();
+  loadNormalizerAndStore(sandbox);
+
+  const normalizer = sandbox.createEventNormalizer();
+  const event = normalizer.normalizeIncoming(createTwitchSubPayload({
+    id: "tw-sub-1",
+    timestamp: 1000,
+    chatname: "StreamElements",
+    chatmessage: "gsmendesfc subscribed for 2 months Oss!",
+    hasMembership: "<div class='donation membership'>NEW MEMBER!</div>"
+  }));
+
+  assert.ok(event);
+  assert.equal(event.type, "sub");
+  assert.equal(event.user, "gsmendesfc");
+  assert.equal(event.months, 2);
+  assert.equal(event.giftCount, undefined);
+});
+
+test("twitch sub keeps a legitimate chatname unchanged", () => {
+  const sandbox = createSandbox();
+  loadNormalizerAndStore(sandbox);
+
+  const normalizer = sandbox.createEventNormalizer();
+  const event = normalizer.normalizeIncoming(createTwitchSubPayload({
+    id: "tw-sub-2",
+    timestamp: 1000,
+    chatname: "Alice",
+    chatmessage: "Alice subscribed for 2 months Oss!",
+    hasMembership: "<div class='donation membership'>NEW MEMBER!</div>"
+  }));
+
+  assert.ok(event);
+  assert.equal(event.type, "sub");
+  assert.equal(event.user, "Alice");
+  assert.equal(event.months, 2);
+  assert.equal(event.giftCount, undefined);
 });
