@@ -29,11 +29,11 @@ export function formatMonths(value) {
   return number === 1 ? "1 mês" : `${formatAmount(number)} meses`;
 }
 
-function extractSubscriptionMonths(source, membershipMarkup, message) {
-  const candidates = [
-    source?.months,
-    source?.subscriptionMonths,
-    source?.subMonths,
+  function extractSubscriptionMonths(source, membershipMarkup, message) {
+    const candidates = [
+      source?.months,
+      source?.subscriptionMonths,
+      source?.subMonths,
     source?.monthCount
   ];
 
@@ -59,11 +59,12 @@ function extractSubscriptionMonths(source, membershipMarkup, message) {
     return null;
   }
 
-  const patterns = [
-    /\bsubscribed\s+for\s+(\d{1,4})\s+months?\b/i,
-    /\b(\d{1,4})\s+months?\b/i,
-    /\bmonth(?:s)?\s*:\s*(\d{1,4})\b/i
-  ];
+    const patterns = [
+      /\bsubscribed\s+for\s+(\d{1,4})\s+months?\b/i,
+      /\b(\d{1,4})\s+months?\b/i,
+      /\b(\d{1,4})\s+m[êe]s(?:es)?\b/i,
+      /\bmonth(?:s)?\s*:\s*(\d{1,4})\b/i
+    ];
 
   for (const pattern of patterns) {
     const match = haystack.match(pattern);
@@ -217,6 +218,70 @@ export function feedRoomFor(roomId) {
 }
 
 export function createEventNormalizer() {
+  function normalizeDedupeText(value) {
+    return cleanText(stripHtml(String(value || ""))).toLowerCase();
+  }
+
+  function normalizeDedupeNumber(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? String(number) : "";
+  }
+
+  function normalizeDedupeCurrency(value) {
+    return String(value || "").trim().toUpperCase();
+  }
+
+  function getNormalizedEventAmount(event) {
+    return Number.isFinite(event?.amount) ? event.amount : null;
+  }
+
+  function getNormalizedMembershipValue(event) {
+    if (Number.isFinite(event?.months)) {
+      return event.months;
+    }
+    if (Number.isFinite(event?.tier)) {
+      return event.tier;
+    }
+    return null;
+  }
+
+  function buildDedupeKey(event) {
+    if (!event || typeof event !== "object") {
+      return "";
+    }
+
+    if (event.type === "message") {
+      return `message|${cleanText(event.id || "")}`;
+    }
+
+    const platform = String(event.platform || "").trim().toLowerCase();
+    const type = String(event.type || "").trim().toLowerCase();
+    const user = normalizeDedupeText(event.user);
+    const message = normalizeDedupeText(event.message || "");
+
+    if (event.type === "superchat") {
+      return [
+        "superchat",
+        platform,
+        type,
+        user,
+        normalizeDedupeNumber(getNormalizedEventAmount(event)),
+        normalizeDedupeCurrency(event.currency),
+        message,
+        normalizeDedupeText(event.hasDonation)
+      ].join("|");
+    }
+
+    return [
+      type,
+      platform,
+      user,
+      normalizeDedupeNumber(getNormalizedMembershipValue(event)),
+      message,
+      normalizeDedupeText(event.hasMembership)
+    ].join("|");
+  }
+
   function validateEvent(event) {
     if (!event || typeof event !== "object") {
       return null;
@@ -251,6 +316,7 @@ export function createEventNormalizer() {
       return null;
     }
 
+    const dedupeKey = buildDedupeKey(event);
     return {
       id: event.id.trim(),
       platform: event.platform,
@@ -269,7 +335,8 @@ export function createEventNormalizer() {
       ...(Number.isFinite(event.amount) ? { amount: event.amount } : {}),
       ...(Number.isFinite(event.tier) ? { tier: event.tier } : {}),
       ...(Number.isFinite(event.months) ? { months: event.months } : {}),
-      ...(Number.isFinite(event.giftCount) ? { giftCount: event.giftCount } : {})
+      ...(Number.isFinite(event.giftCount) ? { giftCount: event.giftCount } : {}),
+      dedupeKey
     };
   }
 

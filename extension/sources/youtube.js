@@ -131,6 +131,39 @@ var tickerObserver = null;
 		return "";
 	}
 
+	function extractYoutubeMembershipText(element) {
+		var selectors = [
+			"#header-primary-text",
+			".yt-live-chat-author-badge-renderer[aria-label]",
+			".yt-live-chat-author-badge-renderer[shared-tooltip-text]",
+			"yt-live-chat-author-badge-renderer[aria-label]"
+		];
+
+		for (var i = 0; i < selectors.length; i += 1) {
+			var node = $(element).find(selectors[i]).first();
+			var membershipText = node.text() || node.attr("aria-label") || node.attr("shared-tooltip-text") || node.html() || "";
+			if (membershipText.trim()) {
+				return membershipText.trim();
+			}
+		}
+
+		return "";
+	}
+
+	function extractYoutubeMembershipMonths(element) {
+		var membershipText = [
+			extractYoutubeMembershipText(element),
+			$(element).find(".yt-live-chat-membership-item-renderer #header-subtext").text().trim()
+		].filter(Boolean).join(" ");
+		var match = membershipText.match(/\b(\d{1,4})\s+(?:months?|mes(?:es)?|m[êe]s(?:es)?)\b/i);
+		if (match && match[1]) {
+			var value = Number(match[1]);
+			return Number.isFinite(value) && value > 0 ? value : NaN;
+		}
+
+		return NaN;
+	}
+
 	function hasYoutubeTickerSuperchatData(element, chatdonation) {
 		if (!isYoutubeTickerSuperchatNode(element)) {
 			return true;
@@ -152,10 +185,11 @@ var tickerObserver = null;
 			chatname = chatname.replace(/ .*/, '');
 		}
 
-			var chatmessage = $(element).find("#message").html();
+			var chatmessage = $(element).find("#message").text().trim() || $(element).find("#message").html() || "";
 			var chatimg = extractYoutubeAvatar(element);
 			var chatdonation = extractYoutubeDonationText(element);
-			var chatmembership = $(element).find(".yt-live-chat-membership-item-renderer #header-subtext").html();
+			var chatmembership = extractYoutubeMembershipText(element);
+			var chatmembershipMonths = extractYoutubeMembershipMonths(element);
 			var chatsticker = $(element).find(".yt-live-chat-paid-sticker-renderer #img").attr("src");
 			if (chatsticker) {
 				chatdonation = extractYoutubeDonationText(element);
@@ -224,6 +258,9 @@ var tickerObserver = null;
 		data.chatimg = chatimg || "unknown.png";
 		data.hasDonation = hasDonation;
 		data.hasMembership = hasMembership;
+		if (Number.isFinite(chatmembershipMonths)) {
+			data.months = chatmembershipMonths;
+		}
 		data.type = "youtube";
 		data.platform = "youtube";
 		data.eventType = eventType;
