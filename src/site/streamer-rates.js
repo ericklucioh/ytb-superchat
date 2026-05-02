@@ -1,11 +1,16 @@
 import { isValidCurrencyCode, normalizeCurrencyCode } from "./streamer-currency.js";
 
+const BITS_TO_BRL_RATE = 0.08;
+
 export function createCurrencyRateService({ scheduleRender } = {}) {
   const currencyRates = new Map();
   const pendingCurrencyRates = new Map();
 
   function getCurrencyRate(currency) {
     const code = normalizeCurrencyCode(currency || "BRL") || "BRL";
+    if (code === "BITS") {
+      return BITS_TO_BRL_RATE;
+    }
     if (!isValidCurrencyCode(code)) {
       return null;
     }
@@ -18,6 +23,9 @@ export function createCurrencyRateService({ scheduleRender } = {}) {
 
   function hasCurrencyRate(currency) {
     const code = normalizeCurrencyCode(currency || "BRL") || "BRL";
+    if (code === "BITS") {
+      return true;
+    }
     if (!isValidCurrencyCode(code)) {
       return false;
     }
@@ -34,17 +42,6 @@ export function createCurrencyRateService({ scheduleRender } = {}) {
     }
 
     const currency = normalizeCurrencyCode(event.currency || "BRL") || "BRL";
-    if (currency === "BITS") {
-      return {
-        ...event,
-        currency,
-        currencyRate: null,
-        currencyRateLoaded: false,
-        brlAmount: 0,
-        sortBrlAmount: event.amount
-      };
-    }
-
     const currencyRate = getCurrencyRate(currency);
     const brlAmount = Number.isFinite(currencyRate) ? event.amount * currencyRate : event.amount;
     const sortBrlAmount = brlAmount;
@@ -84,6 +81,9 @@ export function createCurrencyRateService({ scheduleRender } = {}) {
         continue;
       }
       if (!isValidCurrencyCode(code)) {
+        continue;
+      }
+      if (code === "BITS") {
         continue;
       }
       if (code !== "BRL" && !currencyRates.has(code) && !pendingCurrencyRates.has(code)) {
