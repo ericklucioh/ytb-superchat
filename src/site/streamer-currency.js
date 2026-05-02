@@ -119,6 +119,9 @@ export function extractCurrencyLabel(source, donationText) {
 export function formatCurrencyAmount(value, currency, brlRate = null, options = {}) {
   const normalized = normalizeCurrencyCode(currency || "BRL") || "BRL";
   if (normalized === "BITS") {
+    if (Number.isFinite(brlRate)) {
+      return `${formatAmount(value)} bits · ${formatBrlAmount(value * brlRate)}`;
+    }
     return `${formatAmount(value)} bits`;
   }
 

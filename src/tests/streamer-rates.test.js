@@ -62,9 +62,13 @@ test("bits are converted to BRL with the fixed rate and sorted by BRL equivalent
 
   const createCurrencyRateService = sandbox.createCurrencyRateService;
   const compareSuperchatEvent = sandbox.compareSuperchatEvent;
+  const formatCurrencyAmount = sandbox.formatCurrencyAmount;
+  const formatBrlAmount = sandbox.formatBrlAmount;
 
   assert.equal(typeof createCurrencyRateService, "function");
   assert.equal(typeof compareSuperchatEvent, "function");
+  assert.equal(typeof formatCurrencyAmount, "function");
+  assert.equal(typeof formatBrlAmount, "function");
 
   const service = createCurrencyRateService({ scheduleRender() {} });
   const bitsEvent = service.decorateSuperchatEvent({
@@ -84,6 +88,10 @@ test("bits are converted to BRL with the fixed rate and sorted by BRL equivalent
   assert.equal(bitsEvent.brlAmount, 8);
   assert.equal(bitsEvent.sortBrlAmount, 8);
   assert.equal(bitsEvent.currencyRateLoaded, true);
+  assert.equal(
+    formatCurrencyAmount(bitsEvent.amount, bitsEvent.currency, bitsEvent.currencyRate),
+    `100 bits · ${formatBrlAmount(8)}`
+  );
 
   const ordered = [bitsEvent, brlEvent].sort(compareSuperchatEvent);
   assert.equal(ordered[0].id, "brl");

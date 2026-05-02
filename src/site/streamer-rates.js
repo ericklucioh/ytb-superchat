@@ -83,9 +83,6 @@ export function createCurrencyRateService({ scheduleRender } = {}) {
       if (!isValidCurrencyCode(code)) {
         continue;
       }
-      if (code === "BITS") {
-        continue;
-      }
       if (code !== "BRL" && !currencyRates.has(code) && !pendingCurrencyRates.has(code)) {
         currencies.add(code);
       }
