@@ -1,7 +1,6 @@
 {
   "name": "twitch-youtube-restream-chat-overlay",
   "version": "1.0.0",
-  "private": true,
   "description": "Live chat overlay and streamer dashboard for Twitch and YouTube.",
   "scripts": {
     "dev": "node src/scripts/serve.mjs",

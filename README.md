@@ -1,60 +1,73 @@
 # YTB Superchat
 
-## Contexto
-Este repositório reúne portal, extensão e backend Go para centralizar chats de lives e exibir mensagens no OBS.
+YTB Superchat e um projeto para centralizar chats de live em um dashboard de
+streamer e publicar mensagens selecionadas em um overlay para OBS. O fluxo
+principal combina uma extensao de captura no navegador, um portal estatico e um
+backend Go responsavel por sessao, estado do overlay e broadcast em tempo real.
 
-## Objetivo
-Permitir que o streamer acompanhe chats de várias plataformas, selecione mensagens no portal e envie o conteúdo ao overlay servido pelo backend.
+## O que o projeto faz
 
-## Estrutura
-- `src/` - portal estático e site local
-- `extension/` - extensão Chrome e assets legados do overlay
-- `ytb-go/` - backend Go local para sessão e broadcast do overlay
+- captura mensagens de plataformas suportadas, com foco principal em YouTube e Twitch
+- mostra os eventos em um dashboard do streamer
+- permite selecionar mensagens para destaque no overlay
+- entrega o overlay por URL para uso no OBS
+- mantem estado local de interface no navegador e estado compartilhado no backend Go
 
-## What this project does
+## Arquitetura
 
-- Captures Twitch, YouTube e outras fontes suportadas
-- Mostra mensagens em um dashboard para o streamer
-- Envia mensagens selecionadas ao overlay do OBS
-- Persiste estado local de UI no navegador
-- Suporta superchats, subs, members e chat normal
+- `src/` concentra o portal estatico, landing page e assets do overlay
+- `extension/` contem a extensao Chrome usada para captura e bridge local
+- `ytb-go/` contem o backend Go que atende API, WebSocket e rota do overlay
 
-## Project Structure
+Fluxo resumido:
 
-- [`README.md`](README.md) - visão geral do projeto
-- [`src/README.md`](src/README.md) - portal e site local
-- [`extension/README.md`](extension/README.md) - extensão e overlay legado
-- [`ytb-go/README.md`](ytb-go/README.md) - backend Go local
+1. A extensao le o chat da plataforma suportada.
+2. O dashboard recebe e organiza esses eventos no navegador.
+3. O portal envia o estado selecionado para o backend Go.
+4. O OBS consome a URL `/overlay?session=...` servida pelo backend.
 
-## O Que Já Funciona
-- Portal com dashboard principal em `/portal`
-- Overlay consumido por `/overlay?session=...`
-- Captura por extensão em várias plataformas
-- Backend Go servindo sessão e broadcast
-- Controle manual de keep-awake durante lives longas, com ping interno ao `/health`
+## Estado atual
 
-## Run locally
+- dashboard principal funcionando em `/portal`
+- overlay funcionando em `/overlay?session=...`
+- backend Go servindo sessao, broadcast e keep-awake
+- build web e pacote da extensao gerados pelo mesmo fluxo
+
+## Como rodar localmente
+
+Use Node.js para o portal e, em paralelo, o backend Go para API e overlay.
 
 ```bash
 npm run dev
 ```
 
-O servidor local padrão é `http://localhost:8000`.
+O portal local sobe por padrao em `http://localhost:8000`.
 
-Useful URLs:
+URLs uteis:
 
-- `https://ytb.ericklucioh.com/` - landing page
-- `https://ytb.ericklucioh.com/portal` - main streamer dashboard
-- `http://localhost:8000/` - local landing page
-- `http://localhost:8000/portal` - local dashboard
-- `http://localhost:8000/overlay?session=YOUR_SESSION_ID` - local OBS overlay
+- `http://localhost:8000/` - landing local
+- `http://localhost:8000/portal` - dashboard local
+- `http://localhost:8000/overlay?session=YOUR_SESSION_ID` - overlay local
+- `https://ytb.ericklucioh.com/` - deploy publico
 
-## Keep-awake
+## Variaveis de ambiente
 
-- O portal tem um botão manual para manter o backend acordado durante a live.
-- O clique aciona `POST /keep-awake/start` no backend Go.
-- O backend faz ping em `GET /health` a cada 7 minutos e encerra sozinho após 12 horas sem renovação.
-- Em produção, configure `PUBLIC_BACKEND_URL` ou `YTB_PUBLIC_BACKEND_URL` com a URL pública do backend.
+Os exemplos versionados ficam na raiz:
+
+- `.env.example`
+- `.env.development.example`
+- `.env.production.example`
+
+Variaveis mais importantes:
+
+- `PORT` - porta do portal estatico
+- `YTB_GO_PORT` - porta do backend Go
+- `YTB_OVERLAY_API_BASE_URL` - URL base da API do overlay
+- `PUBLIC_BACKEND_URL` - URL publica usada pelo keep-awake
+- `YTB_SESSION_ID` - sessao predefinida em desenvolvimento
+- `YTB_PORTAL_MOCK` - ativa dados mockados para layout
+- `YTB_DEBUG_LOGS` - habilita logs de diagnostico no portal
+- `YTB_API_TOKEN` - token opcional para proteger API e WebSocket
 
 ## Build
 
@@ -62,70 +75,34 @@ Useful URLs:
 npm run build
 ```
 
-Isto gera:
+O build gera:
 
-- `out/` - static site build
-- `out/overlay/` - overlay assets published by the portal build
-- `out/portal/overlay/` - compatibility alias for the same overlay assets
-- `out/chrome-extension.zip` - packaged Chrome extension
+- `out/` com os assets do site
+- `out/overlay/` com o overlay publicado
+- `out/portal/overlay/` como alias de compatibilidade
+- `out/chrome-extension.zip` com a extensao empacotada
 
-## Chrome extension
+## Extensao Chrome
 
-Carregue `extension/` como unpacked no Chrome enquanto desenvolve:
+Para desenvolvimento, carregue `extension/` como extensao unpacked:
 
-1. Open `chrome://extensions`
-2. Enable Developer mode
-3. Click Load unpacked
-4. Select the `extension/` folder
+1. Abra `chrome://extensions`
+2. Ative o modo desenvolvedor
+3. Clique em `Load unpacked`
+4. Selecione a pasta `extension/`
 
-## Session flow
+## Documentacao complementar
 
-- O dashboard guarda o `sessionId` atual do bridge em `localStorage`
-- O dashboard também lê `?session=...` da URL para o bridge
-- A extensão usa esse `sessionId` para mandar chat ao portal
-- O overlay da API/OBS usa um `sessionId` separado, gerado e persistido no portal
-- O backend Go armazena o overlay por sessão separada e serve o browser source do OBS
-- O campo visível no portal mostra o `sessionId` do overlay/API, não o do bridge
-- O botão `Conectar` gera uma sessão nova do bridge/extensão sem mexer no overlay
+- [`src/README.md`](src/README.md) - portal, dashboard e scripts
+- [`extension/README.md`](extension/README.md) - extensao e bridge local
+- [`ytb-go/README.md`](ytb-go/README.md) - backend Go
 
-## Papel De Cada Parte
-- Portal:
-  - interface do streamer
-  - seleção de mensagens
-  - controle do overlay
-- Extensão:
-  - captura e normalização
-  - bridge para o portal
-- Backend Go:
-  - sessão
-  - overlay
-  - broadcast em tempo real
-- OBS:
-  - somente consumo do overlay
+## Limitacoes atuais
 
-## Main files
+- a extensao ainda concentra integracoes antigas alem do caminho principal
+- o modelo atual de token ainda passa pelo cliente quando configurado
+- o backend mantem estado em memoria, sem persistencia duravel
 
-- [`src/landing.html`](src/landing.html) - landing page for the site root
-- [`src/index.html`](src/index.html) - streamer dashboard entry point used by `/portal`
-- [`src/site/streamer-app.js`](src/site/streamer-app.js) - dashboard bootstrap and local bridge flow
-- [`src/site/streamer-store.js`](src/site/streamer-store.js) - persisted state and normalization
-- [`src/site/streamer-view.js`](src/site/streamer-view.js) - UI rendering helpers
-- [`src/site/streamer-text.js`](src/site/streamer-text.js) - shared text, parsing, and normalization helpers
-- [`src/site/streamer-currency.js`](src/site/streamer-currency.js) - currency parsing and formatting
-- [`src/site/streamer-events.js`](src/site/streamer-events.js) - event normalization, payload building, and comparisons
-- [`src/site/streamer-rates.js`](src/site/streamer-rates.js) - BRL conversion and rate caching
-- [`src/site/streamer-utils.js`](src/site/streamer-utils.js) - compatibility re-export for shared helpers
-- [`extension/index.html`](extension/index.html) - legacy overlay renderer
-- [`extension/sources/youtube.js`](extension/sources/youtube.js) - YouTube chat capture
-- [`extension/sources/twitch.js`](extension/sources/twitch.js) - Twitch chat capture
+## Licenca
 
-## Notes
-
-- O overlay é servido pelo caminho do portal/backend.
-- Se mudar a extensão, rebuild e recarregue a extensão.
-- Se mudar o dashboard, atualize a página local.
-- `out/` é só artefato gerado, nunca origem.
-
-## Origin
-
-This project is based on the original live chat overlay work by Steve Seguin, with a streamer dashboard and Twitch/YouTube workflow layered on top.
+Este projeto esta publicado sob a licenca MIT. Veja [`LICENSE`](LICENSE).

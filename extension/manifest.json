@@ -1,6 +1,6 @@
 {
   "name": "Portal do Streamer - Eloh",
-  "description": "Captura chats ao vivo de plataformas como YouTube, Twitch e Kick para o portal do Streamer. A sessão é definida pelo portal.",
+  "description": "Captura chats ao vivo de plataformas suportadas e encaminha os eventos para o dashboard local do streamer.",
   "manifest_version": 3,
   "version": "0.0.3",
   "homepage_url": "https://ytb.ericklucioh.com/",
