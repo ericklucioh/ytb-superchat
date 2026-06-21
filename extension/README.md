@@ -1,94 +1,51 @@
-# Chrome Extension
+# Extension
 
-## Contexto
-A extensão captura mensagens de chat de várias plataformas e entrega os eventos ao portal.
+This folder contains the browser extension used to capture supported live chat pages and deliver normalized events into the dashboard bridge.
 
-## Objetivo
-Manter a extensão como camada de captura e bridge, sem assumir responsabilidade de renderização do overlay.
+## Primary Scope
 
-This folder contains the browser extension only.
+Main maintained path:
 
-## What lives here
+- YouTube live chat
+- Twitch pop-out chat
 
-- `manifest.json` - Chrome extension manifest
-- `sources/` - chat capture scripts per platform
-- `settings/` - extension options UI
-- `main.css` - extension-specific styling
-- platform assets such as `youtube.png`, `twitch.png`, and `unknown.png`
+Secondary path:
 
-## What the extension does
+- Kick support is present, but should be treated as less proven than the core YouTube/Twitch flow
 
-The extension reads live chat from supported platforms and sends normalized events to the local dashboard bridge:
+Legacy or experimental sources still exist in `sources/`. They are not the main maintained contract of the project.
 
-- Twitch
-- YouTube
-- other legacy sources still present in the repo
+## Responsibilities
 
-The current workflow is:
+- read live chat page DOM
+- normalize incoming events
+- forward them to the local dashboard bridge
 
-1. Open the supported chat page in Chrome
-2. Let the extension capture messages from the page
-3. Send those events to the dashboard bridge running in the browser session
-4. Show the selected message in the OBS browser source
+The extension does not own overlay rendering or shared state persistence.
 
-## O Que Existe Hoje
-- Scripts de captura por plataforma
-- Bridge local para envio de eventos
-- Overlay legado ainda presente como asset histórico
-- Integração com o portal já funcionando no caminho principal
+## Important Files
 
-## Main scripts
+- `manifest.json`
+- `sources/shared-runtime.js`
+- `sources/local-chat-bridge.js`
+- `sources/dashboard-relay.js`
+- `sources/youtube.js`
+- `sources/twitch.js`
+- `settings/options.html`
 
-- [`sources/shared-runtime.js`](sources/shared-runtime.js) - shared socket, settings, and helper runtime
-- [`sources/local-chat-bridge.js`](sources/local-chat-bridge.js) - local Port-based bridge for chat ingestion
-- [`sources/dashboard-relay.js`](sources/dashboard-relay.js) - forwards chat events from the extension into the dashboard page
-- [`sources/avatar-helpers.js`](sources/avatar-helpers.js) - shared avatar lookup helpers for supported platforms
-- [`sources/youtube.js`](sources/youtube.js) - YouTube chat capture
-- [`sources/twitch.js`](sources/twitch.js) - Twitch chat capture
-- [`settings/options.html`](settings/options.html) - extension settings UI
-- [`settings/options.html`](settings/options.html) also exposes the debug logging toggle for the shared runtime
-
-## O Que Precisa Mudar
-- O renderer do overlay não mora mais na extensão.
-- O OBS consome o overlay servido pelo portal/backend Go.
-- A extensão fica só na captura e bridge.
-
-## Install for development
+## Local Development
 
 1. Open `chrome://extensions`
 2. Enable Developer mode
-3. Click Load unpacked
-4. Select the `extension/` folder
+3. Click `Load unpacked`
+4. Select the `extension/` directory
 
-After that, open Twitch or YouTube chat and keep the relevant chat page loaded.
-
-## Build output
-
-From the project root:
-
-```bash
-npm run build
-```
-
-That generates:
-
-- `out/chrome-extension.zip` for packaging
+Then keep a supported chat page open while the local portal is running.
 
 ## Notes
 
-- The extension still depends on the browser page being open.
-- If the chat UI changes, the selector logic may need a refresh.
-- The dashboard receives chat events through the extension bridge and publishes overlay updates to the Go backend.
-- Diagnostic snapshots for reconnects, backlog hydration, and delivery anomalies are available through the bridge/page relay.
+- The extension depends on page structure from the target platform.
+- If the platform UI changes, selectors may need maintenance.
 - Debug logging can be enabled from the extension options page.
-- The current dependency audit is documented in [`DEPENDENCY-AUDIT.md`](DEPENDENCY-AUDIT.md).
-- See [`README-captura-confiavel.md`](README-captura-confiavel.md) for the reliability problem and the delivery options.
 
-## Critério De Pronto
-- A extensão captura mensagens sem ser dona do overlay
-- O caminho principal não aponta para serviço externo
-- O overlay não existe mais como página da extensão
-
-## Assunções
-- A extensão ainda existe para capturar chat em pop-up.
-- O renderer do overlay vive no portal/backend Go.
+See [../docs/extension-scope.md](../docs/extension-scope.md) for the public scope statement.

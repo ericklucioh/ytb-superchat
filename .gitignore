@@ -27,6 +27,10 @@ Desktop.ini
 .idea/
 
 extension.zip
+/.planning/
+/tasks/
+/todo/
+/ytb-go/bin/
 # Temporary files
 *.tmp
 *.temp

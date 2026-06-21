@@ -75,7 +75,7 @@ function createYoutubeNode() {
   return {
     tagName: "YT-LIVE-CHAT-MEMBERSHIP-ITEM-RENDERER",
     dataset: {},
-    innerText: "ericklucioh Member for 4 months Alou calvo, 4 meses salvezada",
+    innerText: "streamerdev Member for 4 months Alou calvo, 4 meses salvezada",
     classList: {
       add() {},
       remove() {}
@@ -229,7 +229,7 @@ function createSandbox(selectorValueMap) {
 
 test("youtube membership items expose months and message correctly", () => {
   const selectorValueMap = new Map([
-    ["#author-name", { text: "@ericklucioh" }],
+    ["#author-name", { text: "@streamerdev" }],
     ["#message", { text: "Alou calvo, 4 meses salvezada", html: "Alou calvo, 4 meses salvezada" }],
     ["#header-primary-text", { text: "Member for 4 months" }],
     [".yt-live-chat-author-badge-renderer[aria-label]", { attrs: { "aria-label": "Member (2 months)", "shared-tooltip-text": "Member (2 months)" }, text: "Member (2 months)" }]

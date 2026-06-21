@@ -13,7 +13,6 @@ const ROOM_KEY = ENV.overlayRoomKey || "overlay_room_id";
 const OVERLAY_SESSION_KEY = "overlay_api_session_id";
 const DEFAULT_OVERLAY_API_BASE_URL = ENV.overlayApiBaseUrl || "http://localhost:8080";
 const MAX_LIVE_MESSAGES = typeof ENV.overlayMaxLiveMessages === "number" ? ENV.overlayMaxLiveMessages : 500;
-const API_TOKEN = cleanText(ENV.apiToken || window.__YTB_API_TOKEN__ || "");
 const portalLogger = createLogger("portal", ENV.debugLogging);
 
 function isFalsyFlag(value) {
@@ -467,8 +466,7 @@ function boot() {
     fetch(`${baseUrl.replace(/\/$/, "")}/api/event`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         session: sessionId,
@@ -533,8 +531,7 @@ function boot() {
       const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/start`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
+          "Content-Type": "application/json"
         }
       });
 
@@ -560,11 +557,7 @@ function boot() {
     }
 
     try {
-      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/status`, {
-        headers: {
-          ...(API_TOKEN ? { "X-YTB-Token": API_TOKEN } : {})
-        }
-      });
+      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/status`);
 
       if (!response.ok) {
         return;
@@ -618,8 +611,7 @@ function boot() {
       return "";
     }
 
-    const tokenQuery = API_TOKEN ? `&token=${encodeURIComponent(API_TOKEN)}` : "";
-    return `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(sessionId)}${tokenQuery}`;
+    return `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(sessionId)}`;
   }
 
   function isCopyShortcut(event) {

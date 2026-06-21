@@ -131,7 +131,7 @@ func requestToken(r *http.Request) string {
 		}
 	}
 
-	return strings.TrimSpace(r.URL.Query().Get("token"))
+	return ""
 }
 
 func defaultAllowedOrigins() []string {

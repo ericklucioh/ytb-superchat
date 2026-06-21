@@ -1,9 +1,8 @@
 {
-  "name": "Portal do Streamer - Eloh",
-  "description": "Captura chats ao vivo de plataformas suportadas e encaminha os eventos para o dashboard local do streamer.",
+  "name": "YTB Superchat Bridge",
+  "description": "Captura chats ao vivo de plataformas suportadas e encaminha os eventos para o dashboard local.",
   "manifest_version": 3,
   "version": "0.0.3",
-  "homepage_url": "https://ytb.ericklucioh.com/",
   "icons": {
     "128": "icons/logoWhite.png"
   },
@@ -17,8 +16,7 @@
     "https://www.twitch.tv/*",
     "https://kick.com/*",
     "http://localhost/*",
-    "https://localhost/*",
-    "https://ytb.ericklucioh.com/*"
+    "https://localhost/*"
   ],
   "background": {
     "service_worker": "service_worker.js"
@@ -79,8 +77,7 @@
       ],
       "matches": [
         "http://localhost/*",
-        "https://localhost/*",
-        "https://ytb.ericklucioh.com/*"
+        "https://localhost/*"
       ],
       "run_at": "document_start"
     }
@@ -99,8 +96,7 @@
         "https://www.twitch.tv/*",
         "https://kick.com/*",
         "http://localhost/*",
-        "https://localhost/*",
-        "https://ytb.ericklucioh.com/*"
+        "https://localhost/*"
       ]
     },
     {
@@ -109,8 +105,7 @@
       ],
       "matches": [
         "http://localhost/*",
-        "https://localhost/*",
-        "https://ytb.ericklucioh.com/*"
+        "https://localhost/*"
       ]
     }
   ],

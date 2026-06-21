@@ -694,8 +694,15 @@
     global.__OverlayLegacySocketShimInstalled = true;
 
     function isLegacyOverlayUrl(url) {
-      const value = String(url || "");
-      return value.includes("ytb.ericklucioh.com");
+      try {
+        const parsed = new URL(
+          String(url || ""),
+          global.location && global.location.href ? global.location.href : "http://localhost"
+        );
+        return parsed.pathname === "/ws";
+      } catch {
+        return false;
+      }
     }
 
     function createSocketEvent(type, socket, detail) {

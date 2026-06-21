@@ -1,73 +1,114 @@
 # YTB Superchat
 
-YTB Superchat e um projeto para centralizar chats de live em um dashboard de
-streamer e publicar mensagens selecionadas em um overlay para OBS. O fluxo
-principal combina uma extensao de captura no navegador, um portal estatico e um
-backend Go responsavel por sessao, estado do overlay e broadcast em tempo real.
+YTB Superchat is a live chat control room for streamers. It captures messages from supported live chat pages, centralizes them in a browser dashboard, and publishes selected messages to an OBS-ready overlay URL.
 
-## O que o projeto faz
+The project is intentionally split into three pieces: a browser extension for capture, a static portal for moderation and selection, and a Go backend for session state, overlay delivery, and realtime broadcast.
 
-- captura mensagens de plataformas suportadas, com foco principal em YouTube e Twitch
-- mostra os eventos em um dashboard do streamer
-- permite selecionar mensagens para destaque no overlay
-- entrega o overlay por URL para uso no OBS
-- mantem estado local de interface no navegador e estado compartilhado no backend Go
+## Why This Project Exists
 
-## Arquitetura
+Streamers often bounce between multiple chat windows, moderation panels, and OBS sources. This project reduces that friction by turning live chat capture and on-stream highlighting into one workflow.
 
-- `src/` concentra o portal estatico, landing page e assets do overlay
-- `extension/` contem a extensao Chrome usada para captura e bridge local
-- `ytb-go/` contem o backend Go que atende API, WebSocket e rota do overlay
+## Features
 
-Fluxo resumido:
+- Captures live chat from the supported browser pages.
+- Normalizes chat events into a single dashboard flow.
+- Lets the streamer promote selected messages to an OBS overlay.
+- Uses a session-aware Go backend to keep overlay state and realtime updates.
+- Supports local development with mock mode for layout and UX work.
 
-1. A extensao le o chat da plataforma suportada.
-2. O dashboard recebe e organiza esses eventos no navegador.
-3. O portal envia o estado selecionado para o backend Go.
-4. O OBS consome a URL `/overlay?session=...` servida pelo backend.
+## Supported Flow
 
-## Estado atual
+Primary supported flow today:
 
-- dashboard principal funcionando em `/portal`
-- overlay funcionando em `/overlay?session=...`
-- backend Go servindo sessao, broadcast e keep-awake
-- build web e pacote da extensao gerados pelo mesmo fluxo
+- YouTube live chat
+- Twitch pop-out chat
+- Kick support is present in the extension, but should be treated as secondary until verified in your own setup
 
-## Como rodar localmente
+Legacy and experimental sources still exist in the extension codebase. They are not the main maintained path and should not be treated as guaranteed integrations.
 
-Use Node.js para o portal e, em paralelo, o backend Go para API e overlay.
+## Architecture
+
+High-level flow:
+
+1. The extension reads messages from a supported chat page.
+2. The dashboard receives normalized events through the local bridge.
+3. The dashboard promotes selected messages to the Go backend.
+4. OBS consumes `/overlay?session=...` from the backend.
+5. The backend keeps the latest overlay state per session and broadcasts updates over WebSocket.
+
+Project layout:
+
+- `src/`: landing page, streamer dashboard, overlay assets, and build/runtime scripts
+- `extension/`: Chrome extension used for chat capture and local bridge delivery
+- `ytb-go/`: Go backend responsible for sessions, overlay state, HTTP API, and WebSocket fanout
+- `docs/`: public-facing architecture, security, and scope documentation
+
+More detail:
+
+- [docs/architecture.md](docs/architecture.md)
+- [docs/security.md](docs/security.md)
+- [docs/extension-scope.md](docs/extension-scope.md)
+- [docs/public-release.md](docs/public-release.md)
+
+## Security Model
+
+This public version no longer injects a shared API token into browser runtime state or overlay URLs.
+
+Important implications:
+
+- Browser clients are treated as public clients.
+- The default local/public setup is intended for development, demos, and self-hosted usage.
+- If you need stronger production hardening, place the backend behind your own auth and trusted network boundary rather than distributing a shared client secret.
+
+See [docs/security.md](docs/security.md) for the current trust model and residual risks.
+
+## Development
+
+Prerequisites:
+
+- Node.js 20+
+- Go 1.22+ or the version declared in `ytb-go/go.mod`
+- Chrome or a Chromium-based browser for extension loading
+
+From the project root:
 
 ```bash
 npm run dev
 ```
 
-O portal local sobe por padrao em `http://localhost:8000`.
+Useful local URLs:
 
-URLs uteis:
+- `http://localhost:8000/`
+- `http://localhost:8000/portal`
+- `http://localhost:8000/overlay?session=YOUR_SESSION_ID`
 
-- `http://localhost:8000/` - landing local
-- `http://localhost:8000/portal` - dashboard local
-- `http://localhost:8000/overlay?session=YOUR_SESSION_ID` - overlay local
-- `https://ytb.ericklucioh.com/` - deploy publico
+Load the extension for development:
 
-## Variaveis de ambiente
+1. Open `chrome://extensions`
+2. Enable Developer mode
+3. Click `Load unpacked`
+4. Select the `extension/` directory
 
-Os exemplos versionados ficam na raiz:
+Environment examples:
 
 - `.env.example`
 - `.env.development.example`
 - `.env.production.example`
 
-Variaveis mais importantes:
+## Testing
 
-- `PORT` - porta do portal estatico
-- `YTB_GO_PORT` - porta do backend Go
-- `YTB_OVERLAY_API_BASE_URL` - URL base da API do overlay
-- `PUBLIC_BACKEND_URL` - URL publica usada pelo keep-awake
-- `YTB_SESSION_ID` - sessao predefinida em desenvolvimento
-- `YTB_PORTAL_MOCK` - ativa dados mockados para layout
-- `YTB_DEBUG_LOGS` - habilita logs de diagnostico no portal
-- `YTB_API_TOKEN` - token opcional para proteger API e WebSocket
+Frontend and extension tests:
+
+```bash
+node --test src/tests/*.test.js extension/tests/*.test.js
+```
+
+Backend tests:
+
+```bash
+cd ytb-go
+go test ./...
+```
 
 ## Build
 
@@ -75,34 +116,31 @@ Variaveis mais importantes:
 npm run build
 ```
 
-O build gera:
+Build outputs:
 
-- `out/` com os assets do site
-- `out/overlay/` com o overlay publicado
-- `out/portal/overlay/` como alias de compatibilidade
-- `out/chrome-extension.zip` com a extensao empacotada
+- `out/`
+- `out/overlay/`
+- `out/portal/overlay/`
+- `out/chrome-extension.zip`
 
-## Extensao Chrome
+## Known Limitations
 
-Para desenvolvimento, carregue `extension/` como extensao unpacked:
+- The extension depends on the target chat page structure. Platform UI changes may require selector updates.
+- Session state is stored in memory on the backend. There is no durable persistence yet.
+- The extension still contains legacy integrations that are not part of the main maintained path.
+- The dashboard runtime is still more monolithic than ideal, although the public repo now documents the intended boundaries clearly.
 
-1. Abra `chrome://extensions`
-2. Ative o modo desenvolvedor
-3. Clique em `Load unpacked`
-4. Selecione a pasta `extension/`
+## Roadmap
 
-## Documentacao complementar
+- Split larger frontend bridge/bootstrap modules into smaller responsibilities
+- Tighten extension scope around officially supported platforms
+- Add a stronger deploy story for production hardening
+- Improve persistence and operational observability in the Go backend
 
-- [`src/README.md`](src/README.md) - portal, dashboard e scripts
-- [`extension/README.md`](extension/README.md) - extensao e bridge local
-- [`ytb-go/README.md`](ytb-go/README.md) - backend Go
+## About This Project
 
-## Limitacoes atuais
+This repository is published as a product-and-engineering portfolio project: it demonstrates browser-extension capture, realtime session state, overlay rendering, and end-to-end delivery across frontend and Go backend layers.
 
-- a extensao ainda concentra integracoes antigas alem do caminho principal
-- o modelo atual de token ainda passa pelo cliente quando configurado
-- o backend mantem estado em memoria, sem persistencia duravel
+## License
 
-## Licenca
-
-Este projeto esta publicado sob a licenca MIT. Veja [`LICENSE`](LICENSE).
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

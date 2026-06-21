@@ -18,7 +18,6 @@ var urlParams = new URLSearchParams(window.location.search);
 var nextComment = null;
 var runtimeEnv = window.__YTB_ENV__ || {};
 var roomID = runtimeEnv.sessionId || "test";
-var apiToken = String(runtimeEnv.apiToken || window.__YTB_API_TOKEN__ || "").trim();
 var overlayLogger = createOverlayLogger(Boolean(runtimeEnv.debugLogging));
 
 if (urlParams.has("session")){
@@ -35,10 +34,6 @@ if (urlParams.has("session")){
 	try{
 		roomID = localStorage.getItem("overlay_room_id") || roomID;
 	} catch(e){}
-}
-
-if (urlParams.has("token")){
-	apiToken = String(urlParams.get("token") || apiToken).trim();
 }
 
 if (urlParams.has("chroma")){
@@ -69,7 +64,6 @@ try {
 overlayLogger.debug("boot", {
 	roomID: roomID,
 	isIFrame: isIFrame,
-	hasApiToken: !!apiToken,
 	timeoutDelay: timeoutDelay || 0
 });
 
@@ -255,33 +249,16 @@ function getOverlaySocketUrl() {
 	var params = new URLSearchParams(window.location.search);
 	var explicit = params.get("ws");
 	if (explicit) {
-		return appendTokenToUrl(explicit);
+		return explicit;
 	}
 
 	var runtimeSocket = runtimeEnv.overlayWsUrl || window.__OVERLAY_WS_URL__;
 	if (runtimeSocket) {
-		return appendTokenToUrl(runtimeSocket);
+		return runtimeSocket;
 	}
 
 	var protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-	return appendTokenToUrl(protocol + "//" + window.location.host + "/ws");
-}
-
-function appendTokenToUrl(url) {
-	if (!apiToken) {
-		return url;
-	}
-
-	try{
-		var parsed = new URL(url, window.location.href);
-		if (!parsed.searchParams.has("token")) {
-			parsed.searchParams.set("token", apiToken);
-		}
-		return parsed.toString();
-	}catch(e){
-		var separator = url.indexOf("?") >= 0 ? "&" : "?";
-		return url + separator + "token=" + encodeURIComponent(apiToken);
-	}
+	return protocol + "//" + window.location.host + "/ws";
 }
 
 var socket = new WebSocket(getOverlaySocketUrl());

@@ -22,7 +22,6 @@ type runtimeEnv struct {
 	PortalPort          int
 	SessionID           string
 	PortalMockMode      bool
-	ApiToken            string
 	OverlayApiBaseURL   string
 	PublicBackendURL    string
 	OverlayWebSocketURL string
@@ -41,7 +40,6 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 
 	sessionID := firstEnv("YTB_SESSION_ID", "SESSION")
 	portalMockMode := readBool("YTB_PORTAL_MOCK", "PORTAL_MOCK")
-	apiToken := firstEnv("YTB_API_TOKEN", "YTB_SHARED_SECRET")
 	overlayApiBaseURL := firstEnv("YTB_OVERLAY_API_BASE_URL", "PUBLIC_BACKEND_URL", "YTB_PUBLIC_BACKEND_URL")
 	if overlayApiBaseURL == "" {
 		scheme := requestScheme(r)
@@ -64,7 +62,6 @@ func runtimeEnvFromRequest(r *http.Request) runtimeEnv {
 		PortalPort:          portalPort,
 		SessionID:           sessionID,
 		PortalMockMode:      portalMockMode,
-		ApiToken:            apiToken,
 		OverlayApiBaseURL:   overlayApiBaseURL,
 		PublicBackendURL:    publicBackendURL,
 		OverlayWebSocketURL: overlayWebSocketURL,
@@ -106,7 +103,6 @@ func renderRuntimeEnvScript(env runtimeEnv) string {
 		PortalPort          int    `json:"portalPort"`
 		SessionID           string `json:"sessionId"`
 		PortalMockMode      bool   `json:"portalMockMode"`
-		ApiToken            string `json:"apiToken"`
 		OverlayApiBaseURL   string `json:"overlayApiBaseUrl"`
 		PublicBackendURL    string `json:"publicBackendUrl"`
 		OverlayWebSocketURL string `json:"overlayWsUrl"`
@@ -117,14 +113,12 @@ func renderRuntimeEnvScript(env runtimeEnv) string {
 		PortalPort:          env.PortalPort,
 		SessionID:           env.SessionID,
 		PortalMockMode:      env.PortalMockMode,
-		ApiToken:            env.ApiToken,
 		OverlayApiBaseURL:   env.OverlayApiBaseURL,
 		PublicBackendURL:    env.PublicBackendURL,
 		OverlayWebSocketURL: env.OverlayWebSocketURL,
 	})
 
 	return "window.__YTB_ENV__ = " + string(body) + ";\n" +
-		"window.__YTB_API_TOKEN__ = " + jsString(env.ApiToken) + ";\n" +
 		"window.__OVERLAY_API_BASE_URL__ = " + jsString(env.OverlayApiBaseURL) + ";\n" +
 		"window.__PUBLIC_BACKEND_URL__ = " + jsString(env.PublicBackendURL) + ";\n" +
 		"window.__OVERLAY_WS_URL__ = " + jsString(env.OverlayWebSocketURL) + ";\n"
