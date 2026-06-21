@@ -3,24 +3,18 @@
     return;
   }
 
+  const runtimeHelpers = global.OverlayBridgeChannelHelpers || {};
+  const cleanSession = runtimeHelpers.cleanSession || ((value) => String(value || "").replace(/\s+/g, "").trim());
+  const buildPortName = runtimeHelpers.buildPortName || ((role, session) => `chat-bridge:${role}:${cleanSession(session) || "pending"}`);
+  const createPendingQueue = runtimeHelpers.createPendingQueue;
   const NativeWebSocket = global.WebSocket;
   const bridgeLogger = global.OverlayLogger && global.OverlayLogger.createLogger
     ? global.OverlayLogger.createLogger("local-bridge")
     : null;
 
-  function cleanSession(value) {
-    return String(value || "").replace(/\s+/g, "").trim();
-  }
-
-  function buildPortName(role, session) {
-    return `chat-bridge:${role}:${cleanSession(session) || "pending"}`;
-  }
-
   function createChannel({ role, session, onMessage } = {}) {
-    const MAX_PENDING_PACKETS = 250;
     const HEARTBEAT_INTERVAL_MS = 15000;
     const ACK_TIMEOUT_MS = 45000;
-    const PENDING_STORAGE_PREFIX = "chatbridge:pending:";
 
     let currentSession = cleanSession(session);
     let port = null;
@@ -29,13 +23,8 @@
     let suspended = false;
     let reconnectTimer = null;
     let heartbeatTimer = null;
-    let persistTimer = null;
     let reconnectDelay = 150;
-    let pendingPackets = [];
-    let pendingIndex = new Map();
     let portListeners = null;
-    let pendingHydrated = false;
-    let pendingHydrating = null;
     let lastAckAt = Date.now();
     const diagnostics = {
       role,
@@ -53,27 +42,12 @@
       lastError: ""
     };
 
-    function pendingStorageKey(nextSession = currentSession) {
-      return `${PENDING_STORAGE_PREFIX}${role}:${cleanSession(nextSession) || "pending"}`;
-    }
-
-    function packetKey(packet) {
-      const payload = packet?.payload || {};
-      const id = payload.id != null ? String(payload.id) : "";
-      if (id) {
-        return id;
-      }
-
-      return [
-        packet?.session || "",
-        packet?.type || "",
-        payload.type || "",
-        payload.platform || "",
-        payload.chatname || payload.user || "",
-        payload.chatmessage || payload.message || "",
-        payload.timestamp || ""
-      ].join("|");
-    }
+    const pendingQueue = createPendingQueue({
+      role,
+      chromeStorageLocal: chrome?.storage?.local,
+      getCurrentSession: () => currentSession,
+      emitDiagnostic
+    });
 
     function clearReconnectTimer() {
       if (!reconnectTimer) {
@@ -93,15 +67,6 @@
       heartbeatTimer = null;
     }
 
-    function clearPersistTimer() {
-      if (!persistTimer) {
-        return;
-      }
-
-      clearTimeout(persistTimer);
-      persistTimer = null;
-    }
-
     function resetReconnectDelay() {
       reconnectDelay = 150;
     }
@@ -109,7 +74,7 @@
     function snapshotDiagnostics(reason = "") {
       diagnostics.role = role;
       diagnostics.session = currentSession;
-      diagnostics.pendingSize = pendingPackets.length;
+      diagnostics.pendingSize = pendingQueue.getPendingSize();
       diagnostics.lastAckAt = lastAckAt;
       return {
         ...diagnostics,
@@ -121,9 +86,14 @@
       bridgeLogger?.debug(reason, {
         role,
         session: currentSession,
-        pendingSize: pendingPackets.length,
+        pendingSize: pendingQueue.getPendingSize(),
         extra
       });
+
+      if (reason === "hydrated") {
+        diagnostics.hydrationCount += 1;
+      }
+
       if (typeof onMessage !== "function") {
         return;
       }
@@ -171,6 +141,7 @@
         session: currentSession,
         delay: reconnectDelay
       });
+
       reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
         if (closed || suspended || port) {
@@ -196,7 +167,7 @@
           role,
           session: currentSession,
           type: packet?.type || "",
-          pendingSize: pendingPackets.length
+          pendingSize: pendingQueue.getPendingSize()
         });
         return true;
       } catch {
@@ -206,149 +177,15 @@
       }
     }
 
-    function normalizePendingPackets(items) {
-      if (!Array.isArray(items)) {
-        return [];
-      }
-
-      return items
-        .filter((packet) => packet && typeof packet === "object" && packet.type === "publish")
-        .slice(-MAX_PENDING_PACKETS);
-    }
-
-    function queuePersistPending() {
-      if (role !== "source") {
-        return;
-      }
-
-      if (persistTimer) {
-        return;
-      }
-
-      persistTimer = setTimeout(() => {
-        persistTimer = null;
-        void persistPending().catch(() => {});
-      }, 0);
-    }
-
-    async function persistPending() {
-      if (role !== "source" || !chrome?.storage?.local || !currentSession) {
-        return;
-      }
-
-      const key = pendingStorageKey();
-      const snapshot = pendingPackets.slice(-MAX_PENDING_PACKETS);
-      try {
-        if (!snapshot.length) {
-          await chrome.storage.local.remove(key);
-          return;
-        }
-
-        await chrome.storage.local.set({ [key]: snapshot });
-      } catch {
-        //
-      }
-    }
-
-    async function hydratePendingPackets() {
-      if (role !== "source" || pendingHydrated) {
-        return pendingHydrating || Promise.resolve(pendingPackets);
-      }
-
-      if (pendingHydrating) {
-        return pendingHydrating;
-      }
-
-      pendingHydrating = (async () => {
-        const sessionKey = currentSession;
-        try {
-          if (chrome?.storage?.local && sessionKey) {
-            const result = await chrome.storage.local.get(pendingStorageKey(sessionKey));
-            const loadedPackets = normalizePendingPackets(result?.[pendingStorageKey(sessionKey)]);
-            if (sessionKey === currentSession && loadedPackets.length) {
-              for (const packet of loadedPackets) {
-                const key = packetKey(packet);
-                if (key && pendingIndex.has(key)) {
-                  continue;
-                }
-
-                pendingPackets.push(packet);
-                if (key) {
-                  pendingIndex.set(key, packet);
-                }
-              }
-            }
-          }
-        } catch {
-          //
-        }
-
-        pendingHydrated = true;
-        diagnostics.hydrationCount += 1;
-        pendingHydrating = null;
-        emitDiagnostic("hydrated", {
-          pendingCount: pendingPackets.length
-        });
-        return pendingPackets;
-      })();
-
-      return pendingHydrating;
-    }
-
-    function dropPendingByKey(key) {
-      if (!key || !pendingIndex.has(key)) {
-        return false;
-      }
-
-      pendingIndex.delete(key);
-      pendingPackets = pendingPackets.filter((packet) => packetKey(packet) !== key);
-      diagnostics.acks += 1;
-      queuePersistPending();
-      return true;
-    }
-
-    function registerPendingPacket(packet) {
-      if (role !== "source" || !packet || typeof packet !== "object") {
-        return packet;
-      }
-
-      const key = packetKey(packet);
-      if (key && pendingIndex.has(key)) {
-        return pendingIndex.get(key);
-      }
-
-      pendingPackets.push(packet);
-      if (key) {
-        pendingIndex.set(key, packet);
-      }
-
-      if (pendingPackets.length > MAX_PENDING_PACKETS) {
-        const trimmed = pendingPackets.splice(0, pendingPackets.length - MAX_PENDING_PACKETS);
-        for (const item of trimmed) {
-          const itemKey = packetKey(item);
-          if (itemKey) {
-            pendingIndex.delete(itemKey);
-          }
-        }
-      }
-
-      queuePersistPending();
-      return packet;
-    }
-
     function flushPending() {
-      if (!port || !pendingPackets.length) {
+      if (!port) {
         return;
       }
 
-      const queue = pendingPackets.slice();
-      for (let index = 0; index < queue.length; index += 1) {
-        if (!sendRawPacket(queue[index])) {
-          disconnectPort();
-          scheduleReconnect();
-          break;
-        }
-      }
+      pendingQueue.flushPending(sendRawPacket, () => {
+        disconnectPort();
+        scheduleReconnect();
+      });
     }
 
     function disconnectPort() {
@@ -367,7 +204,7 @@
       bridgeLogger?.debug("disconnect", {
         role,
         session: currentSession,
-        pendingSize: pendingPackets.length
+        pendingSize: pendingQueue.getPendingSize()
       });
 
       try {
@@ -382,7 +219,8 @@
         return false;
       }
 
-      if (cleanSession(message.session || "") && cleanSession(message.session || "") !== currentSession) {
+      const messageSession = cleanSession(message.session || "");
+      if (messageSession && messageSession !== currentSession) {
         return false;
       }
 
@@ -405,7 +243,11 @@
         return true;
       }
 
-      return dropPendingByKey(key);
+      const removed = pendingQueue.dropPendingByKey(key);
+      if (removed) {
+        diagnostics.acks += 1;
+      }
+      return removed;
     }
 
     function sendHeartbeat() {
@@ -416,8 +258,9 @@
       bridgeLogger?.debug("heartbeat", {
         role,
         session: currentSession,
-        pendingSize: pendingPackets.length
+        pendingSize: pendingQueue.getPendingSize()
       });
+
       return sendRawPacket({
         type: "heartbeat",
         session: currentSession,
@@ -436,7 +279,7 @@
         }
 
         if (!port) {
-          if (pendingPackets.length) {
+          if (pendingQueue.getPendingSize()) {
             scheduleReconnect();
           }
           return;
@@ -461,7 +304,7 @@
       }
 
       if (port) {
-        if (role !== "source" || pendingHydrated) {
+        if (role !== "source" || pendingQueue.isHydrated()) {
           flushPending();
         }
         return port;
@@ -479,8 +322,9 @@
         bridgeLogger?.debug("connect", {
           role,
           session: currentSession,
-          pendingSize: pendingPackets.length
+          pendingSize: pendingQueue.getPendingSize()
         });
+
         const token = portToken;
         const listeners = {
           onMessage(message) {
@@ -517,7 +361,7 @@
             bridgeLogger?.debug("port-disconnect", {
               role,
               session: currentSession,
-              pendingSize: pendingPackets.length
+              pendingSize: pendingQueue.getPendingSize()
             });
 
             if (!suspended) {
@@ -525,18 +369,19 @@
             }
           }
         };
+
         portListeners = listeners;
         nextPort.onMessage.addListener(listeners.onMessage);
         nextPort.onDisconnect.addListener(listeners.onDisconnect);
         resetReconnectDelay();
         clearReconnectTimer();
         lastAckAt = Date.now();
-        void hydratePendingPackets().then(() => {
+        void pendingQueue.hydratePendingPackets().then(() => {
           if (!closed && port === nextPort) {
             flushPending();
           }
         });
-        if (role !== "source" || pendingHydrated) {
+        if (role !== "source" || pendingQueue.isHydrated()) {
           flushPending();
         }
         startHeartbeatTimer();
@@ -560,16 +405,16 @@
         payload
       };
 
-      registerPendingPacket(packet);
+      pendingQueue.registerPendingPacket(packet);
       bridgeLogger?.debug("publish", {
         role,
         session: currentSession,
         packetId: packet?.payload?.id || "",
-        pendingSize: pendingPackets.length
+        pendingSize: pendingQueue.getPendingSize()
       });
 
       const hadPort = !!port;
-      const shouldSendImmediately = role !== "source" || pendingHydrated;
+      const shouldSendImmediately = role !== "source" || pendingQueue.isHydrated();
       if (!hadPort && !connect()) {
         return false;
       }
@@ -583,21 +428,9 @@
       return true;
     }
 
-    function send(payload) {
-      return publish(payload);
-    }
-
     function subscribe(handler) {
       onMessage = handler;
       return channel;
-    }
-
-    function resetPendingState() {
-      pendingPackets = [];
-      pendingIndex.clear();
-      pendingHydrated = false;
-      pendingHydrating = null;
-      clearPersistTimer();
     }
 
     function setSession(nextSession) {
@@ -616,7 +449,7 @@
         return currentSession;
       }
 
-      resetPendingState();
+      pendingQueue.resetPendingState();
       if (port) {
         disconnectPort();
       }
@@ -645,7 +478,7 @@
     function close() {
       closed = true;
       clearHeartbeatTimer();
-      clearPersistTimer();
+      pendingQueue.clearPersistTimer();
       clearReconnectTimer();
       disconnectPort();
       window.removeEventListener("pagehide", handlePageHide);
@@ -671,7 +504,9 @@
       connect,
       close,
       publish,
-      send,
+      send(payload) {
+        return publish(payload);
+      },
       subscribe,
       setSession,
       getDiagnostics() {
@@ -682,232 +517,17 @@
       }
     };
 
-    void hydratePendingPackets();
+    void pendingQueue.hydratePendingPackets();
     return channel;
-  }
-
-  function installLegacyOverlaySocketShim() {
-    if (global.__OverlayLegacySocketShimInstalled || typeof NativeWebSocket !== "function") {
-      return;
-    }
-
-    global.__OverlayLegacySocketShimInstalled = true;
-
-    function isLegacyOverlayUrl(url) {
-      try {
-        const parsed = new URL(
-          String(url || ""),
-          global.location && global.location.href ? global.location.href : "http://localhost"
-        );
-        return parsed.pathname === "/ws";
-      } catch {
-        return false;
-      }
-    }
-
-    function createSocketEvent(type, socket, detail) {
-      return {
-        type,
-        target: socket,
-        currentTarget: socket,
-        detail
-      };
-    }
-
-    function createShimSocket(url) {
-      let currentSession = "";
-      let bridge = null;
-      let closed = false;
-      let opened = false;
-      const listeners = {
-        open: new Set(),
-        message: new Set(),
-        close: new Set(),
-        error: new Set()
-      };
-      const pendingPackets = [];
-
-      function emit(type, detail) {
-        const event = createSocketEvent(type, socket, detail);
-        const handler = socket[`on${type}`];
-        if (typeof handler === "function") {
-          try {
-            handler.call(socket, event);
-          } catch {
-            //
-          }
-        }
-
-        for (const listener of listeners[type] || []) {
-          try {
-            listener.call(socket, event);
-          } catch {
-            //
-          }
-        }
-      }
-
-      function ensureBridge() {
-        const session = cleanSession(currentSession);
-        if (!session || !global.OverlayLocalChatBridge || !global.OverlayLocalChatBridge.createChannel) {
-          return null;
-        }
-
-        if (!bridge) {
-          bridge = global.OverlayLocalChatBridge.createChannel({
-            role: "source",
-            session
-          });
-          bridge.connect();
-        } else if (bridge.session !== session) {
-          bridge.setSession(session);
-        }
-
-        return bridge;
-      }
-
-      function flushPending() {
-        if (!bridge || !pendingPackets.length) {
-          return;
-        }
-
-        const queue = pendingPackets.splice(0);
-        for (const packet of queue) {
-          bridge.publish(packet);
-        }
-      }
-
-      const socket = {
-        binaryType: "blob",
-        bufferedAmount: 0,
-        extensions: "",
-        protocol: "",
-        url,
-        get readyState() {
-          if (closed) {
-            return 3;
-          }
-          return opened ? 1 : 0;
-        },
-        send(data) {
-          if (closed) {
-            throw new DOMException("WebSocket is closed.", "InvalidStateError");
-          }
-
-          let packet = null;
-          if (typeof data === "string") {
-            try {
-              packet = JSON.parse(data);
-            } catch {
-              packet = null;
-            }
-          } else if (data && typeof data === "object") {
-            packet = data;
-          }
-
-          if (!packet || typeof packet !== "object") {
-            return;
-          }
-
-          if (packet.join) {
-            currentSession = cleanSession(packet.join);
-            ensureBridge();
-            flushPending();
-            return;
-          }
-
-          if (packet.session && !currentSession) {
-            currentSession = cleanSession(packet.session);
-          }
-
-          if (packet.msg && !packet.feed) {
-            packet = {
-              ...packet,
-              feed: true
-            };
-          }
-
-          const activeBridge = ensureBridge();
-          if (!activeBridge) {
-            pendingPackets.push(packet);
-            return;
-          }
-
-          activeBridge.publish(packet);
-        },
-        close() {
-          if (closed) {
-            return;
-          }
-
-          closed = true;
-          if (bridge) {
-            bridge.close();
-            bridge = null;
-          }
-          emit("close");
-        },
-        addEventListener(type, listener) {
-          if (listeners[type]) {
-            listeners[type].add(listener);
-          }
-        },
-        removeEventListener(type, listener) {
-          if (listeners[type]) {
-            listeners[type].delete(listener);
-          }
-        },
-        dispatchEvent(event) {
-          if (!event || !event.type || !listeners[event.type]) {
-            return true;
-          }
-
-          for (const listener of listeners[event.type]) {
-            try {
-              listener.call(socket, event);
-            } catch {
-              //
-            }
-          }
-          return true;
-        },
-        onopen: null,
-        onmessage: null,
-        onclose: null,
-        onerror: null
-      };
-
-      queueMicrotask(() => {
-        if (closed) {
-          return;
-        }
-        opened = true;
-        emit("open");
-      });
-
-      return socket;
-    }
-
-    function LegacyOverlayWebSocket(url, protocols) {
-      if (!(this instanceof LegacyOverlayWebSocket)) {
-        return new NativeWebSocket(url, protocols);
-      }
-
-      if (!isLegacyOverlayUrl(url)) {
-        return new NativeWebSocket(url, protocols);
-      }
-
-      return createShimSocket(url);
-    }
-
-    LegacyOverlayWebSocket.prototype = NativeWebSocket.prototype;
-    Object.setPrototypeOf(LegacyOverlayWebSocket, NativeWebSocket);
-    global.WebSocket = LegacyOverlayWebSocket;
   }
 
   global.OverlayLocalChatBridge = {
     createChannel
   };
 
-  installLegacyOverlaySocketShim();
+  global.OverlayBridgeLegacySocketShim?.installLegacyOverlaySocketShim({
+    NativeWebSocket,
+    cleanSession,
+    createChannel
+  });
 })(window);

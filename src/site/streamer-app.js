@@ -1,4 +1,4 @@
-import { buildOverlayPayload, compareMessageEvent, comparePriorityEvent, compareSuperchatEvent } from "./streamer-events.js";
+import { buildOverlayPayload } from "./streamer-events.js";
 import { cleanText } from "./streamer-text.js";
 import { createCurrencyRateService } from "./streamer-rates.js";
 import { createStreamerStore } from "./streamer-store.js";
@@ -6,6 +6,10 @@ import { createStreamerView } from "./streamer-view.js";
 import { createChatBridge } from "./chat-bridge.js";
 import { createLogger } from "./logger.js";
 import { loadMockDeck, getMockRoomId } from "./streamer-mock.js";
+import { createPortalClipboard } from "./portal-clipboard.js";
+import { createPortalOverlayApi } from "./portal-overlay-api.js";
+import { createPortalRenderLoop } from "./portal-render-loop.js";
+import { createPortalSessionController } from "./portal-session.js";
 
 const ENV = window.__YTB_ENV__ || {};
 const STORAGE_KEY = ENV.overlayStorageKey || "overlay_state";
@@ -21,37 +25,7 @@ function isFalsyFlag(value) {
 }
 
 function boot() {
-  const elements = {
-    sessionInput: document.getElementById("session-input"),
-    generateOverlayButton: document.getElementById("generate-overlay-button"),
-    connectButton: document.getElementById("connect-button"),
-    summaryButton: document.getElementById("summary-button"),
-    keepAwakeButton: document.getElementById("keep-awake-button"),
-    keepAwakeStatus: document.getElementById("keep-awake-status"),
-    connectionStatus: document.getElementById("connection-status"),
-    mockBadge: document.getElementById("mock-badge"),
-    summaryPopup: document.getElementById("summary-popup"),
-    summaryCopyOverlayButton: document.getElementById("summary-copy-overlay"),
-    summaryClearHistoryButton: document.getElementById("summary-clear-history"),
-    detailPopup: document.getElementById("detail-popup"),
-    filterGroup: document.getElementById("filter-group"),
-    currentFilter: document.getElementById("current-filter"),
-    eventTotal: document.getElementById("event-total"),
-    countTwitchSubs: document.getElementById("count-twitch-subs"),
-    countYoutubeMembers: document.getElementById("count-youtube-members"),
-    countTotalCombined: document.getElementById("count-total-combined"),
-    countSuperchats: document.getElementById("count-superchats"),
-    countSuperchatsBrlTotal: document.getElementById("count-superchats-brl-total"),
-    priorityCount: document.getElementById("priority-count"),
-    superchatCount: document.getElementById("superchat-count"),
-    chatCount: document.getElementById("chat-count"),
-    priorityList: document.getElementById("priority-list"),
-    superchatList: document.getElementById("superchat-list"),
-    chatList: document.getElementById("chat-list"),
-    priorityTemplate: document.getElementById("priority-template"),
-    eventTemplate: document.getElementById("event-template")
-  };
-
+  const elements = collectElements();
   if (!elements.sessionInput || !elements.generateOverlayButton || !elements.connectButton || !elements.filterGroup) {
     return;
   }
@@ -68,6 +42,7 @@ function boot() {
   const storedRoom = cleanText(localStorage.getItem(ROOM_KEY) || "");
   const initialRoom = mockMode ? mockRoomId : (urlRoom || envRoom || storedRoom || "");
   const initialOverlaySession = cleanText(localStorage.getItem(OVERLAY_SESSION_KEY) || "");
+  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
 
   const store = createStreamerStore({
     storageKey: STORAGE_KEY,
@@ -76,327 +51,294 @@ function boot() {
     initialRoomId: initialRoom
   });
   const view = createStreamerView(elements);
-  const hasChromeStorage = typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync;
 
-  let renderQueued = false;
-  let lastRenderedFilter = "";
-  let lastRenderKey = "";
   let summaryOpen = false;
   let detailId = "";
-  let overlaySessionId = initialOverlaySession;
-  const currencyService = createCurrencyRateService({ scheduleRender });
+  let renderLoop = null;
+  let sessionController = null;
+
+  const currencyService = createCurrencyRateService({
+    scheduleRender: () => renderLoop?.scheduleRender()
+  });
+
   const chatBridge = mockMode ? createMockBridge() : createChatBridge({
     session: initialRoom,
     onMessage: handleIncomingPayload,
     onReady: () => setStatus("online"),
-    onSession: handleBridgeSession,
+    onSession: (nextSession) => sessionController?.handleBridgeSession(nextSession),
     logger: portalLogger.child("bridge")
+  });
+
+  const clipboard = createPortalClipboard({
+    logger: portalLogger,
+    button: elements.summaryCopyOverlayButton
+  });
+
+  const overlayApi = createPortalOverlayApi({
+    logger: portalLogger,
+    elements,
+    defaultOverlayApiBaseUrl: DEFAULT_OVERLAY_API_BASE_URL
+  });
+
+  renderLoop = createPortalRenderLoop({
+    store,
+    view,
+    currencyService,
+    logger: portalLogger,
+    getDetailId: () => detailId,
+    resetMissingDetail: () => {
+      detailId = "";
+      view.setDetailOpen(false);
+    }
+  });
+
+  sessionController = createPortalSessionController({
+    store,
+    view,
+    chatBridge,
+    logger: portalLogger,
+    roomKey: ROOM_KEY,
+    overlaySessionKey: OVERLAY_SESSION_KEY,
+    initialOverlaySession,
+    hasChromeStorage,
+    mockMode,
+    scheduleRender: renderLoop.scheduleRender,
+    setStatus
   });
 
   portalLogger.debug("boot", {
     initialRoom,
     mockMode,
-    overlayApiBaseUrl: resolveOverlayApiBaseUrl()
+    overlayApiBaseUrl: overlayApi.resolveOverlayApiBaseUrl()
   });
 
-  if (mockMode) {
-    document.body.dataset.mockMode = "true";
+  initializeViewState();
+  attachEventListeners();
+  startInitialFlow();
+
+  function collectElements() {
+    return {
+      sessionInput: document.getElementById("session-input"),
+      generateOverlayButton: document.getElementById("generate-overlay-button"),
+      connectButton: document.getElementById("connect-button"),
+      summaryButton: document.getElementById("summary-button"),
+      keepAwakeButton: document.getElementById("keep-awake-button"),
+      keepAwakeStatus: document.getElementById("keep-awake-status"),
+      connectionStatus: document.getElementById("connection-status"),
+      mockBadge: document.getElementById("mock-badge"),
+      summaryPopup: document.getElementById("summary-popup"),
+      summaryCopyOverlayButton: document.getElementById("summary-copy-overlay"),
+      summaryClearHistoryButton: document.getElementById("summary-clear-history"),
+      detailPopup: document.getElementById("detail-popup"),
+      filterGroup: document.getElementById("filter-group"),
+      currentFilter: document.getElementById("current-filter"),
+      eventTotal: document.getElementById("event-total"),
+      countTwitchSubs: document.getElementById("count-twitch-subs"),
+      countYoutubeMembers: document.getElementById("count-youtube-members"),
+      countTotalCombined: document.getElementById("count-total-combined"),
+      countSuperchats: document.getElementById("count-superchats"),
+      countSuperchatsBrlTotal: document.getElementById("count-superchats-brl-total"),
+      priorityCount: document.getElementById("priority-count"),
+      superchatCount: document.getElementById("superchat-count"),
+      chatCount: document.getElementById("chat-count"),
+      priorityList: document.getElementById("priority-list"),
+      superchatList: document.getElementById("superchat-list"),
+      chatList: document.getElementById("chat-list"),
+      priorityTemplate: document.getElementById("priority-template"),
+      eventTemplate: document.getElementById("event-template")
+    };
   }
 
-  if (elements.mockBadge) {
-    const explicitMockBadge = params.has("mock") && !isFalsyFlag(params.get("mock"));
-    elements.mockBadge.hidden = !mockMode || !explicitMockBadge;
+  function initializeViewState() {
+    if (mockMode) {
+      document.body.dataset.mockMode = "true";
+    }
+
+    if (elements.mockBadge) {
+      const explicitMockBadge = params.has("mock") && !isFalsyFlag(params.get("mock"));
+      elements.mockBadge.hidden = !mockMode || !explicitMockBadge;
+    }
+
+    elements.sessionInput.value = sessionController.initializeOverlaySessionId();
+    view.syncFilterButtons(store.state.filter);
+    view.setSummaryOpen(summaryOpen);
+    view.setDetailOpen(false);
   }
 
-  elements.sessionInput.value = initializeOverlaySessionId();
-  view.syncFilterButtons(store.state.filter);
-  view.setSummaryOpen(summaryOpen);
-  view.setDetailOpen(false);
-
-  if (mockMode) {
-    void seedMockDeck();
-  } else if (initialRoom) {
-    connect(initialRoom);
-  } else if (hasChromeStorage) {
-    chrome.storage.sync.get(["streamID"], (result) => {
-      const storedChromeRoom = cleanText(result?.streamID || "");
-      if (storedChromeRoom) {
-        connect(storedChromeRoom);
-        return;
-      }
-      setStatus("aguardando");
+  function attachEventListeners() {
+    elements.connectButton.addEventListener("click", () => {
+      sessionController.connect(sessionController.buildSessionId());
     });
-  } else {
-    setStatus("aguardando");
-  }
 
-  elements.connectButton.addEventListener("click", () => {
-    const generatedBridgeSession = buildSessionId();
-    connect(generatedBridgeSession);
-  });
+    if (elements.summaryButton && elements.summaryPopup) {
+      elements.summaryButton.addEventListener("click", () => {
+        setSummaryOpen(!summaryOpen);
+      });
 
-  if (elements.summaryButton && elements.summaryPopup) {
-    elements.summaryButton.addEventListener("click", () => {
-      setSummaryOpen(!summaryOpen);
-    });
+      elements.summaryPopup.addEventListener("click", (event) => {
+        if (event.target.closest("[data-summary-close]")) {
+          setSummaryOpen(false);
+        }
+      });
+    }
 
-    elements.summaryPopup.addEventListener("click", (event) => {
-      if (event.target.closest("[data-summary-close]")) {
-        setSummaryOpen(false);
-      }
-    });
-  }
+    if (elements.summaryCopyOverlayButton) {
+      elements.summaryCopyOverlayButton.addEventListener("click", () => {
+        void copyOverlayLink();
+      });
+    }
 
-  if (elements.summaryCopyOverlayButton) {
-    elements.summaryCopyOverlayButton.addEventListener("click", () => {
-      void copyOverlayLink();
-    });
-  }
+    if (elements.keepAwakeButton && elements.keepAwakeStatus) {
+      elements.keepAwakeButton.addEventListener("click", () => {
+        void overlayApi.activateKeepAwake();
+      });
 
-  if (elements.keepAwakeButton && elements.keepAwakeStatus) {
-    elements.keepAwakeButton.addEventListener("click", () => {
-      void activateKeepAwake();
-    });
+      void overlayApi.refreshKeepAwakeStatus();
+    }
 
-    void refreshKeepAwakeStatus();
-  }
-
-  if (elements.generateOverlayButton) {
     elements.generateOverlayButton.addEventListener("click", () => {
-      const generatedOverlaySession = buildSessionId();
-      setOverlaySessionId(generatedOverlaySession);
+      const generatedOverlaySession = sessionController.buildSessionId();
+      sessionController.setOverlaySessionId(generatedOverlaySession);
       elements.sessionInput.value = generatedOverlaySession;
-      void copyTextToClipboard(generatedOverlaySession);
+      void clipboard.copyText(generatedOverlaySession);
       setStatus("api id gerado");
     });
-  }
 
-  if (elements.summaryClearHistoryButton) {
-    elements.summaryClearHistoryButton.addEventListener("click", () => {
-      void clearCurrentHistory();
+    if (elements.summaryClearHistoryButton) {
+      elements.summaryClearHistoryButton.addEventListener("click", () => {
+        void clearCurrentHistory();
+      });
+    }
+
+    if (elements.detailPopup) {
+      elements.detailPopup.addEventListener("click", (event) => {
+        if (event.target.closest("[data-detail-close]")) {
+          closeDetail();
+          return;
+        }
+
+        const actionButton = event.target.closest("button[data-detail-action]");
+        if (!actionButton || !detailId) {
+          return;
+        }
+
+        const nextStatus = actionButton.getAttribute("data-detail-action");
+        if (!nextStatus) {
+          return;
+        }
+
+        closeDetail({ status: nextStatus });
+      });
+    }
+
+    elements.filterGroup.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-filter]");
+      if (!button) {
+        return;
+      }
+
+      const nextFilter = button.getAttribute("data-filter");
+      if (store.setFilter(nextFilter)) {
+        view.syncFilterButtons(store.state.filter);
+        renderLoop.scheduleRender();
+      }
     });
-  }
 
-  if (elements.detailPopup) {
-    elements.detailPopup.addEventListener("click", (event) => {
-      if (event.target.closest("[data-detail-close]")) {
+    [elements.priorityList, elements.superchatList, elements.chatList].forEach((list) => {
+      list.addEventListener("click", (event) => {
+        const actionButton = event.target.closest("button[data-action]");
+        const card = event.target.closest("[data-id]");
+        if (!card) {
+          return;
+        }
+
+        const id = card.getAttribute("data-id");
+
+        if (actionButton) {
+          const nextStatus = actionButton.getAttribute("data-action");
+          if (store.updateStatus(id, nextStatus)) {
+            renderLoop.scheduleRender();
+          }
+          return;
+        }
+
+        toggleOverlaySelection(id);
+      });
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") {
+        if (summaryOpen && isCopyShortcut(event)) {
+          const target = event.target;
+          const isInsideSummary = elements.summaryPopup && target instanceof Node && elements.summaryPopup.contains(target);
+          if (isInsideSummary) {
+            event.preventDefault();
+            void copyOverlayLink();
+          }
+        }
+        return;
+      }
+
+      if (detailId) {
         closeDetail();
         return;
       }
 
-      const actionButton = event.target.closest("button[data-detail-action]");
-      if (!actionButton || !detailId) {
-        return;
+      if (summaryOpen) {
+        setSummaryOpen(false);
       }
-
-      const nextStatus = actionButton.getAttribute("data-detail-action");
-      if (!nextStatus) {
-        return;
-      }
-
-      closeDetail({ status: nextStatus });
     });
+
+    window.addEventListener("storage", (event) => {
+      if (event.key !== store.getStorageKey() || !event.newValue) {
+        return;
+      }
+
+      if (store.syncFromExternalState(event.newValue)) {
+        view.syncFilterButtons(store.state.filter);
+        if (detailId && !store.findEventById(detailId)) {
+          detailId = "";
+          view.setDetailOpen(false);
+        }
+        renderLoop.scheduleRender();
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        renderLoop.renderNow();
+      }
+    });
+
+    window.addEventListener("beforeunload", cleanup);
   }
 
-  elements.filterGroup.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-filter]");
-    if (!button) {
+  function startInitialFlow() {
+    renderLoop.scheduleRender();
+
+    if (mockMode) {
+      void seedMockDeck();
       return;
     }
 
-    const nextFilter = button.getAttribute("data-filter");
-    if (store.setFilter(nextFilter)) {
-      view.syncFilterButtons(store.state.filter);
-      scheduleRender();
+    if (initialRoom) {
+      sessionController.connect(initialRoom);
+      return;
     }
-  });
 
-  [elements.priorityList, elements.superchatList, elements.chatList].forEach((list) => {
-    list.addEventListener("click", (event) => {
-      const actionButton = event.target.closest("button[data-action]");
-      const card = event.target.closest("[data-id]");
-      if (!card) {
-        return;
-      }
-
-      const id = card.getAttribute("data-id");
-
-      if (actionButton) {
-        const nextStatus = actionButton.getAttribute("data-action");
-        if (store.updateStatus(id, nextStatus)) {
-          scheduleRender();
-        }
-        return;
-      }
-
-      toggleOverlaySelection(id);
-    });
-  });
-
-  window.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") {
-      if (summaryOpen && isCopyShortcut(event)) {
-        const target = event.target;
-        const isInsideSummary = elements.summaryPopup && target instanceof Node && elements.summaryPopup.contains(target);
-        if (isInsideSummary) {
-          event.preventDefault();
-          void copyOverlayLink();
+    if (hasChromeStorage) {
+      chrome.storage.sync.get(["streamID"], (result) => {
+        const storedChromeRoom = cleanText(result?.streamID || "");
+        if (storedChromeRoom) {
+          sessionController.connect(storedChromeRoom);
           return;
         }
-      }
+        setStatus("aguardando");
+      });
       return;
     }
 
-    if (detailId) {
-      closeDetail();
-      return;
-    }
-
-    if (summaryOpen) {
-      setSummaryOpen(false);
-    }
-  });
-
-  window.addEventListener("storage", (event) => {
-    if (event.key !== store.getStorageKey() || !event.newValue) {
-      return;
-    }
-
-    if (store.syncFromExternalState(event.newValue)) {
-      view.syncFilterButtons(store.state.filter);
-      if (detailId && !store.findEventById(detailId)) {
-        detailId = "";
-        view.setDetailOpen(false);
-      }
-      scheduleRender();
-    }
-  });
-
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) {
-      renderQueued = false;
-      render();
-    }
-  });
-
-  window.addEventListener("beforeunload", cleanup);
-
-  scheduleRender();
-  initializeOverlaySessionId();
-
-  function connect(roomId) {
-    const nextRoom = cleanText(roomId);
-    if (!nextRoom) {
-      setStatus("digite session id");
-      return;
-    }
-
-    const previousRoom = store.state.roomId;
-
-    portalLogger.debug("connect", {
-      roomId: nextRoom
-    });
-
-    store.connectRoom(nextRoom);
-    localStorage.setItem(ROOM_KEY, nextRoom);
-    persistSharedRoom(nextRoom);
-    ensureOverlaySessionIsSeparate(nextRoom);
-    view.syncFilterButtons(store.state.filter);
-    setStatus("sync");
-    if (!mockMode) {
-      const sameRoom = nextRoom === previousRoom;
-      if (sameRoom && chatBridge.ready && typeof chatBridge.refreshSession === "function") {
-        chatBridge.refreshSession(nextRoom);
-      } else {
-        chatBridge.setSession(nextRoom);
-      }
-    }
-    scheduleRender();
-  }
-
-  function buildSessionId(length = 11) {
-    const alphabet = "ABCEFGHJKLMNPQRSTUVWXYZabcefghijkmnpqrstuvwxyz23456789";
-    const bytes = new Uint8Array(length);
-    if (window.crypto && typeof window.crypto.getRandomValues === "function") {
-      window.crypto.getRandomValues(bytes);
-    } else {
-      for (let index = 0; index < bytes.length; index += 1) {
-        bytes[index] = Math.floor(Math.random() * 256);
-      }
-    }
-
-    let result = "";
-    for (let index = 0; index < bytes.length; index += 1) {
-      result += alphabet.charAt(bytes[index] % alphabet.length);
-    }
-    return result;
-  }
-
-  function initializeOverlaySessionId() {
-    if (overlaySessionId) {
-      return overlaySessionId;
-    }
-
-    return setOverlaySessionId(buildSessionId());
-  }
-
-  function ensureOverlaySessionIsSeparate(roomId) {
-    if (!overlaySessionId || overlaySessionId !== roomId) {
-      return;
-    }
-
-    setOverlaySessionId(buildSessionId());
-  }
-
-  function getOverlaySessionId() {
-    return cleanText(overlaySessionId || "");
-  }
-
-  function setOverlaySessionId(nextSession) {
-    const normalized = cleanText(nextSession);
-    if (!normalized) {
-      return "";
-    }
-
-    overlaySessionId = normalized;
-    try {
-      localStorage.setItem(OVERLAY_SESSION_KEY, normalized);
-    } catch {
-      //
-    }
-
-    return overlaySessionId;
-  }
-
-  async function copyTextToClipboard(text) {
-    try {
-      await navigator.clipboard?.writeText?.(text);
-    } catch {
-      fallbackCopyText(text);
-    }
-  }
-
-  function handleBridgeSession(nextSession) {
-    if (mockMode) {
-      return;
-    }
-
-    const session = cleanText(nextSession);
-    if (!session || session === store.state.roomId) {
-      return;
-    }
-
-    portalLogger.debug("bridge-session", {
-      from: store.state.roomId,
-      to: session
-    });
-
-    store.connectRoom(session);
-    localStorage.setItem(ROOM_KEY, session);
-    persistSharedRoom(session);
-    view.syncFilterButtons(store.state.filter);
-    setStatus("sync");
-    scheduleRender();
+    setStatus("aguardando");
   }
 
   function handleIncomingPayload(payload) {
@@ -412,13 +354,13 @@ function boot() {
     portalLogger.debug("incoming-payload", summarizePayload(normalized));
 
     if (store.insertEvent(normalized)) {
-      scheduleRender();
+      renderLoop.scheduleRender();
     }
   }
 
   function toggleOverlaySelection(id) {
     const event = store.findEventById(id);
-    const overlaySession = getOverlaySessionId();
+    const overlaySession = sessionController.getOverlaySessionId();
     if (!event || !overlaySession) {
       return;
     }
@@ -434,329 +376,22 @@ function boot() {
     }
 
     if (store.setOverlayId(id)) {
-      sendOverlayOnce(overlaySession, overlayPayload);
+      overlayApi.sendOverlayOnce(overlaySession, overlayPayload);
     }
 
     openDetail(id);
-    scheduleRender();
-  }
-
-  function sendOverlayOnce(sessionId, overlayPayload) {
-    sendOverlayPacket(sessionId, {
-      msg: true,
-      id: `overlay-${overlayPayload.eventType || "message"}-${Date.now()}`,
-      contents: overlayPayload
-    });
-  }
-
-  function sendOverlayPacket(sessionId, packet) {
-    const baseUrl = resolveOverlayApiBaseUrl();
-    if (!baseUrl) {
-      return;
-    }
-
-    portalLogger.debug("send-overlay", {
-      roomId: sessionId,
-      endpoint: `${baseUrl.replace(/\/$/, "")}/api/event`,
-      msg: packet?.msg,
-      clear: packet?.contents === false,
-      id: packet?.id || ""
-    });
-
-    fetch(`${baseUrl.replace(/\/$/, "")}/api/event`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        session: sessionId,
-        ...packet
-      })
-    }).catch((error) => {
-      portalLogger.warn("Failed to send overlay packet", error);
-    });
-  }
-
-  function resolveOverlayApiBaseUrl() {
-    const stored = cleanText(localStorage.getItem("overlay_backend_base_url") || "");
-    if (stored) {
-      return normalizeApiBaseUrl(stored);
-    }
-
-    const runtimeEnv = window.__YTB_ENV__ || {};
-    const runtimeApiBase = cleanText(
-      runtimeEnv.publicBackendUrl
-      || runtimeEnv.overlayApiBaseUrl
-      || window.__PUBLIC_BACKEND_URL__
-      || window.__OVERLAY_API_BASE_URL__
-      || ""
-    );
-    if (runtimeApiBase) {
-      return normalizeApiBaseUrl(runtimeApiBase);
-    }
-
-    return normalizeApiBaseUrl(DEFAULT_OVERLAY_API_BASE_URL);
+    renderLoop.scheduleRender();
   }
 
   async function copyOverlayLink() {
-    const overlaySession = getOverlaySessionId();
+    const overlaySession = sessionController.getOverlaySessionId();
     if (!overlaySession) {
       setStatus("gere overlay id");
       return;
     }
 
-    const overlayUrl = buildOverlayUrl(overlaySession);
-
-    try {
-      await navigator.clipboard.writeText(overlayUrl);
-      flashSummaryCopyButton("Copiado");
-    } catch (error) {
-      portalLogger.warn("Failed to copy overlay link", error);
-      fallbackCopyText(overlayUrl);
-      flashSummaryCopyButton("Copiado");
-    }
-  }
-
-  async function activateKeepAwake() {
-    const baseUrl = resolveOverlayApiBaseUrl();
-    if (!baseUrl) {
-      updateKeepAwakeStatus("Não foi possível ativar o keep-awake.", false);
-      return;
-    }
-
-    setKeepAwakeButtonBusy(true);
-    updateKeepAwakeStatus("Ativando...", false);
-
-    try {
-      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/start`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`keep-awake start failed with status ${response.status}`);
-      }
-
-      const payload = await response.json();
-      updateKeepAwakeStatusFromPayload(payload);
-    } catch (error) {
-      portalLogger.warn("Failed to activate keep-awake", error);
-      updateKeepAwakeStatus("Não foi possível ativar o keep-awake.", false);
-    } finally {
-      setKeepAwakeButtonBusy(false);
-    }
-  }
-
-  async function refreshKeepAwakeStatus() {
-    const baseUrl = resolveOverlayApiBaseUrl();
-    if (!baseUrl) {
-      updateKeepAwakeStatus("Keep-awake indisponível.", false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${baseUrl.replace(/\/$/, "")}/keep-awake/status`);
-
-      if (!response.ok) {
-        return;
-      }
-
-      const payload = await response.json();
-      updateKeepAwakeStatusFromPayload(payload);
-    } catch (error) {
-      portalLogger.warn("Failed to refresh keep-awake status", error);
-    }
-  }
-
-  function updateKeepAwakeStatusFromPayload(payload) {
-    if (!elements.keepAwakeStatus) {
-      return;
-    }
-
-    const active = Boolean(payload && payload.active);
-    const until = payload && payload.until ? new Date(payload.until) : null;
-    if (active && until instanceof Date && !Number.isNaN(until.getTime())) {
-      updateKeepAwakeStatus(`Ativo · até ${formatFriendlyDateTime(until)}`, true);
-      return;
-    }
-
-    updateKeepAwakeStatus("Inativo", false);
-  }
-
-  function updateKeepAwakeStatus(message, isActive) {
-    if (!elements.keepAwakeStatus) {
-      return;
-    }
-
-    elements.keepAwakeStatus.textContent = message;
-    elements.keepAwakeStatus.dataset.state = isActive ? "active" : "idle";
-  }
-
-  function setKeepAwakeButtonBusy(isBusy) {
-    if (!elements.keepAwakeButton) {
-      return;
-    }
-
-    elements.keepAwakeButton.disabled = isBusy;
-    elements.keepAwakeButton.textContent = isBusy
-      ? "Ativando..."
-      : "Ativar por 12h";
-  }
-
-  function buildOverlayUrl(sessionId) {
-    const baseUrl = resolveOverlayApiBaseUrl();
-    if (!baseUrl) {
-      return "";
-    }
-
-    return `${baseUrl.replace(/\/$/, "")}/overlay?session=${encodeURIComponent(sessionId)}`;
-  }
-
-  function isCopyShortcut(event) {
-    return (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "c";
-  }
-
-  function fallbackCopyText(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "true");
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      document.execCommand("copy");
-    } catch {
-      //
-    }
-    textarea.remove();
-  }
-
-  function flashSummaryCopyButton(label) {
-    if (!elements.summaryCopyOverlayButton) {
-      return;
-    }
-
-    const originalLabel = elements.summaryCopyOverlayButton.textContent || "Copiar overlay";
-    elements.summaryCopyOverlayButton.textContent = label;
-    window.setTimeout(() => {
-      if (elements.summaryCopyOverlayButton) {
-        elements.summaryCopyOverlayButton.textContent = originalLabel;
-      }
-    }, 1400);
-  }
-
-  function normalizeApiBaseUrl(value) {
-    const raw = cleanText(value || "").replace(/\/+$/, "");
-    if (!raw) {
-      return "";
-    }
-
-    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
-      return raw;
-    }
-
-    if (raw.startsWith("//")) {
-      return `${window.location.protocol}${raw}`;
-    }
-
-    const protocol = window.location.protocol === "http:" ? "http://" : "https://";
-    return `${protocol}${raw}`;
-  }
-
-  function formatFriendlyDateTime(date) {
-    return new Intl.DateTimeFormat("pt-BR", {
-      dateStyle: "short",
-      timeStyle: "short"
-    }).format(date);
-  }
-
-  function scheduleRender() {
-    if (renderQueued) {
-      return;
-    }
-
-    renderQueued = true;
-    const flush = () => {
-      renderQueued = false;
-      render();
-    };
-
-    window.setTimeout(flush, document.visibilityState === "hidden" ? 0 : 16);
-  }
-
-  function render() {
-    const state = store.state;
-    const visibleEvents = store.getVisibleEvents();
-    const priorityEvents = visibleEvents
-      .filter((event) => event.type === "sub" || event.type === "member")
-      .sort(comparePriorityEvent);
-    const superchatEvents = visibleEvents
-      .filter((event) => event.type === "superchat")
-      .map((event) => currencyService.decorateSuperchatEvent(event))
-      .sort(compareSuperchatEvent);
-    const chatEvents = store.liveEvents.slice().sort(compareMessageEvent);
-    const counts = store.getCounts();
-    const focusedEvent = detailId ? store.findEventById(detailId) : null;
-    const superchatTotals = currencyService.summarizeSuperchatEvents(superchatEvents);
-    const newestLiveId = chatEvents[0]?.id || "";
-    const oldestLiveId = chatEvents[chatEvents.length - 1]?.id || "";
-    const nextRenderKey = [
-      state.roomId,
-      state.filter,
-      state.overlayId || "",
-      detailId || "",
-      counts.totalEvents,
-      counts.twitchSubs,
-      counts.youtubeMembers,
-      counts.totalCombined,
-      counts.superchats,
-      priorityEvents.length,
-      superchatEvents.length,
-      chatEvents.length,
-      newestLiveId,
-      oldestLiveId,
-      superchatTotals.totalBrl.toFixed(2)
-    ].join("|");
-
-    if (nextRenderKey === lastRenderKey) {
-      return;
-    }
-    lastRenderKey = nextRenderKey;
-
-    portalLogger.debug("render", {
-      roomId: state.roomId,
-      filter: state.filter,
-      totalEvents: counts.totalEvents,
-      priorityEvents: priorityEvents.length,
-      superchatEvents: superchatEvents.length,
-      chatEvents: chatEvents.length
-    });
-
-    if (superchatEvents.length) {
-      currencyService.warmCurrencyRates(superchatEvents);
-    }
-
-    if (detailId && !focusedEvent) {
-      detailId = "";
-      view.setDetailOpen(false);
-    }
-
-    if (lastRenderedFilter !== state.filter) {
-      lastRenderedFilter = state.filter;
-      view.syncFilterButtons(state.filter);
-    }
-    view.render({
-      state,
-      priorityEvents,
-      superchatEvents,
-      chatEvents,
-      counts,
-      superchatTotals,
-      focusedEvent
-    });
+    const overlayUrl = overlayApi.buildOverlayUrl(overlaySession);
+    await clipboard.copyTextWithButtonFeedback(overlayUrl);
   }
 
   function summarizePayload(payload) {
@@ -778,7 +413,7 @@ function boot() {
     summaryOpen = Boolean(nextOpen);
     view.setSummaryOpen(summaryOpen);
     if (summaryOpen) {
-      scheduleRender();
+      renderLoop.scheduleRender();
     }
   }
 
@@ -790,66 +425,43 @@ function boot() {
   function closeDetail(options = {}) {
     const { status = "read", clearOverlay = true } = options;
 
-    if (detailId) {
-      if (status && store.updateStatus(detailId, status)) {
-        // status already persisted
-      }
+    if (detailId && status) {
+      store.updateStatus(detailId, status);
+    }
 
-      if (clearOverlay && store.state.overlayId === detailId && store.clearOverlayId()) {
-        sendOverlayClear(getOverlaySessionId());
-      }
+    if (detailId && clearOverlay && store.state.overlayId === detailId && store.clearOverlayId()) {
+      overlayApi.sendOverlayClear(sessionController.getOverlaySessionId());
     }
 
     detailId = "";
     view.setDetailOpen(false);
-    scheduleRender();
-  }
-
-  function sendOverlayClear(roomId) {
-    sendOverlayPacket(roomId, {
-      msg: true,
-      contents: false
-    });
+    renderLoop.scheduleRender();
   }
 
   async function clearCurrentHistory() {
-    const overlaySession = getOverlaySessionId();
+    const overlaySession = sessionController.getOverlaySessionId();
     const hasEvents = store.state.events.length > 0 || store.liveEvents.length > 0;
     const hasOverlay = Boolean(store.state.overlayId);
 
     if (!hasEvents && !hasOverlay) {
-      setStatus("histórico vazio");
+      setStatus("historico vazio");
       return;
     }
 
-    const confirmed = window.confirm("Limpar o histórico do painel? A conexão atual será mantida.");
+    const confirmed = window.confirm("Limpar o historico do painel? A conexao atual sera mantida.");
     if (!confirmed) {
       return;
     }
 
     if (hasOverlay && overlaySession) {
-      sendOverlayClear(overlaySession);
+      overlayApi.sendOverlayClear(overlaySession);
     }
 
     store.clearHistory();
     detailId = "";
     view.setDetailOpen(false);
-    scheduleRender();
-    setStatus("histórico limpo");
-  }
-
-  function persistSharedRoom(roomId) {
-    if (mockMode) {
-      return;
-    }
-
-    if (!hasChromeStorage) {
-      return;
-    }
-
-    chrome.storage.sync.set({
-      streamID: roomId
-    });
+    renderLoop.scheduleRender();
+    setStatus("historico limpo");
   }
 
   function cleanup() {
@@ -860,7 +472,7 @@ function boot() {
     try {
       const mockPackets = await loadMockDeck();
       localStorage.removeItem(store.getStorageKey(mockRoomId));
-      store.connectRoom(mockRoomId);
+      sessionController.connect(mockRoomId);
       elements.sessionInput.value = mockRoomId;
       view.syncFilterButtons(store.state.filter);
       setStatus("mock");
@@ -876,17 +488,17 @@ function boot() {
         }
 
         handleIncomingPayload(packet);
-        sendOverlayPacket(mockRoomId, {
+        overlayApi.sendOverlayPacket(mockRoomId, {
           msg: true,
           id: packet.id,
           contents: packet.contents
         });
       }
 
-      scheduleRender();
+      renderLoop.scheduleRender();
     } catch (error) {
       portalLogger.warn("Failed to load mock deck", error);
-      setStatus("mock indisponível");
+      setStatus("mock indisponivel");
     }
   }
 
@@ -899,7 +511,10 @@ function boot() {
       }
     };
   }
+}
 
+function isCopyShortcut(event) {
+  return (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === "c";
 }
 
 if (document.readyState === "loading") {

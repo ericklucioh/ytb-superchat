@@ -10,6 +10,13 @@ function loadScript(filePath, sandbox) {
   return sandbox;
 }
 
+function loadBridgeScripts(sandbox) {
+  const baseDir = path.join(__dirname, '..', 'sources');
+  loadScript(path.join(baseDir, 'bridge-channel-helpers.js'), sandbox);
+  loadScript(path.join(baseDir, 'bridge-legacy-socket-shim.js'), sandbox);
+  loadScript(path.join(baseDir, 'local-chat-bridge.js'), sandbox);
+}
+
 function createChromeStub() {
   const localStore = new Map();
   const sessionStore = new Map();
@@ -187,7 +194,7 @@ test('local-chat bridge dedupes pending packets and applies acks', async () => {
     isNaN
   };
 
-  loadScript(path.join(__dirname, '..', 'sources', 'local-chat-bridge.js'), sandbox);
+  loadBridgeScripts(sandbox);
   const bridgeFactory = sandbox.window.OverlayLocalChatBridge;
   assert.ok(bridgeFactory, 'bridge factory should be installed');
 
